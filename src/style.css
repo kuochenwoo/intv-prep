@@ -7,9 +7,17 @@
   --color-icon-accent: light-dark(#6d28d9, #c4b5fd);
   --color-accent-muted: light-dark(#f1ecff, #2a2145);
   --color-on-accent: light-dark(#ffffff, #160b33);
-  --font-family-body: "Figtree Variable", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-family-body:
+    "Figtree Variable", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-family-heading: var(--font-family-body);
+  /* Native text faces have calmer letterforms for extended bilingual reading. */
+  --font-family-reading:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-size-reading: calc(var(--font-size-lg) - 0.0625rem);
+  --line-height-reading: 1.85;
+  --reading-measure: 80ch;
 }
 html,
 body {
@@ -133,7 +141,11 @@ button.problem {
 button.problem:hover {
   border-color: var(--color-border-emphasized);
   /* Astryx's tint-hover is solid black/white meant for overlays, so mix a light tint instead. */
-  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-background-card));
+  background: color-mix(
+    in srgb,
+    var(--color-accent) 8%,
+    var(--color-background-card)
+  );
 }
 button.problem.active {
   border-color: var(--color-accent);
@@ -196,7 +208,69 @@ button.problem small {
 }
 .prose {
   white-space: pre-wrap;
-  line-height: 1.65;
+}
+.prose,
+.statement li,
+.complexity-card p,
+.topic-panel > p,
+.topic-panel li,
+.question-context,
+.question-preview,
+.turn,
+.shown-reference,
+.feedback,
+.sd-markdown {
+  font-family: var(--font-family-reading);
+  font-size: var(--font-size-reading);
+  line-height: var(--line-height-reading);
+  overflow-wrap: anywhere;
+  line-break: strict;
+}
+.prose,
+.topic-panel > p,
+.topic-panel ul,
+.question-context > p,
+.question-context > ul,
+.question-context > h3,
+.question-preview > p,
+.turn > p,
+.shown-reference > p,
+.feedback > p,
+.feedback > ul {
+  max-inline-size: var(--reading-measure);
+}
+/* Override element-level theme typography as well as container inheritance. */
+.question-context > p,
+.question-context li,
+.question-preview p,
+.question-preview li,
+.turn p,
+.turn li,
+.shown-reference p,
+.shown-reference li,
+.feedback p,
+.feedback li,
+.sd-markdown p,
+.sd-markdown li {
+  font-family: var(--font-family-reading);
+  font-size: inherit;
+  line-height: var(--line-height-reading);
+}
+.question-context > p.muted,
+.turn p.muted {
+  font-size: var(--font-size-base);
+}
+.statement .prose {
+  margin-block: 18px;
+}
+.statement li,
+.topic-panel li,
+.question-context li,
+.question-preview li,
+.shown-reference li,
+.feedback li {
+  margin-block: 8px;
+  line-height: var(--line-height-reading);
 }
 .tags {
   display: flex;
@@ -301,6 +375,6 @@ details.case summary {
   margin: 6px 0;
 }
 .app li {
-  margin: 3px 0;
-  line-height: 1.55;
+  margin: 8px 0;
+  line-height: var(--line-height-reading);
 }
