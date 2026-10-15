@@ -11,6 +11,11 @@ import "./style.css";
 };
 loader.config({ monaco });
 type Mode = "function" | "acm";
+type JudgeLimits = {
+  timeLimitMs: number;
+  memoryLimitMb: number;
+  outputLimitKb: number;
+};
 type Problem = {
   id: string;
   title: string;
@@ -18,6 +23,14 @@ type Problem = {
   tags: string[];
   statement: string;
   constraints: string[];
+  limits: JudgeLimits;
+  complexity: {
+    time: string;
+    space: string;
+    officialRequirement: string;
+    notes: string;
+    sourceUrl: string;
+  };
   cpp: { functionTemplate: string; acmTemplate: string; acmIoSpec: string };
   examples: { input: string; output: string }[];
 };
@@ -34,6 +47,7 @@ type Result = {
   total: number;
   compiler: string;
   diagnostics: string;
+  limits?: JudgeLimits;
   cases: {
     id: string;
     status: string;
@@ -43,6 +57,7 @@ type Result = {
     actual: string;
     stderr: string;
     durationMs: number;
+    peakMemoryBytes?: number | null;
   }[];
 };
 const labels: Record<string, string> = {
@@ -52,6 +67,7 @@ const labels: Record<string, string> = {
   runtime_error: "运行错误",
   timeout: "运行超时",
   output_limit: "输出超限",
+  memory_limit: "記憶體超限",
   compile_timeout: "编译超时",
   compile_output_limit: "编译输出超限",
 };
@@ -304,6 +320,42 @@ function App() {
                   <li key={c}>{c}</li>
                 ))}
               </ul>
+              <h3>時間／空間複雜度要求</h3>
+              <p>
+                時間：{problem.complexity.time}
+                <br />
+                額外空間：{problem.complexity.space}
+              </p>
+              <p>{problem.complexity.officialRequirement}</p>
+              <p className="muted">{problem.complexity.notes}</p>
+              <p>
+                <button
+                  className="source-link"
+                  title={problem.complexity.sourceUrl}
+                  onClick={() => {
+                    void invoke("open_problem_source", {
+                      problemId: problem.id,
+                    }).catch((e) => setError(String(e)));
+                  }}
+                >
+                  官方題面參考（需聯網）
+                </button>
+              </p>
+              <h3>本地執行上限</h3>
+              <p>
+                每例 {problem.limits.timeLimitMs} ms · 主進程記憶體{" "}
+                {problem.limits.memoryLimitMb} MiB · 輸出{" "}
+                {problem.limits.outputLimitKb} KiB
+              </p>
+              <p className="muted">
+                此為本地設定，非 LeetCode
+                官方資源限額。記憶體包含輸入、包裝器及執行期，每 5 ms
+                採樣，可能漏計短暫峰值；不等同演算法額外空間。
+              </p>
+              <p className="muted">
+                通過本地測試不會自動證明 Big-O
+                或原地要求已滿足，仍需檢查程式的複雜度。
+              </p>
               <h3>示例（逻辑数据）</h3>
               {problem.examples.map((ex, i) => (
                 <pre key={i}>
@@ -320,8 +372,7 @@ function App() {
                 </pre>
               )}
               <p className="muted">
-                每例运行上限 1 秒；stdout + stderr 上限 64
-                KiB。此程序以当前用户权限执行本人可信代码，不是安全沙箱。
+                此程序以当前用户权限执行本人可信代码，不是安全沙箱。
               </p>
             </>
           )}
@@ -381,6 +432,8 @@ function App() {
                 <small>
                   {result.compiler} ·
                   上次执行结果（样例或提交）；代码修改后不会自动重判
+                  {result.limits &&
+                    ` · 當次上限 ${result.limits.timeLimitMs} ms / ${result.limits.memoryLimitMb} MiB`}
                 </small>
                 {result.diagnostics && <pre>{result.diagnostics}</pre>}
                 {result.cases.map((c) => (
@@ -388,6 +441,9 @@ function App() {
                     <summary>
                       {c.id} · {labels[c.status] ?? c.status} · {c.durationMs}{" "}
                       ms · exit {c.exitCode ?? "signal / killed"}
+                      {c.peakMemoryBytes != null
+                        ? ` · 採樣峰值 ${(c.peakMemoryBytes / 1024 / 1024).toFixed(1)} MiB`
+                        : " · 記憶體未取得（短程式或舊記錄）"}
                     </summary>
                     <pre>
                       stdin：{"\n"}
@@ -401,7 +457,7 @@ function App() {
                 ))}
                 {result.cases.length > 0 &&
                   result.cases.length < result.total && (
-                    <p>超时或输出超限后已停止后续测试。</p>
+                    <p>超出時間、記憶體或輸出限制後已停止後續測試。</p>
                   )}
               </>
             )}

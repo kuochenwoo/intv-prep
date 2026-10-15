@@ -233,3 +233,14 @@ ul {
     flex-wrap: wrap;
   }
 }
+a {
+  color: #9bc5ff;
+}
+.source-link {
+  color: #9bc5ff;
+  background: transparent;
+  padding: 0;
+  border: 0;
+  text-decoration: underline;
+  font-size: 12px;
+}

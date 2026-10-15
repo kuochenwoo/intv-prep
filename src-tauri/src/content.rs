@@ -9,9 +9,27 @@ pub struct Problem {
     pub tags: Vec<String>,
     pub statement: String,
     pub constraints: Vec<String>,
+    pub complexity: Complexity,
+    pub limits: JudgeLimits,
     pub examples: Value,
     pub cpp: Cpp,
     pub tests: Vec<Test>,
+}
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Complexity {
+    pub time: String,
+    pub space: String,
+    pub official_requirement: String,
+    pub notes: String,
+    pub source_url: String,
+}
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JudgeLimits {
+    pub time_limit_ms: u64,
+    pub memory_limit_mb: u64,
+    pub output_limit_kb: usize,
 }
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

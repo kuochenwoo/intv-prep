@@ -4,7 +4,10 @@
   "difficulty": "easy",
   "tags": ["数组", "哈希表"],
   "statement": "给定整数数组和目标值，返回两个不同元素的下标，使其和等于目标值。保证至少存在一组解；返回任意合法下标对即可，下标从 0 开始。",
-  "constraints": ["2 ≤ n ≤ 10000；元素和目标的绝对值 ≤ 1000000"],
+  "constraints": [
+    "2 ≤ n ≤ 10000；-10^9 ≤ nums[i], target ≤ 10^9",
+    "本地比較器允許多組合法答案；官方原題保證唯一答案。"
+  ],
   "tests": [
     {
       "id": "t1",
@@ -967,5 +970,17 @@
       "input": "{\"nums\": [3, 2, 4], \"target\": 6}",
       "output": "[1, 2]"
     }
-  ]
+  ],
+  "complexity": {
+    "time": "平均 O(n)（本地訓練目標）",
+    "space": "O(n) 額外空間",
+    "officialRequirement": "官方 follow-up 要求時間優於 O(n²)，並未強制只能使用哈希表。",
+    "notes": "n 為元素數。O(n log n) 排序方案也符合官方 follow-up；本地建議練習哈希表。哈希碰撞極端情況可退化。",
+    "sourceUrl": "https://leetcode.com/problems/two-sum/"
+  },
+  "limits": {
+    "timeLimitMs": 1000,
+    "memoryLimitMb": 128,
+    "outputLimitKb": 64
+  }
 }

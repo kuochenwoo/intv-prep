@@ -10,6 +10,27 @@ struct AppState {
 fn list_problems() -> Vec<content::Problem> {
     content::problems()
 }
+#[tauri::command(async)]
+fn open_problem_source(problem_id: String) -> Result<(), String> {
+    // Only open bundled, known problem URLs; never run a user-provided shell command.
+    let url = content::problem(&problem_id)?.complexity.source_url;
+    let launcher = if cfg!(target_os = "macos") {
+        "open"
+    } else if cfg!(target_os = "linux") {
+        "xdg-open"
+    } else {
+        return Err("此平台尚未支援開啟官方連結".into());
+    };
+    let status = std::process::Command::new(launcher)
+        .arg(url)
+        .status()
+        .map_err(|e| e.to_string())?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err("無法開啟官方題面".into())
+    }
+}
 #[tauri::command]
 fn load_progress(state: State<AppState>) -> Result<Vec<db::Progress>, String> {
     db::load(&db::open(&state.path)?)
@@ -75,6 +96,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             list_problems,
+            open_problem_source,
             load_progress,
             save_draft,
             get_compiler,

@@ -20,6 +20,44 @@ pub struct ProcessResult {
     pub stdout: String,
     pub stderr: String,
     pub duration_ms: u128,
+    pub peak_memory_bytes: Option<u64>,
+}
+
+// Sample the executable's resident footprint, including the runtime and harness.
+// This is not auxiliary-space analysis or an OS memory sandbox.
+#[cfg(target_os = "macos")]
+fn resident_bytes(pid: u32) -> Option<u64> {
+    let mut info = std::mem::MaybeUninit::<libc::proc_taskinfo>::zeroed();
+    let size = std::mem::size_of::<libc::proc_taskinfo>() as i32;
+    let read = unsafe {
+        libc::proc_pidinfo(
+            pid as i32,
+            libc::PROC_PIDTASKINFO,
+            0,
+            info.as_mut_ptr().cast(),
+            size,
+        )
+    };
+    if read == size {
+        Some(unsafe { info.assume_init() }.pti_resident_size)
+    } else {
+        None
+    }
+}
+#[cfg(target_os = "linux")]
+fn resident_bytes(pid: u32) -> Option<u64> {
+    let status = std::fs::read_to_string(format!("/proc/{pid}/status")).ok()?;
+    // VmHWM also retains peaks that occurred between samples while alive.
+    status
+        .lines()
+        .filter(|s| s.starts_with("VmRSS:") || s.starts_with("VmHWM:"))
+        .filter_map(|s| s.split_whitespace().nth(1)?.parse::<u64>().ok())
+        .max()
+        .map(|kb| kb * 1024)
+}
+#[cfg(not(any(target_os = "macos", target_os = "linux")))]
+fn resident_bytes(_pid: u32) -> Option<u64> {
+    None
 }
 fn kill_group(child: &mut std::process::Child) {
     #[cfg(unix)]
@@ -52,6 +90,20 @@ pub fn execute(
     timeout: Duration,
     cap: usize,
 ) -> Result<ProcessResult, String> {
+    execute_with_memory(program, args, cwd, input, timeout, cap, None)
+}
+pub fn execute_with_memory(
+    program: &str,
+    args: &[&str],
+    cwd: &std::path::Path,
+    input: String,
+    timeout: Duration,
+    cap: usize,
+    memory_limit_bytes: Option<u64>,
+) -> Result<ProcessResult, String> {
+    if memory_limit_bytes.is_some() && !cfg!(any(target_os = "macos", target_os = "linux")) {
+        return Err("此平台尚未支援記憶體監測，無法按題目限制判題".into());
+    }
     let mut cmd = Command::new(program);
     cmd.args(args)
         .current_dir(cwd)
@@ -96,7 +148,35 @@ pub fn execute(
     let stdout = thread::spawn(move || capture(out, c, cap));
     let c = count.clone();
     let stderr = thread::spawn(move || capture(err, c, cap));
+    let mut peak_memory_bytes: Option<u64> = None;
+    let mut memory_read_failures = 0;
     let status = loop {
+        if let Some(limit) = memory_limit_bytes {
+            match resident_bytes(child.id()) {
+                Some(bytes) => {
+                    memory_read_failures = 0;
+                    peak_memory_bytes = Some(peak_memory_bytes.unwrap_or(0).max(bytes));
+                    if bytes > limit {
+                        break "memory_limit";
+                    }
+                }
+                None => {
+                    // An already-exited process may no longer expose memory data.
+                    match child.try_wait() {
+                        Ok(Some(s)) => break if s.success() { "ok" } else { "runtime_error" },
+                        Ok(None) => {
+                            // On macOS task info can disappear just before the
+                            // exit status becomes waitable. Allow that brief race.
+                            memory_read_failures += 1;
+                            if memory_read_failures >= 10 {
+                                break "memory_monitor_error";
+                            }
+                        }
+                        Err(_) => break "memory_monitor_error",
+                    }
+                }
+            }
+        }
         if count.load(Ordering::SeqCst) > cap {
             break "output_limit";
         }
@@ -114,6 +194,9 @@ pub fn execute(
     let _ = writer.join();
     let out = stdout.join().unwrap_or_default();
     let err = stderr.join().unwrap_or_default();
+    if status == "memory_monitor_error" {
+        return Err("無法讀取執行進程的記憶體用量；已終止進程，未繞過記憶體限制".into());
+    }
     let status = if count.load(Ordering::SeqCst) > cap {
         "output_limit"
     } else {
@@ -125,6 +208,7 @@ pub fn execute(
         stdout: out,
         stderr: err,
         duration_ms: start.elapsed().as_millis(),
+        peak_memory_bytes,
     })
 }
 pub fn detect_compiler(requested: &str) -> Result<String, String> {
@@ -178,6 +262,7 @@ pub struct CaseResult {
     pub actual: String,
     pub stderr: String,
     pub duration_ms: u128,
+    pub peak_memory_bytes: Option<u64>,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -188,6 +273,7 @@ pub struct JudgeResult {
     pub compiler: String,
     pub diagnostics: String,
     pub cases: Vec<CaseResult>,
+    pub limits: content::JudgeLimits,
 }
 pub fn judge(
     p: &Problem,
@@ -196,6 +282,16 @@ pub fn judge(
     samples: bool,
     compiler: &str,
 ) -> Result<JudgeResult, String> {
+    let limits = &p.limits;
+    if limits.time_limit_ms == 0
+        || limits.time_limit_ms > 60000
+        || limits.memory_limit_mb == 0
+        || limits.memory_limit_mb > 4096
+        || limits.output_limit_kb == 0
+        || limits.output_limit_kb > 1024
+    {
+        return Err("無效的題目執行限制".into());
+    }
     if code.len() > 256 * 1024 {
         return Err("代码长度超过 256 KiB".into());
     }
@@ -211,6 +307,7 @@ pub fn judge(
         compiler: compiler.clone(),
         diagnostics: String::new(),
         cases: vec![],
+        limits: limits.clone(),
     };
     let compile = execute(
         &compiler,
@@ -232,13 +329,14 @@ pub fn judge(
     let executable = tmp.path().join("solution").to_string_lossy().into_owned();
     for t in tests {
         let input = content::input(p, t);
-        let r = execute(
+        let r = execute_with_memory(
             &executable,
             &[],
             tmp.path(),
             input.clone(),
-            Duration::from_millis(1000),
-            64 * 1024,
+            Duration::from_millis(limits.time_limit_ms),
+            limits.output_limit_kb * 1024,
+            Some(limits.memory_limit_mb * 1024 * 1024),
         )?;
         let status = if r.status != "ok" {
             r.status.clone()
@@ -252,7 +350,7 @@ pub fn judge(
         } else if result.status == "accepted" {
             result.status = status.clone();
         }
-        let stop = status == "timeout" || status == "output_limit";
+        let stop = ["timeout", "output_limit", "memory_limit"].contains(&status.as_str());
         result.cases.push(CaseResult {
             id: t.id.clone(),
             status,
@@ -262,6 +360,7 @@ pub fn judge(
             actual: r.stdout,
             stderr: r.stderr,
             duration_ms: r.duration_ms,
+            peak_memory_bytes: r.peak_memory_bytes,
         });
         if stop {
             break;

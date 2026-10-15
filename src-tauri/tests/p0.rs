@@ -295,3 +295,77 @@ fn two_sum_worst_case_and_complexity_profile() {
         r.status, r.cases[0].duration_ms
     );
 }
+
+#[test]
+fn per_problem_resource_limits_are_executed_in_both_modes() {
+    let allocating = r#"
+        #include <thread>
+        #include <chrono>
+        int main() {
+            volatile char* memory = new char[192 * 1024 * 1024];
+            for (int i = 0; i < 192 * 1024 * 1024; i += 4096) memory[i] = 1;
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+            delete[] memory;
+        }
+    "#;
+    let allocating_function = r#"
+        #include <thread>
+        #include <chrono>
+        class Solution { public: int lengthOfLongestSubstring(string) {
+            volatile char* memory = new char[192 * 1024 * 1024];
+            for (int i = 0; i < 192 * 1024 * 1024; i += 4096) memory[i] = 1;
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+            delete[] memory;
+            return 0;
+        }};
+    "#;
+    for (mode, code) in [("acm", allocating), ("function", allocating_function)] {
+        let mut p = problem("lc-3").unwrap();
+        p.limits.memory_limit_mb = 32;
+        let r = judge(&p, mode, code, true, "").unwrap();
+        assert_eq!(r.status, "memory_limit", "{mode}");
+        assert_eq!(r.cases.len(), 1);
+        assert!(r.cases[0].peak_memory_bytes.unwrap() > 32 * 1024 * 1024);
+        assert_eq!(r.limits.memory_limit_mb, 32);
+    }
+    let mut p = problem("lc-3").unwrap();
+    p.limits.time_limit_ms = 50;
+    let r = judge(&p, "acm", "#include <thread>\n#include <chrono>\nint main(){std::this_thread::sleep_for(std::chrono::seconds(2));}", true, "").unwrap();
+    assert_eq!(r.status, "timeout");
+    assert_eq!(r.limits.time_limit_ms, 50);
+    p.limits.output_limit_kb = 1;
+    p.limits.time_limit_ms = 1000;
+    let r = judge(
+        &p,
+        "acm",
+        "#include <iostream>\nint main(){for(int i=0;i<2000;++i)std::cout << 'x';}",
+        true,
+        "",
+    )
+    .unwrap();
+    assert_eq!(r.status, "output_limit");
+    assert!(r.cases[0].actual.len() <= 1024);
+    p.limits.memory_limit_mb = 0;
+    assert!(judge(&p, "acm", "int main(){}", true, "").is_err());
+}
+
+#[test]
+fn every_problem_has_sourced_complexity_policy_and_maximum_size_test() {
+    for p in content::problems() {
+        assert!(!p.complexity.time.is_empty());
+        assert!(!p.complexity.space.is_empty());
+        assert!(!p.complexity.official_requirement.is_empty());
+        assert!(p
+            .complexity
+            .source_url
+            .starts_with("https://leetcode.com/problems/"));
+        assert_eq!(p.limits.time_limit_ms, 1000);
+        assert_eq!(p.limits.memory_limit_mb, 128);
+        assert_eq!(p.limits.output_limit_kb, 64);
+        assert!(p
+            .tests
+            .iter()
+            .any(|t| !t.is_sample
+                && (t.id.starts_with("max-size-") || t.id.starts_with("worst-case-"))));
+    }
+}
