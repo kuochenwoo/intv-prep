@@ -5,6 +5,7 @@ import Editor, { loader } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import EditorWorker from "monaco-editor/editor/editor.worker.js?worker";
 import "./style.css";
+import InterviewApp from "./features/interview/InterviewApp";
 // Bundle Monaco locally: editing works without a CDN or network connection.
 (self as unknown as { MonacoEnvironment: unknown }).MonacoEnvironment = {
   getWorker: () => new EditorWorker(),
@@ -72,7 +73,7 @@ const labels: Record<string, string> = {
   compile_output_limit: "编译输出超限",
 };
 const keyOf = (id: string, mode: Mode) => `${id}:${mode}`;
-function App() {
+function CodingApp() {
   const [problems, setProblems] = useState<Problem[]>([]),
     [selected, setSelected] = useState("lc-1"),
     [mode, setMode] = useState<Mode>("function");
@@ -207,7 +208,7 @@ function App() {
       <header>
         <div>
           <strong>SWE Interview Prep</strong>
-          <span>本地 Coding · P0</span>
+          <span>本地 Coding</span>
         </div>
         <span className="badge">C++20 · 离线判题</span>
       </header>
@@ -464,6 +465,39 @@ function App() {
           </section>
         </section>
       </main>
+    </>
+  );
+}
+function App() {
+  const [view, setView] = useState<"lc" | "deep_dive">("lc");
+  const [visited, setVisited] = useState(false);
+  return (
+    <>
+      <nav className="module-nav" aria-label="训练模块">
+        <button
+          className={view === "lc" ? "selected" : ""}
+          onClick={() => setView("lc")}
+        >
+          LC 本地判题
+        </button>
+        <button
+          className={view === "deep_dive" ? "selected" : ""}
+          onClick={() => {
+            setVisited(true);
+            setView("deep_dive");
+          }}
+        >
+          Technical Deep Dive
+        </button>
+      </nav>
+      <div hidden={view !== "lc"}>
+        <CodingApp />
+      </div>
+      {visited && (
+        <div hidden={view !== "deep_dive"}>
+          <InterviewApp />
+        </div>
+      )}
     </>
   );
 }

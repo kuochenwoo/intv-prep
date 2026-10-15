@@ -1,10 +1,16 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-use std::{path::PathBuf, sync::Mutex};
-use swe_interview_prep::{code_runner, content, db};
+use interview::LlmProvider;
+use std::{
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
+use swe_interview_prep::{code_runner, content, credentials, db, interview, interview_store, llm};
 use tauri::{Manager, State};
+#[derive(Clone)]
 struct AppState {
     path: PathBuf,
-    judge: Mutex<()>,
+    judge: Arc<Mutex<()>>,
+    interview: Arc<Mutex<()>>,
 }
 #[tauri::command]
 fn list_problems() -> Vec<content::Problem> {
@@ -83,6 +89,173 @@ fn run_judge(
     }
     Ok(result)
 }
+// reqwest::blocking owns a runtime; create and use it only on blocking workers.
+async fn background<T: Send + 'static>(
+    task: impl FnOnce() -> Result<T, String> + Send + 'static,
+) -> Result<T, String> {
+    tauri::async_runtime::spawn_blocking(task)
+        .await
+        .map_err(|_| "后台面试任务意外终止，请重试")?
+}
+fn provider(
+    c: &rusqlite::Connection,
+    session_id: Option<&str>,
+) -> Result<llm::DeepSeekProvider, String> {
+    let mut config = credentials::settings(c)?;
+    if let Some(id) = session_id {
+        let s = interview_store::session(c, id)?;
+        config.provider = s.provider;
+        config.model = s.model;
+    }
+    llm::DeepSeekProvider::new(&config, credentials::read_key(&config.provider)?)
+}
+#[tauri::command(async)]
+fn interview_overview(state: State<AppState>) -> Result<serde_json::Value, String> {
+    let c = db::open(&state.path)?;
+    Ok(
+        serde_json::json!({"topics":interview::topics(),"questions":interview_store::questions(&c)?,"sessions":interview_store::sessions(&c)?,"settings":credentials::view(&c)?}),
+    )
+}
+#[tauri::command(async)]
+fn save_llm_settings(
+    state: State<AppState>,
+    config: credentials::LlmSettings,
+    api_key: Option<String>,
+) -> Result<credentials::SettingsView, String> {
+    let _guard = state
+        .interview
+        .try_lock()
+        .map_err(|_| "请等待当前面试请求完成")?;
+    config.validate()?;
+    if let Some(key) = api_key.filter(|s| !s.trim().is_empty()) {
+        credentials::save_key(&config.provider, &key)?;
+    }
+    let c = db::open(&state.path)?;
+    credentials::save_settings(&c, &config)?;
+    credentials::view(&c)
+}
+#[tauri::command(async)]
+fn delete_llm_key(state: State<AppState>, provider: String) -> Result<(), String> {
+    let _guard = state
+        .interview
+        .try_lock()
+        .map_err(|_| "请等待当前面试请求完成")?;
+    credentials::delete_key(&provider)
+}
+#[tauri::command(async)]
+async fn generate_interview_question(
+    state: State<'_, AppState>,
+    topic_id: String,
+) -> Result<interview::QuestionView, String> {
+    let state = state.inner().clone();
+    background(move || {
+        let _guard = state
+            .interview
+            .try_lock()
+            .map_err(|_| "已有面试请求正在运行")?;
+        let c = db::open(&state.path)?;
+        let config = credentials::settings(&c)?;
+        let q = provider(&c, None)?.generate_question(&interview::topic(&topic_id)?)?;
+        interview_store::cache_question(&c, &topic_id, &config, &q)
+    })
+    .await
+}
+#[tauri::command]
+fn start_interview(
+    state: State<AppState>,
+    question_id: String,
+) -> Result<interview::SessionView, String> {
+    let _guard = state
+        .interview
+        .try_lock()
+        .map_err(|_| "请等待当前面试请求完成")?;
+    let c = db::open(&state.path)?;
+    interview_store::start(&c, &question_id, &credentials::settings(&c)?)
+}
+#[tauri::command]
+fn get_interview_session(
+    state: State<AppState>,
+    session_id: String,
+) -> Result<interview::SessionView, String> {
+    interview_store::session(&db::open(&state.path)?, &session_id)
+}
+#[tauri::command]
+fn save_interview_draft(
+    state: State<AppState>,
+    session_id: String,
+    draft: String,
+) -> Result<(), String> {
+    interview_store::save_draft(&db::open(&state.path)?, &session_id, &draft)
+}
+#[tauri::command(async)]
+async fn submit_interview_answer(
+    state: State<'_, AppState>,
+    session_id: String,
+    answer: String,
+) -> Result<interview::SessionView, String> {
+    let state = state.inner().clone();
+    background(move || {
+        let _guard = state
+            .interview
+            .try_lock()
+            .map_err(|_| "已有面试请求正在运行")?;
+        let c = db::open(&state.path)?;
+        let api = provider(&c, Some(&session_id))?;
+        interview_store::begin_answer(&c, &session_id, &answer)?;
+        interview_store::retry_pending(&c, &session_id, &api)
+    })
+    .await
+}
+#[tauri::command(async)]
+async fn finish_interview(
+    state: State<'_, AppState>,
+    session_id: String,
+) -> Result<interview::SessionView, String> {
+    let state = state.inner().clone();
+    background(move || {
+        let _guard = state
+            .interview
+            .try_lock()
+            .map_err(|_| "已有面试请求正在运行")?;
+        let c = db::open(&state.path)?;
+        let api = provider(&c, Some(&session_id))?;
+        interview_store::begin_feedback(&c, &session_id)?;
+        interview_store::retry_pending(&c, &session_id, &api)
+    })
+    .await
+}
+#[tauri::command(async)]
+async fn retry_interview(
+    state: State<'_, AppState>,
+    session_id: String,
+) -> Result<interview::SessionView, String> {
+    let state = state.inner().clone();
+    background(move || {
+        let _guard = state
+            .interview
+            .try_lock()
+            .map_err(|_| "已有面试请求正在运行")?;
+        let c = db::open(&state.path)?;
+        interview_store::retry_pending(&c, &session_id, &provider(&c, Some(&session_id))?)
+    })
+    .await
+}
+#[tauri::command]
+fn delete_interview_session(state: State<AppState>, session_id: String) -> Result<(), String> {
+    let _guard = state
+        .interview
+        .try_lock()
+        .map_err(|_| "请等待当前面试请求完成")?;
+    interview_store::delete_session(&db::open(&state.path)?, &session_id)
+}
+#[tauri::command]
+fn clear_interview_history(state: State<AppState>) -> Result<(), String> {
+    let _guard = state
+        .interview
+        .try_lock()
+        .map_err(|_| "请等待当前面试请求完成")?;
+    interview_store::clear_history(&db::open(&state.path)?)
+}
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
@@ -90,11 +263,24 @@ fn main() {
             db::open(&path).map_err(std::io::Error::other)?;
             app.manage(AppState {
                 path,
-                judge: Mutex::new(()),
+                judge: Arc::new(Mutex::new(())),
+                interview: Arc::new(Mutex::new(())),
             });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            interview_overview,
+            save_llm_settings,
+            delete_llm_key,
+            generate_interview_question,
+            start_interview,
+            get_interview_session,
+            save_interview_draft,
+            submit_interview_answer,
+            finish_interview,
+            retry_interview,
+            delete_interview_session,
+            clear_interview_history,
             list_problems,
             open_problem_source,
             load_progress,

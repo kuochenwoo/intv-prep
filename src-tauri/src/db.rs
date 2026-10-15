@@ -18,6 +18,7 @@ pub fn open(path: &Path) -> Result<Connection, String> {
     c.busy_timeout(std::time::Duration::from_secs(3))
         .map_err(|e| e.to_string())?;
     c.execute_batch("PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS coding_progress(problem_id TEXT NOT NULL, mode TEXT NOT NULL, code TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'in_progress', last_result TEXT, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(problem_id,mode)); CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);").map_err(|e|e.to_string())?;
+    crate::interview_store::migrate(&c)?;
     Ok(c)
 }
 pub fn load(c: &Connection) -> Result<Vec<Progress>, String> {

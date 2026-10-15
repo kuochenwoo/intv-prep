@@ -1,0 +1,112 @@
+[
+  {
+    "id": "cache-selection",
+    "category": "Caching",
+    "title": "缓存选型与一致性",
+    "focus": [
+      "Redis vs 本地缓存",
+      "Cache Aside 与 write-through",
+      "击穿与热点",
+      "缓存/数据库一致性"
+    ],
+    "scenarioConstraints": ["100k 读 QPS", "p99 < 50ms", "多实例部署"],
+    "level": "mid-to-senior"
+  },
+  {
+    "id": "hot-key-protection",
+    "category": "Caching",
+    "title": "热点与缓存故障",
+    "focus": ["热 key 识别", "请求合并", "缓存失效", "降级与限流"],
+    "scenarioConstraints": [
+      "热点占 60% 流量",
+      "峰值 10 倍",
+      "缓存集群可能不可用"
+    ],
+    "level": "mid-to-senior"
+  },
+  {
+    "id": "idempotency-retries",
+    "category": "Correctness",
+    "title": "幂等、超时与重试",
+    "focus": ["幂等键生命周期", "重复执行", "指数退避与抖动", "未知结果恢复"],
+    "scenarioConstraints": ["支付回调可能重复", "网络超时", "不允许重复扣款"],
+    "level": "mid-to-senior"
+  },
+  {
+    "id": "message-delivery",
+    "category": "Messaging",
+    "title": "消息可靠投递与消费",
+    "focus": ["至少一次 vs 至多一次", "去重与顺序", "事务发件箱", "积压与重放"],
+    "scenarioConstraints": [
+      "10k 消息/秒",
+      "消费端可能崩溃",
+      "业务状态与消息必须可对账"
+    ],
+    "level": "mid-to-senior"
+  },
+  {
+    "id": "queue-selection",
+    "category": "Messaging",
+    "title": "队列选型与背压",
+    "focus": [
+      "Kafka vs RabbitMQ",
+      "分区并发与顺序",
+      "重试队列",
+      "生产消费速率不匹配"
+    ],
+    "scenarioConstraints": [
+      "事件保留 7 天",
+      "5 个消费组",
+      "下游峰值处理能力有限"
+    ],
+    "level": "mid-to-senior"
+  },
+  {
+    "id": "rate-limiting",
+    "category": "Concurrency",
+    "title": "限流、熔断与降级",
+    "focus": ["令牌桶 vs 漏桶", "分布式配额", "公平性", "失效时放行还是拒绝"],
+    "scenarioConstraints": ["多租户 API", "每租户额度", "依赖服务 p99 抖动"],
+    "level": "mid-to-senior"
+  },
+  {
+    "id": "database-concurrency",
+    "category": "Consistency",
+    "title": "事务隔离与并发正确性",
+    "focus": ["乐观锁 vs 悲观锁", "隔离级别", "写偏差", "库存超卖"],
+    "scenarioConstraints": ["库存不可为负", "高并发扣减", "热点 SKU"],
+    "level": "mid-to-senior"
+  },
+  {
+    "id": "replication-failover",
+    "category": "Availability",
+    "title": "副本、故障转移与一致性",
+    "focus": ["同步 vs 异步复制", "读己之写", "脑裂与 fencing", "RPO/RTO"],
+    "scenarioConstraints": ["跨可用区部署", "读多写少", "主节点可能网络分区"],
+    "level": "mid-to-senior"
+  },
+  {
+    "id": "sharding-growth",
+    "category": "Scalability",
+    "title": "分片、扩容与热点迁移",
+    "focus": ["分片键选择", "一致性哈希 vs 范围", "在线迁移", "跨分片查询"],
+    "scenarioConstraints": [
+      "数据增长 10 倍",
+      "写热点不均匀",
+      "迁移期间持续服务"
+    ],
+    "level": "mid-to-senior"
+  },
+  {
+    "id": "rpc-tail-latency",
+    "category": "Performance",
+    "title": "RPC 与尾延迟优化",
+    "focus": ["超时预算", "连接池与排队", "重试放大", "批处理 vs 并发扇出"],
+    "scenarioConstraints": [
+      "聚合 12 个下游",
+      "端到端 p99 < 200ms",
+      "流量有突发"
+    ],
+    "level": "mid-to-senior"
+  }
+]
