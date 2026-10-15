@@ -503,7 +503,7 @@ const strings = {
   state_finished: ["已结束", "Finished"],
   rating_good: ["良好", "Good"],
   rating_partial: ["部分具备", "Partial"],
-  rating_missing: ["遗漏", "Missing"],
+  rating_missing: ["独立证据不足", "Insufficient evidence"],
   rating_incorrect: ["有误", "Incorrect"],
   rating_uncertain: ["待确认", "Uncertain"],
   dim_principles: ["原理理解", "Principles"],

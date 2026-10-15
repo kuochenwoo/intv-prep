@@ -58,7 +58,7 @@ pub fn cache_question(
     config.validate()?;
     q.validate()?;
     let id = new_id(c)?;
-    c.execute("INSERT INTO generated_questions(id,seed_id,provider,model,prompt_version,content_json) VALUES(?1,?2,?3,?4,'deep-dive-v4-calibrated',?5)",params![id,seed_id,config.provider,config.model,serde_json::to_string(q).map_err(err)?]).map_err(err)?;
+    c.execute("INSERT INTO generated_questions(id,seed_id,provider,model,prompt_version,content_json) VALUES(?1,?2,?3,?4,'deep-dive-v6-reviewed',?5)",params![id,seed_id,config.provider,config.model,serde_json::to_string(q).map_err(err)?]).map_err(err)?;
     question(c, &id).map(|r| r.0)
 }
 pub fn question(c: &Connection, id: &str) -> Result<(QuestionView, GeneratedQuestion), String> {

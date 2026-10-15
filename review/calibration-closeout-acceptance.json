@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-15",
+  "provider": "claude",
+  "model": "claude-haiku-5-5",
+  "status": "accepted-scripted-baseline",
+  "positiveOutputsReviewed": 11,
+  "adversarialProbesRejected": 3,
+  "countedContinuationHttpAttempts": 142,
+  "initialUntracedHttpAttemptsRange": [4, 12],
+  "conservativeTotalHttpAttemptUpperBound": 154,
+  "approvedHttpAttemptCeiling": 159,
+  "finalAffectedTests": {
+    "passed": 54,
+    "failed": 0,
+    "ignored": 1
+  },
+  "earlierBroaderSuite": {
+    "passed": 74,
+    "failed": 0,
+    "ignored": 1
+  },
+  "limitations": [
+    "Human-reviewed scripted baseline, not a guarantee for every future generation or judgement.",
+    "Semantic reviewer is a separate invocation of the same model and may reject valid content or miss defects.",
+    "Author streams remain provisional until review completes; review JSON is never sent to the UI stream.",
+    "Existing histories were not rewritten; DeepSeek final-policy semantics were not rerun in this Claude-only closeout."
+  ],
+  "sources": {
+    "src-tauri/src/quality.rs": "e6abe805e0961201936444800936a315cc837fd2912bbfdb7a488dea29f319bf",
+    "src-tauri/src/llm.rs": "f38c153ae36abbcae4123615989e4b07c8f890d5c046c5318208c94ce1795f21",
+    "src-tauri/src/interview.rs": "883c76627b146d44ba1052533080151db06378191199b24b086c5f7ae3861b26",
+    "src-tauri/src/system_design.rs": "69e2d42122cc0b40b3f5820d167c66a7b35d89e4522d51f6e0a6a350bf5176e7",
+    "src-tauri/examples/live_ai_quality.rs": "0665c957aa08d30e3508433b245915a01fc44508db6e4ad8e82de69449580b1d",
+    "content/evals/interview-quality.json": "d38b54ebf89cc005506d7b40c05f89f66934679fade8f88b2802d06c0aaea8d0",
+    "content/evals/calibration-closeout.json": "025733d3aac5453b82733a9814ff37ed24b79c9de3beeb2b950934ec493a3c59",
+    "src/i18n.tsx": "03dcdf6df0281af3d59bd354e1538d0c149f9730b90fac28ac5380da4e913bb4",
+    "src/errors.ts": "067f0c0dce1fb7f1af70b09238f4f632819182a4fb47481101f0c4c9d8451d92"
+  },
+  "epollPrerequisiteFollowUp": "Passed real response and human review after incomplete responses were rejected; see calibration-closeout-epoll-followup.json"
+}

@@ -1,0 +1,1 @@
+{"followUpQuestion":"A pipe has 100 bytes and read consumes 10; before new data arrives, is the descriptor still readable?","observation":"The candidate says they do not know how edge-triggered epoll works and asks for a basic starting step, so the gap is the prerequisite of how readability relates to unread bytes.","shouldEnd":false}

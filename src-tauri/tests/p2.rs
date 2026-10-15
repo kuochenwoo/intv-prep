@@ -383,6 +383,7 @@ fn p1_and_coding_data_remain_untouched_by_p2() {
         constraints: vec!["One mechanism".into()],
         follow_up_directions: vec!["One boundary".into()],
         evaluation_checklist: vec!["Evidence".into()],
+        answer_terms: vec![],
     };
     let q =
         swe_interview_prep::interview_store::cache_question(&c, "cache-selection", &config(), &p1)

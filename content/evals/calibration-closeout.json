@@ -1,0 +1,206 @@
+{
+  "description": "Scripted adversarial probes for human-reviewed closeout, not real candidate histories.",
+  "crossStageCase": {
+    "id": "p2-cross-stage-evidence-en",
+    "seedId": "metrics-platform",
+    "lang": "en",
+    "stage": "high_level",
+    "question": {
+      "question": "Design a multi-tenant metrics ingestion, query and alerting service.",
+      "background": "Local training assumptions, not real production metrics.",
+      "constraints": [
+        "500000 targets, 100 active series/target, one sample every 15 seconds",
+        "16 uncompressed bytes/sample excluding labels/indexes, retain raw data for 15 days",
+        "Last-hour query p95 below two seconds; acknowledged samples survive a node failure"
+      ],
+      "followUpDirections": ["One changed boundary only"],
+      "evaluationChecklist": [
+        "Check explicitly stated baselines, arithmetic and additional overhead"
+      ]
+    },
+    "turns": [
+      {
+        "role": "interviewer",
+        "stage": "high_level",
+        "text": "State the scope and capacity assumptions, then describe the durable ingest path."
+      },
+      {
+        "role": "candidate",
+        "stage": "high_level",
+        "text": "Scope is multi-tenant metrics ingestion, last-hour queries and alerting, with 15-day raw retention. Acknowledged samples must survive one node failure. For the task baseline: 500000*100/15 = about 3333333 samples/s; at 16 bytes each for 15 days this is 69.12 decimal TB, excluding labels, indexes, WAL, replicas and compression. Hash tenant ID plus series ID to ingest partitions. Each partition appends to a durable replicated log and acknowledges only after two nodes persist the sample. Consumers build time-partitioned storage; queries fan out over relevant partitions and merge results. Alert evaluators read the query API. No per-node measured throughput or peak multiplier is claimed."
+      }
+    ],
+    "notes": "",
+    "diagram": "",
+    "expected": [
+      "Credit requirements and estimation evidence submitted in high_level; do not force missing from stage labels",
+      "Recognize explicit input formulas and durable acknowledgements",
+      "Do not invent measurements or demand unasked components"
+    ]
+  },
+  "reviewProbes": [
+    {
+      "id": "synonymous-hint",
+      "lang": "en",
+      "purpose": "P1 opening question: candidate must independently derive the mechanism and output",
+      "input": {
+        "topic": "browser event loop"
+      },
+      "proposal": {
+        "question": "What is the log order and why?",
+        "background": "A browser script logs A, queues a Promise callback C and a timer B, then logs D. The engine finishes all ordinary statements, drains deferred promise reactions, and only then selects a timer callback.",
+        "constraints": ["Browser, no other callbacks"],
+        "evaluationChecklist": ["Explain the relative order"],
+        "followUpDirections": ["Change one callback"],
+        "answerTerms": ["microtask checkpoint", "run-to-completion"]
+      },
+      "expectedAccepted": false
+    },
+    {
+      "id": "matching-question-unasked-gap",
+      "lang": "zh",
+      "purpose": "P2 feedback: a matching question citation does not establish gap relevance",
+      "input": {
+        "question": {
+          "question": "设计文件存储与多端同步服务，先澄清范围再逐阶段讨论。",
+          "background": "训练场景：分块上传、设备游标、版本历史与分享撤销。",
+          "constraints": [
+            "训练基准为500万日活，每人每日10次变更，平均变更文件5 MB，保留30天",
+            "成功确认版本在单AZ故障后不丢；区域灾难的RPO待澄清",
+            "元数据p99低于300ms，不把它当平均服务时间"
+          ],
+          "followUpDirections": ["One changed boundary only"],
+          "evaluationChecklist": [
+            "按声明假设校验推导与完整数据流，接受合理替代架构"
+          ]
+        },
+        "turns": [
+          {
+            "role": "interviewer",
+            "text": "请说明发布与确认顺序。",
+            "stage": "high_level",
+            "observation": null
+          },
+          {
+            "role": "candidate",
+            "text": "所有块先在对象存储达到持久化条件，然后元数据事务发布manifest和变更日志，成功后才确认；版本条件更新拒绝静默覆盖，另存冲突副本。",
+            "stage": "high_level",
+            "observation": null
+          }
+        ]
+      },
+      "proposal": {
+        "summary": "发布确认顺序正确。",
+        "gaps": [
+          {
+            "question": "请说明发布与确认顺序。",
+            "gap": "没有设计分享撤销和完整设备游标同步路径。"
+          }
+        ],
+        "assessment": {
+          "requirements": {
+            "rating": "missing",
+            "evidence": "The question only requested publish/ack ordering; no other ability was independently demonstrated.",
+            "improvement": "Practice one explicitly changed failure condition."
+          },
+          "estimation": {
+            "rating": "missing",
+            "evidence": "The question only requested publish/ack ordering; no other ability was independently demonstrated.",
+            "improvement": "Practice one explicitly changed failure condition."
+          },
+          "architecture": {
+            "rating": "missing",
+            "evidence": "The question only requested publish/ack ordering; no other ability was independently demonstrated.",
+            "improvement": "Practice one explicitly changed failure condition."
+          },
+          "scalability": {
+            "rating": "missing",
+            "evidence": "The question only requested publish/ack ordering; no other ability was independently demonstrated.",
+            "improvement": "Practice one explicitly changed failure condition."
+          },
+          "availability": {
+            "rating": "missing",
+            "evidence": "The question only requested publish/ack ordering; no other ability was independently demonstrated.",
+            "improvement": "Practice one explicitly changed failure condition."
+          },
+          "correctness": {
+            "rating": "good",
+            "evidence": "The answer explicitly makes chunks durable before metadata commit and acknowledgement.",
+            "improvement": "Practice one explicitly changed failure condition."
+          },
+          "tradeoffs": {
+            "rating": "missing",
+            "evidence": "The question only requested publish/ack ordering; no other ability was independently demonstrated.",
+            "improvement": "Practice one explicitly changed failure condition."
+          },
+          "communication": {
+            "rating": "good",
+            "evidence": "The question only requested publish/ack ordering; no other ability was independently demonstrated.",
+            "improvement": "Practice one explicitly changed failure condition."
+          }
+        },
+        "strengths": [],
+        "nextPracticeTopics": [
+          "A later question could examine share revocation."
+        ]
+      },
+      "expectedAccepted": false
+    },
+    {
+      "id": "unassessed-is-not-uncertain",
+      "lang": "en",
+      "purpose": "P1 feedback: unassessed technical dimensions must be missing",
+      "input": {
+        "question": "Explain edge-triggered readiness.",
+        "turns": [
+          {
+            "role": "candidate",
+            "text": "I do not know. Could we start with one basic step?",
+            "aiAssisted": false
+          }
+        ]
+      },
+      "proposal": {
+        "summary": "No technical mechanism was demonstrated.",
+        "dimensions": [
+          {
+            "name": "principles",
+            "rating": "uncertain",
+            "evidence": "The candidate said I do not know; no technical reasoning was demonstrated.",
+            "improvement": "Trace an example where a pipe still contains unread bytes after a partial read, then ask whether another edge occurs."
+          },
+          {
+            "name": "selection_rationale",
+            "rating": "missing",
+            "evidence": "The candidate said I do not know; no technical reasoning was demonstrated.",
+            "improvement": "Trace an example where a pipe still contains unread bytes after a partial read, then ask whether another edge occurs."
+          },
+          {
+            "name": "tradeoffs",
+            "rating": "missing",
+            "evidence": "The candidate said I do not know; no technical reasoning was demonstrated.",
+            "improvement": "Trace an example where a pipe still contains unread bytes after a partial read, then ask whether another edge occurs."
+          },
+          {
+            "name": "failure_and_correctness",
+            "rating": "missing",
+            "evidence": "The candidate said I do not know; no technical reasoning was demonstrated.",
+            "improvement": "Trace an example where a pipe still contains unread bytes after a partial read, then ask whether another edge occurs."
+          },
+          {
+            "name": "communication",
+            "rating": "missing",
+            "evidence": "The candidate said I do not know; no technical reasoning was demonstrated.",
+            "improvement": "Trace an example where a pipe still contains unread bytes after a partial read, then ask whether another edge occurs."
+          }
+        ],
+        "gaps": [],
+        "strengths": [],
+        "nextPracticeTopics": [
+          "Trace partial reads and edge-triggered readiness."
+        ]
+      },
+      "expectedAccepted": false
+    }
+  ]
+}

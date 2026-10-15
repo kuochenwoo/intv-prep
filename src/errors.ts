@@ -3,6 +3,14 @@ import type { Lang } from "./i18n";
 // The Rust backend reports errors in Chinese. In English mode the UI translates
 // them here, so keep this table in sync when adding or rewording a backend error.
 const EXACT: [string, string][] = [
+  [
+    "AI 内容未通过质量检查，请重试；本地回答已保留",
+    "AI content failed quality review; please retry. Your local answer has been preserved",
+  ],
+  [
+    "新题缺少有效且不同的答案要点，请重试",
+    "The new question lacks valid, distinct answer terms; please retry",
+  ],
   // system_design.rs, system_design_store.rs
   ["未知系统设计场景", "Unknown system design scenario"],
   ["系统设计题目结构无效，请重试", "Invalid system design question; retry"],
@@ -138,6 +146,14 @@ const EXACT: [string, string][] = [
   [
     "生成题目字段为空、过长或缺少约束/检查点，请重试",
     "The generated question has empty or overlong fields, or lacks constraints/checkpoints; please retry",
+  ],
+  [
+    "生成题目的可见内容泄露了答案要点，请重试",
+    "The generated question gave away the answer in its visible text; please retry",
+  ],
+  [
+    "反馈总结不应自行统计阶段或维度数量，请重试",
+    "The feedback summary miscounted stages or dimensions; please retry",
   ],
   [
     "追问观察为空或超过6000字符，请重试",

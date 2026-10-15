@@ -12,6 +12,7 @@ fn question() -> GeneratedQuestion {
         constraints: vec!["多实例部署".into()],
         follow_up_directions: vec!["PRIVATE_DIRECTION".into()],
         evaluation_checklist: vec!["PRIVATE_CHECKLIST".into()],
+        answer_terms: vec![],
     }
 }
 fn feedback() -> Feedback {

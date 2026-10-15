@@ -9,3 +9,5 @@ pub mod llm;
 
 pub mod system_design;
 pub mod system_design_store;
+
+pub mod quality;

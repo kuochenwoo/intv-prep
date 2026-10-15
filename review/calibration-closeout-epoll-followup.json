@@ -1,0 +1,45 @@
+{
+  "after": {
+    "followUpQuestion": "A pipe has 100 bytes and read consumes 10; before new data arrives, is the descriptor still readable?",
+    "observation": "The candidate says they do not know how edge-triggered epoll works and asks for a basic starting step, so the gap is the prerequisite of how readability relates to unread bytes.",
+    "shouldEnd": false
+  },
+  "before": {
+    "followUpQuestion": "Does the reader read the remaining 90 bytes or does epoll_wait report a new edge when the earlier readiness was consumed?",
+    "observation": "The candidate does not know how edge-triggered epoll works and asks for a basic starting step, so the prerequisite needs narrowing.",
+    "shouldEnd": false
+  },
+  "input": {
+    "expected": [
+      "Narrow to one prerequisite grounded in the given pipe state",
+      "Do not demand a full event-loop implementation",
+      "Mark independent mechanism understanding unassessed, not invented technical mistakes"
+    ],
+    "feedbackOnly": false,
+    "id": "p1-unknown-epoll-en",
+    "lang": "en",
+    "question": {
+      "background": "A nonblocking Linux pipe uses EPOLLIN | EPOLLET. Its writer writes 100 bytes once and remains open. After readiness, the reader consumes ten bytes and waits again.",
+      "constraints": [
+        "No further writes, closes or other readers",
+        "No error events"
+      ],
+      "evaluationChecklist": [
+        "Distinguish readiness transitions from unread bytes and draining until EAGAIN"
+      ],
+      "followUpDirections": [
+        "One changed boundary only"
+      ],
+      "question": "Why might epoll_wait wait even though unread data remains?"
+    },
+    "seedId": "epoll-edge-trigger",
+    "turns": [
+      {
+        "aiAssisted": false,
+        "role": "candidate",
+        "text": "I do not know how edge-triggered epoll works. Please start with one basic step.",
+        "timestamp": ""
+      }
+    ]
+  }
+}

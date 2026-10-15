@@ -58,6 +58,100 @@ pub struct GeneratedQuestion {
     pub constraints: Vec<String>,
     pub follow_up_directions: Vec<String>,
     pub evaluation_checklist: Vec<String>,
+    /// Interviewer-only mechanism terms the candidate should supply. Questions
+    /// cached before this field existed have none.
+    #[serde(default)]
+    pub answer_terms: Vec<String>,
+}
+impl GeneratedQuestion {
+    /// Strict generation-only requirements; legacy cache reads use validate().
+    pub fn validate_fresh(&self) -> Result<(), String> {
+        self.validate()?;
+        if !self
+            .evaluation_checklist
+            .iter()
+            .any(|c| !marked_optional(c))
+        {
+            return Err("生成题目字段为空、过长或缺少约束/检查点，请重试".into());
+        }
+        let terms: std::collections::HashSet<_> = self
+            .answer_terms
+            .iter()
+            .map(|t| t.trim().to_lowercase())
+            .filter(|t| t.chars().count() >= 4 || (t.chars().count() >= 2 && !t.is_ascii()))
+            .collect();
+        if !(2..=4).contains(&self.answer_terms.len()) || terms.len() != self.answer_terms.len() {
+            return Err("新题缺少有效且不同的答案要点，请重试".into());
+        }
+        Ok(())
+    }
+    /// The first answer term that also appears in a visible field, if any.
+    pub fn leaked_term(&self) -> Option<&str> {
+        let visible = std::iter::once(&self.question)
+            .chain(std::iter::once(&self.background))
+            .chain(&self.constraints)
+            .map(|s| s.to_lowercase())
+            .collect::<Vec<_>>()
+            .join("\n");
+        self.answer_terms
+            .iter()
+            .map(|t| t.trim())
+            .filter(|t| {
+                // Very short terms (e.g. "B") match unrelated text.
+                let n = t.chars().count();
+                n >= 4 || (n >= 2 && !t.is_ascii())
+            })
+            .find(|t| visible.contains(&t.to_lowercase()))
+    }
+    /// Moves checkpoints the model itself marked optional into the follow-up
+    /// directions, so the opening is graded only on what it actually asks.
+    pub fn move_optional_checkpoints(&mut self) {
+        let (optional, required): (Vec<_>, Vec<_>) = self
+            .evaluation_checklist
+            .drain(..)
+            .partition(|c| marked_optional(c));
+        self.evaluation_checklist = required;
+        for item in optional {
+            if self.follow_up_directions.len() < 12 {
+                self.follow_up_directions.push(item);
+            }
+        }
+    }
+}
+/// Separate wire type prevents legacy defaults from weakening new generation.
+#[derive(Serialize)]
+#[serde(transparent)]
+pub struct FreshQuestion(pub GeneratedQuestion);
+impl<'de> Deserialize<'de> for FreshQuestion {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let mut q = GeneratedQuestion::deserialize(deserializer)?;
+        q.move_optional_checkpoints();
+        Ok(Self(q))
+    }
+}
+impl Validated for FreshQuestion {
+    fn validate(&self) -> Result<(), String> {
+        self.0.validate_fresh()
+    }
+}
+fn marked_optional(s: &str) -> bool {
+    let lower = s.to_lowercase();
+    [
+        "可选",
+        "选做",
+        "加分",
+        "非必需",
+        "非必须",
+        "不要求",
+        "不作要求",
+        "不是必需",
+        "optional",
+        "not required",
+        "bonus",
+        "extra credit",
+    ]
+    .iter()
+    .any(|m| lower.contains(m))
 }
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -79,7 +173,7 @@ pub struct ReferenceView {
     #[serde(flatten)]
     pub content: ReferenceAnswer,
 }
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Rating {
     Good,
@@ -128,7 +222,11 @@ impl Validated for GeneratedQuestion {
             && list(&self.constraints, 1)
             && list(&self.follow_up_directions, 1)
             && list(&self.evaluation_checklist, 1)
+            && list(&self.answer_terms, 0)
         {
+            if self.leaked_term().is_some() {
+                return Err("生成题目的可见内容泄露了答案要点，请重试".into());
+            }
             Ok(())
         } else {
             Err("生成题目字段为空、过长或缺少约束/检查点，请重试".into())
@@ -246,4 +344,72 @@ pub trait LlmProvider {
         turns: &[Turn],
     ) -> Result<ReferenceAnswer, String>;
     fn summarize(&self, question: &GeneratedQuestion, turns: &[Turn]) -> Result<Feedback, String>;
+}
+
+#[cfg(test)]
+mod calibration_tests {
+    use super::*;
+    fn question() -> GeneratedQuestion {
+        GeneratedQuestion {
+            question: "What does this code print, and why?".into(),
+            background: "A browser runs one script with a promise and a timer.".into(),
+            constraints: vec!["Chrome, no other tasks queued".into()],
+            follow_up_directions: vec!["Change one callback".into()],
+            evaluation_checklist: vec!["Explains why C prints before B".into()],
+            answer_terms: vec!["microtask checkpoint".into(), "Run-to-completion".into()],
+        }
+    }
+    #[test]
+    fn visible_answer_terms_are_rejected_case_insensitively() {
+        let q = question();
+        assert!(q.leaked_term().is_none() && q.validate().is_ok());
+        let mut leaked = question();
+        leaked.background = "After run-to-completion the engine does more work.".into();
+        assert_eq!(leaked.leaked_term(), Some("Run-to-completion"));
+        assert!(leaked.validate().unwrap_err().contains("泄露"));
+        let mut zh = question();
+        zh.answer_terms = vec!["语句级快照".into()];
+        zh.constraints = vec!["隔离级别为 READ COMMITTED，每条语句使用语句级快照".into()];
+        assert!(zh.validate().is_err());
+        // Single letters and short ASCII names appear in code and must not count.
+        let mut short = question();
+        short.answer_terms = vec!["B".into(), "C".into()];
+        assert!(short.validate().is_ok());
+    }
+    #[test]
+    fn fresh_generation_rejects_missing_empty_short_and_duplicate_terms_but_legacy_loads() {
+        let mut q = question();
+        q.answer_terms.clear();
+        assert!(q.validate().is_ok());
+        assert!(q.validate_fresh().is_err());
+        q.answer_terms = vec!["B".into(), "C".into()];
+        assert!(q.validate_fresh().is_err());
+        q.answer_terms = vec!["checkpoint".into(), "CHECKPOINT".into()];
+        assert!(q.validate_fresh().is_err());
+        let mut old = serde_json::to_value(question()).unwrap();
+        old.as_object_mut().unwrap().remove("answerTerms");
+        let legacy: GeneratedQuestion = serde_json::from_value(old.clone()).unwrap();
+        legacy.validate().unwrap();
+        let fresh: FreshQuestion = serde_json::from_value(old).unwrap();
+        assert!(fresh.validate().is_err());
+        question().validate_fresh().unwrap();
+    }
+    #[test]
+    fn optional_checkpoints_move_to_follow_up_directions() {
+        let mut q = question();
+        q.evaluation_checklist
+            .push("可选：比较 REPEATABLE READ（不要求）".into());
+        q.evaluation_checklist
+            .push("Optional: mention xmin/xmax".into());
+        q.move_optional_checkpoints();
+        assert_eq!(
+            q.evaluation_checklist,
+            vec!["Explains why C prints before B"]
+        );
+        assert_eq!(q.follow_up_directions.len(), 3);
+        let mut all_optional = question();
+        all_optional.evaluation_checklist = vec!["Bonus: discuss TTL".into()];
+        assert!(all_optional.validate().is_ok()); // Legacy caches keep their original content.
+        assert!(all_optional.validate_fresh().is_err());
+    }
 }

@@ -1,0 +1,847 @@
+[
+  {
+    "closeout": true,
+    "description": "Scripted quality-regression inputs, not evidence of a human candidate or pre-approved model outcomes. Expected items require human semantic review; transport/schema checks alone cannot pass them.",
+    "focused": false,
+    "logicalRequestsPlanned": 17,
+    "model": "claude-haiku-5-5",
+    "note": "Business operations include semantic review and at most one repair; transport/schema success is not human semantic acceptance. Content decoding has separate bounded retries.",
+    "provider": "claude",
+    "providerOperationsNormally": 31,
+    "resumedWithSeparateReviewTasks": true,
+    "semanticReviewEnabled": true
+  },
+  {
+    "input": {
+      "lang": "en",
+      "seedId": "javascript-event-loop"
+    },
+    "kind": "generation",
+    "output": {
+      "answerTerms": [
+        "run-to-completion of the current script",
+        "microtask checkpoint after the script finishes",
+        "task queue ordering for timer callbacks",
+        "timer delay is a minimum, not an exact time"
+      ],
+      "background": "A browser page runs one classic script with four statements: console.log(\"A\"); setTimeout(() => console.log(\"B\"), 0); Promise.resolve().then(() => console.log(\"C\")); console.log(\"D\"). The script is the only work on the page, and no statement throws. You are asked about the order in which the four log lines appear in the console.",
+      "constraints": [
+        "Treat the script as a single browser task with no other pending tasks, rendering work, or exceptions.",
+        "Compare only the relative order of the four log lines; do not reason about actual millisecond values.",
+        "The timer is registered with a delay argument of 0 and its callback logs B; the promise callback logs C."
+      ],
+      "evaluationChecklist": [
+        "States that A and D are printed synchronously during the current script run, before any queued callback can start.",
+        "Explains that the promise callback is queued as a microtask and runs after the script finishes but before the next task, so C prints before B.",
+        "Explains that the timer callback is placed in the task queue and runs in a later task, so B prints after C, and gives the resulting order A, D, C, B.",
+        "Identifies that the zero delay does not guarantee B runs before the promise callback, because timers only set a minimum delay and must still wait for the current task and microtasks to finish."
+      ],
+      "followUpDirections": [
+        "Ask the candidate to explain what exactly happens at the boundary between the end of the script and the start of the timer callback, naming which queue or step is drained first.",
+        "Propose a counterexample: a second promise callback that itself calls Promise.resolve().then(...) and logs E. Ask where E appears relative to B and why.",
+        "Ask the candidate to describe a local change that would make B run before C, such as moving the timer out of the same task context, and what that change costs in terms of ordering guarantees."
+      ],
+      "question": "For this script, in what order do A, B, C, and D print, and what rule determines where B appears relative to C?"
+    },
+    "review": "Check visible fields for answer leakage and private checkpoints for unasked scope."
+  },
+  {
+    "input": {
+      "lang": "zh",
+      "seedId": "mvcc-snapshots"
+    },
+    "kind": "generation",
+    "output": {
+      "answerTerms": [
+        "语句级快照",
+        "已提交版本可见",
+        "语句开始时确定可见范围"
+      ],
+      "background": "某账户余额初始为 100。会话 T1 执行 BEGIN 后运行第一条 SELECT 读取余额，得到 100。随后会话 T2 执行 UPDATE 将余额改为 80 并 COMMIT。T1 没有结束事务，在同一个事务中再次执行同样的 SELECT。",
+      "constraints": [
+        "数据库为 PostgreSQL 18，T1 的事务隔离级别为 READ COMMITTED",
+        "T2 的 COMMIT 发生在 T1 第一条 SELECT 之后、第二条 SELECT 之前",
+        "除 T2 的这一次更新外，没有其他写入"
+      ],
+      "evaluationChecklist": [
+        "给出第二次 SELECT 的返回值为 80，并指出第一次返回的 100 与之不同",
+        "说明 READ COMMITTED 下每条语句开始执行时确定自己能看到的数据范围，因此第二条语句能看到 T2 已提交的新值",
+        "说明第一条语句确定的可见范围不会被同一事务中的后续语句沿用，因此不会继续返回 100"
+      ],
+      "followUpDirections": [
+        "把隔离级别改为 REPEATABLE READ，让候选人说明第二次 SELECT 的返回值会如何变化，以及原因在于事务内首次读取时确定的可见范围",
+        "把时序改为 T2 在 T1 第二条 SELECT 执行时仍未 COMMIT，让候选人判断返回值，并说明未提交的更新对 T1 是否可见",
+        "让候选人比较同一事务内两条普通 SELECT 与在第二条语句使用 SELECT ... FOR UPDATE 时，读取结果和锁行为的差异"
+      ],
+      "question": "在上述操作顺序下，T1 第二次执行 SELECT 返回什么值？请说明原因。"
+    },
+    "review": "Check visible fields for answer leakage and private checkpoints for unasked scope."
+  },
+  {
+    "feedback": {
+      "dimensions": [
+        {
+          "evidence": "The candidate stated the causal mechanism: the script's synchronous logs run first, promise reactions are queued as microtasks and drain before the timer task executes. This matches the core mechanism of the question.",
+          "improvement": "Write a short explanation of why microtasks and tasks are separate queues and when the browser checks each one, then test it with a variant that adds a second promise chain and a second timer.",
+          "name": "principles",
+          "rating": "good"
+        },
+        {
+          "evidence": "Not assessed. The question did not ask why one would choose a promise callback over a timer, and the candidate gave no reasoning about choosing between these mechanisms.",
+          "improvement": "Practice a short comparison: when you would schedule work with a promise reaction versus setTimeout, and what the choice implies for responsiveness and ordering guarantees.",
+          "name": "selection_rationale",
+          "rating": "missing"
+        },
+        {
+          "evidence": "Not assessed. The question did not ask about the costs of microtasks or timers, and no trade-off was discussed in the answer.",
+          "improvement": "Consider the local costs of running work as microtasks, such as delaying rendering and input handling when a microtask chain is long, and compare that with deferring work to a timer task.",
+          "name": "tradeoffs",
+          "rating": "missing"
+        },
+        {
+          "evidence": "The candidate correctly ordered the four logs and identified the boundary that matters here: the timer task cannot run until the script finishes and the microtask queue drains. This was the ordering the question examined. Edge cases such as nested microtasks or long-running microtask chains were not examined.",
+          "improvement": "Trace a few variants by hand, such as a promise callback that schedules another promise callback, or a setTimeout scheduled inside a then callback, and predict the order before checking it in a console.",
+          "name": "failure_and_correctness",
+          "rating": "good"
+        },
+        {
+          "evidence": "The single answer was brief and organized: it gave the full order A, D, C, B, then a short causal explanation (synchronous logs first, then pending promise reactions as microtasks, then the timer task). The explanation was easy to follow.",
+          "improvement": "Practice explaining an event-loop ordering in two or three sentences that name each queue (synchronous stack, microtask queue, task queue) and state which one runs when, so the reasoning is explicit even when the answer is short.",
+          "name": "communication",
+          "rating": "good"
+        }
+      ],
+      "gaps": [],
+      "nextPracticeTopics": [
+        "Trade-offs of microtasks versus timer tasks, such as rendering delays from long microtask chains and the responsiveness impact of deferring work to a timer",
+        "Selection rationale: when a promise callback is the right local choice compared with setTimeout, and what ordering guarantee each provides",
+        "Variant ordering questions: nested promise callbacks, timers scheduled inside promise callbacks, and multiple queued microtasks"
+      ],
+      "strengths": [
+        "Gave the correct full ordering of the four logs",
+        "Identified the key mechanism: promise reactions as microtasks run after the synchronous script and before the timer task",
+        "Explained the answer concisely and clearly"
+      ],
+      "summary": "The candidate answered independently with no AI assistance and showed a correct understanding of event-loop ordering for a single browser script: they predicted the full sequence and explained that microtasks drain before the timer task runs. Evidence covers the mechanism and the ordering. Local selection rationale and trade-off reasoning were not assessed in this session, so no judgement is made about those abilities."
+    },
+    "followUp": {
+      "followUpQuestion": "Good, the synchronous logs A and D come first, and the promise reaction runs as a microtask before the timer task. Suppose the promise callback is changed to log C and then queue another microtask that logs E; what is the relative order of E and B?",
+      "observation": "The candidate correctly traced the synchronous logs A and D, then the microtask C before the timer task B, and explained the microtask checkpoint as the reason.",
+      "shouldEnd": false
+    },
+    "input": {
+      "expected": [
+        "Recognize the correct causal explanation without demanding the term microtask checkpoint",
+        "Ask one related boundary rather than repeating the original trace",
+        "Do not list unasked queue-selection rationale or timer variants as demonstrated gaps"
+      ],
+      "feedbackOnly": false,
+      "id": "p1-correct-event-en",
+      "lang": "en",
+      "question": {
+        "background": "A browser script executes console.log(\"A\"); setTimeout(() => console.log(\"B\"), 0); Promise.resolve().then(() => console.log(\"C\")); console.log(\"D\");",
+        "constraints": [
+          "One browser script, no other tasks or exceptions",
+          "Compare only relative order, not actual delay or Node.js behavior"
+        ],
+        "evaluationChecklist": [
+          "Trace synchronous execution and the microtask checkpoint before a timer task"
+        ],
+        "followUpDirections": [
+          "One changed boundary only"
+        ],
+        "question": "What is the order of the four logs, and why?"
+      },
+      "seedId": "javascript-event-loop",
+      "turns": [
+        {
+          "aiAssisted": false,
+          "role": "candidate",
+          "text": "A, D, C, B. The script logs A and D synchronously; after it finishes, pending promise reactions drain as microtasks before the timer task can run.",
+          "timestamp": ""
+        }
+      ]
+    },
+    "kind": "p1"
+  },
+  {
+    "feedback": {
+      "dimensions": [
+        {
+          "evidence": "候选人正确判断第二次读取结果为 80，并给出“只读已提交的数据”这一理由。该理由方向正确，但没有说明 READ COMMITTED 下每条语句以语句开始时的快照判断可见性，也没有解释 T1 的第一次读取为何不影响第二次读取。因此只能证明结论正确和有限的理由，不能证明已掌握语句级快照的机制。",
+          "improvement": "用自己的话解释 READ COMMITTED 下每条语句的快照何时确定，以及它与 REPEATABLE READ 整个事务共用一个快照的区别。",
+          "name": "principles",
+          "rating": "partial"
+        },
+        {
+          "evidence": "本题问的是读取结果及原因，没有要求候选人在多种做法之间做局部选择，因此本维度未考察。",
+          "improvement": "下一题可以让候选人在“重新读取”与“加 FOR UPDATE 或使用 REPEATABLE READ”之间选择，并说明选择理由。",
+          "name": "selection_rationale",
+          "rating": "missing"
+        },
+        {
+          "evidence": "本题未涉及局部代价的比较，例如 REPEATABLE READ 带来的一致性与并发冲突代价，因此本维度未考察，并非能力不足。",
+          "improvement": "练习比较 READ COMMITTED 与 REPEATABLE READ 在读一致性、写冲突和重试成本上的差异。",
+          "name": "tradeoffs",
+          "rating": "missing"
+        },
+        {
+          "evidence": "候选人给出的结果 80 与 READ COMMITTED 下语句级快照的行为一致。但回答没有涉及首次读取与第二次读取之间的时序边界，例如为什么 T1 第一次读到的 100 不会被保留，也没有说明 T2 提交时点与第二次语句开始时点的关系。",
+          "improvement": "画一个时间线，标出 T1 首次 SELECT、T2 UPDATE 与 COMMIT、T1 第二次 SELECT 的先后顺序，并说明每条语句各自看到哪个版本。",
+          "name": "failure_and_correctness",
+          "rating": "partial"
+        },
+        {
+          "evidence": "候选人回答简短，只说“会读到80，因为只读已提交的数据”，结论清楚，但没有展开解释“已提交”如何在第二次 SELECT 时生效。",
+          "improvement": "用两三句话把因果链写完整：先说明结果，再说明第二次 SELECT 开始时 T2 已提交，最后说明该语句看到的快照时间点。",
+          "name": "communication",
+          "rating": "partial"
+        }
+      ],
+      "gaps": [
+        "题目明确要求解释“为什么”，但候选人的理由只停留在“只读已提交的数据”，没有说明语句级快照如何决定可见性。"
+      ],
+      "nextPracticeTopics": [
+        "READ COMMITTED 下语句级快照的确定时点",
+        "同一事务内 READ COMMITTED 与 REPEATABLE READ 的快照差异",
+        "并发读写时间线的推演，包括首次读取与第二次读取的先后关系",
+        "SELECT ... FOR UPDATE 与普通 SELECT 在读取可见性上的区别"
+      ],
+      "strengths": [
+        "对第二次读取的结果判断正确，能识别 T2 已提交会影响后续普通读取。"
+      ],
+      "summary": "本次只有一道独立回答，没有 AI 辅助。候选人对“T1 第二次普通 SELECT 读到 80”这一结果判断正确，并能指出“只读已提交的数据”这一方向。证据仅限于这一简短回答，尚不足以说明候选人已掌握语句级快照的具体机制；选择理由与代价维度本题未考察。"
+    },
+    "followUp": {
+      "followUpQuestion": "T1 两次 SELECT 之间没有 BEGIN 以外的事务控制语句，那么第二次 SELECT 使用的快照，是和第一次共用同一个，还是在该语句开始执行时重新获取？",
+      "observation": "候选人给出了正确结果 80，并说明读取的是已提交数据，但还没有说明 READ COMMITTED 下每条语句使用新快照这一原因。",
+      "shouldEnd": false
+    },
+    "input": {
+      "expected": [
+        "Acknowledge the correct result",
+        "Probe when a SELECT snapshot is established",
+        "Do not require Repeatable Read comparison or a full database design"
+      ],
+      "feedbackOnly": false,
+      "id": "p1-partial-mvcc-zh",
+      "lang": "zh",
+      "question": {
+        "background": "PostgreSQL 18 READ COMMITTED：余额初值100，T1首次读取100；T2更新为80并提交，之后T1在同一事务中再次读取。",
+        "constraints": [
+          "无其他写入",
+          "两次都是普通 SELECT，不加行锁"
+        ],
+        "evaluationChecklist": [
+          "说明每条语句的新快照使第二次读取可见已提交80"
+        ],
+        "followUpDirections": [
+          "One changed boundary only"
+        ],
+        "question": "T1 的第二次普通 SELECT 会读到哪个余额，为什么？"
+      },
+      "seedId": "mvcc-snapshots",
+      "turns": [
+        {
+          "aiAssisted": false,
+          "role": "candidate",
+          "text": "会读到80，因为只读已提交的数据。",
+          "timestamp": ""
+        }
+      ]
+    },
+    "kind": "p1"
+  },
+  {
+    "feedback": {
+      "dimensions": [
+        {
+          "evidence": "候选人将volatile理解为使count++具有原子性。volatile保证的是变量读写的可见性和一定的有序性，并不能把读-改-写这一复合操作变为原子操作，因此该因果解释有误。",
+          "improvement": "对照JMM的volatile语义，区分可见性与原子性；再用count++的字节码或读-改-写三步拆解，说明为什么需要synchronized或AtomicInteger之类的机制。",
+          "name": "principles",
+          "rating": "incorrect"
+        },
+        {
+          "evidence": "本题未要求候选人选择或比较同步方案，候选人也未给出替代方案的选择理由，故此维度未考察，并非能力不足。",
+          "improvement": "后续可在独立题目中练习：针对同一计数场景，说明为什么选择某种同步方式以及它适用的前提。",
+          "name": "selection_rationale",
+          "rating": "missing"
+        },
+        {
+          "evidence": "本题未涉及代价比较，候选人也未讨论锁、原子类等方案的取舍，故此维度未考察，并非能力不足。",
+          "improvement": "后续可在独立题目中练习：比较synchronized、ReentrantLock与AtomicInteger在计数场景下的性能与语义代价。",
+          "name": "tradeoffs",
+          "rating": "missing"
+        },
+        {
+          "evidence": "候选人断言两个线程各自的count++不会丢失更新，因此最终值一定为2。这一判断在本题的并发边界上不成立：两个线程可能同时读到相同旧值，各自写回后导致一次自增丢失，最终值可能为1。",
+          "improvement": "针对两线程交错执行count++的情况，手写读、加一、写三步在两线程间的交错时序表，逐步检查每种交错下的最终结果，再判断结论是否一定成立。",
+          "name": "failure_and_correctness",
+          "rating": "incorrect"
+        },
+        {
+          "evidence": "候选人用一句话直接给出结论“一定是2”并附上理由“volatile保证每次count++都是原子操作”，表达简洁、结论与理由对应清楚。",
+          "improvement": "在给出结论前，可先区分可见性、原子性与复合操作（读-改-写）三个概念，再逐条说明理由，让推理链更完整。",
+          "name": "communication",
+          "rating": "good"
+        }
+      ],
+      "gaps": [
+        "候选人断言volatile使count++原子，因此两线程结果一定为2；这一断言错误，volatile不保证复合操作的原子性，最终值可能小于2。"
+      ],
+      "nextPracticeTopics": [
+        "volatile的可见性与有序性语义，以及它与原子性的区别",
+        "count++作为读-改-写复合操作在两线程交错下的时序分析",
+        "join的happens-before语义：它保证结果可见，但不修复竞态写入",
+        "synchronized与AtomicInteger如何分别保证count++的正确性"
+      ],
+      "strengths": [
+        "候选人给出了明确结论，并用一句话说明了推理依据，表达直接。"
+      ],
+      "summary": "候选人能够明确给出结论并附上理由，表达清晰。但其核心断言“volatile使count++原子，结果一定为2”不成立，因此在本题的因果机制与并发边界上存在明确错误。本次证据仅来自这一道独立回答，未使用AI辅助（辅助次数为0，独立回答数为1）。选择理由与代价取舍未被本题考察，因此标为missing。"
+    },
+    "followUp": {
+      "followUpQuestion": "把两个线程各自的 count++ 拆成“读取、加1、写回”三步。如果两个线程都先读到 0，然后各自写回 1，主线程 join 后读到的 count 是多少？",
+      "observation": "候选人认为 volatile 让 count++ 原子化，因此结果一定为 2，这个判断有误，需要确认其是否理解 volatile 只保证可见性和有序性，不保证复合操作的原子性。",
+      "shouldEnd": false
+    },
+    "input": {
+      "expected": [
+        "Identify the specific false claim that volatile makes increment atomic",
+        "Use one interleaving counterexample as a follow-up, without dumping the full solution",
+        "Feedback distinguishes the actual error from optional locking alternatives"
+      ],
+      "feedbackOnly": false,
+      "id": "p1-incorrect-volatile-zh",
+      "lang": "zh",
+      "question": {
+        "background": "Java 21：volatile int count = 0；两个线程各执行一次 count++，主线程启动并 join 两者后读取。",
+        "constraints": [
+          "无其他写入",
+          "不使用锁或原子计数类"
+        ],
+        "evaluationChecklist": [
+          "volatile读写的可见性不使复合自增原子化"
+        ],
+        "followUpDirections": [
+          "One changed boundary only"
+        ],
+        "question": "主线程最终读取的 count 是否一定为2，为什么？"
+      },
+      "seedId": "volatile-counter",
+      "turns": [
+        {
+          "aiAssisted": false,
+          "role": "candidate",
+          "text": "一定是2，volatile保证每次count++都是原子操作，不会丢失更新。",
+          "timestamp": ""
+        }
+      ]
+    },
+    "kind": "p1"
+  },
+  {
+    "feedback": {
+      "dimensions": [
+        {
+          "evidence": "No causal mechanism was explained. The candidate said they did not know how edge-triggered epoll works and asked for a starting step, so the core mechanism (readiness notifications fire on state transitions, not on the presence of unread data) was not demonstrated and is not evidence of weakness.",
+          "improvement": "Study the difference between level-triggered and edge-triggered epoll. Write two sentences: one stating when a level-triggered epoll_wait returns for unread data, and one stating what counts as a new edge in EPOLLET mode. Then explain why a partial read can leave data unnoticed.",
+          "name": "principles",
+          "rating": "missing"
+        },
+        {
+          "evidence": "Not assessed. The candidate did not compare approaches or give reasons for choosing a local approach, such as draining until EAGAIN versus reading once per notification.",
+          "improvement": "Compare two reader strategies for an edge-triggered fd: read once per notification versus read in a loop until EAGAIN. For each, write one reason you would pick it and one situation where it fails.",
+          "name": "selection_rationale",
+          "rating": "missing"
+        },
+        {
+          "evidence": "Not assessed. The candidate gave no local costs or benefits of edge-triggered versus level-triggered notification, and no trade-off reasoning appeared in the answer.",
+          "improvement": "Write a short comparison of edge-triggered and level-triggered epoll. List one cost of each, such as extra notifications versus the risk of missed wakeups, and give one concrete example where each cost matters.",
+          "name": "tradeoffs",
+          "rating": "missing"
+        },
+        {
+          "evidence": "Not assessed. The candidate gave no ordering or boundary reasoning about the pipe, the 100 bytes, the ten-byte read, or epoll_wait. The only reply was an explicit 'I do not know', which provides insufficient evidence rather than a demonstrated error.",
+          "improvement": "Trace the event sequence by hand: the writer writes 100 bytes, epoll reports readiness once, the reader reads 10 bytes, and then list which state changes would or would not generate a new notification. Write the sequence as numbered steps before answering.",
+          "name": "failure_and_correctness",
+          "rating": "missing"
+        },
+        {
+          "evidence": "The candidate clearly stated that they did not know how edge-triggered epoll works and asked for one basic step to start from. The reply is clear and direct, but it contains no technical explanation to rate beyond that.",
+          "improvement": "Practice answering a scenario in two parts: first state what you know or don't know in one sentence, then give your best partial reasoning, even if it is a guess labeled as such. For example, explain what EPOLLET means in one sentence and mark which part you are unsure about.",
+          "name": "communication",
+          "rating": "good"
+        }
+      ],
+      "gaps": [],
+      "nextPracticeTopics": [
+        "Edge-triggered versus level-triggered epoll: when epoll_wait reports readiness for unread data",
+        "Why a partial read on an EPOLLET fd can leave data without a new notification, and why readers drain until EAGAIN",
+        "Event ordering in the pipe scenario: writer writes 100 bytes, reader consumes 10 bytes, and which state changes generate a new edge",
+        "Choosing between read-once and read-until-EAGAIN loops for nonblocking fds, and their costs",
+        "Nonblocking I/O error handling: EAGAIN versus EOF versus errors on a pipe"
+      ],
+      "strengths": [
+        "The candidate openly stated uncertainty instead of guessing, which makes the limits of the evidence clear.",
+        "The candidate asked for a scaffolded starting step, showing awareness of what they still need to learn."
+      ],
+      "summary": "The candidate showed honesty and clarity by stating they did not know how edge-triggered epoll works and asking for a basic starting step. No independent technical reasoning was given, so no mechanism, rationale, trade-off, or ordering ability has been demonstrated, and those abilities were not assessed in depth. No AI assistance was recorded; the evidence comes from one independent reply only, and the scenario question itself went unanswered."
+    },
+    "followUp": {
+      "followUpQuestion": "Does the reader's epoll_wait return again only when new data arrives, or does it also return while old unread bytes remain? Answer in one word and say why.",
+      "observation": "The candidate says they do not know how edge-triggered epoll works and asks for a basic starting step, so the explanation is not yet present.",
+      "shouldEnd": false
+    },
+    "input": {
+      "expected": [
+        "Narrow to one prerequisite grounded in the given pipe state",
+        "Do not demand a full event-loop implementation",
+        "Mark independent mechanism understanding unassessed, not invented technical mistakes"
+      ],
+      "feedbackOnly": false,
+      "id": "p1-unknown-epoll-en",
+      "lang": "en",
+      "question": {
+        "background": "A nonblocking Linux pipe uses EPOLLIN | EPOLLET. Its writer writes 100 bytes once and remains open. After readiness, the reader consumes ten bytes and waits again.",
+        "constraints": [
+          "No further writes, closes or other readers",
+          "No error events"
+        ],
+        "evaluationChecklist": [
+          "Distinguish readiness transitions from unread bytes and draining until EAGAIN"
+        ],
+        "followUpDirections": [
+          "One changed boundary only"
+        ],
+        "question": "Why might epoll_wait wait even though unread data remains?"
+      },
+      "seedId": "epoll-edge-trigger",
+      "turns": [
+        {
+          "aiAssisted": false,
+          "role": "candidate",
+          "text": "I do not know how edge-triggered epoll works. Please start with one basic step.",
+          "timestamp": ""
+        }
+      ]
+    },
+    "kind": "p1"
+  },
+  {
+    "feedback": {
+      "dimensions": [
+        {
+          "evidence": "Not independently assessed: no independent candidate answer provides evidence for this dimension. AI-assisted text is excluded from ability evidence.",
+          "improvement": "Independently explain the current question's mechanism or reasoning without the reference answer, then practise this dimension.",
+          "name": "principles",
+          "rating": "missing"
+        },
+        {
+          "evidence": "Not independently assessed: no independent candidate answer provides evidence for this dimension. AI-assisted text is excluded from ability evidence.",
+          "improvement": "Independently explain the current question's mechanism or reasoning without the reference answer, then practise this dimension.",
+          "name": "selection_rationale",
+          "rating": "missing"
+        },
+        {
+          "evidence": "Not independently assessed: no independent candidate answer provides evidence for this dimension. AI-assisted text is excluded from ability evidence.",
+          "improvement": "Independently explain the current question's mechanism or reasoning without the reference answer, then practise this dimension.",
+          "name": "tradeoffs",
+          "rating": "missing"
+        },
+        {
+          "evidence": "Not independently assessed: no independent candidate answer provides evidence for this dimension. AI-assisted text is excluded from ability evidence.",
+          "improvement": "Independently explain the current question's mechanism or reasoning without the reference answer, then practise this dimension.",
+          "name": "failure_and_correctness",
+          "rating": "missing"
+        },
+        {
+          "evidence": "Not independently assessed: no independent candidate answer provides evidence for this dimension. AI-assisted text is excluded from ability evidence.",
+          "improvement": "Independently explain the current question's mechanism or reasoning without the reference answer, then practise this dimension.",
+          "name": "communication",
+          "rating": "missing"
+        }
+      ],
+      "gaps": [],
+      "nextPracticeTopics": [
+        "Event loop ordering: predict and trace the four-log snippet, then explain why synchronous code, microtasks and timer tasks run in that order",
+        "Microtask versus macrotask queues: how promise callbacks, queueMicrotask and setTimeout differ in scheduling and when each runs relative to rendering",
+        "Chained promises and nested timers: predict the order of logs when a promise callback schedules another promise and another timer",
+        "Trade-offs of microtask scheduling, including how long chains of microtasks can delay rendering and input handling"
+      ],
+      "strengths": [],
+      "summary": "No independent answer was submitted; the submitted content consists only of AI-assisted answers. All dimensions are unassessed and do not establish your understanding."
+    },
+    "followUp": null,
+    "input": {
+      "expected": [
+        "Application enforces all five ratings as missing",
+        "No independent strengths or demonstrated technical gaps",
+        "Summary explicitly discloses AI assistance"
+      ],
+      "feedbackOnly": true,
+      "id": "p1-assisted-only-event-en",
+      "lang": "en",
+      "question": {
+        "background": "A browser script executes console.log(\"A\"); setTimeout(() => console.log(\"B\"), 0); Promise.resolve().then(() => console.log(\"C\")); console.log(\"D\");",
+        "constraints": [
+          "One browser script, no other tasks or exceptions",
+          "Compare only relative order, not actual delay or Node.js behavior"
+        ],
+        "evaluationChecklist": [
+          "Trace synchronous execution and the microtask checkpoint before a timer task"
+        ],
+        "followUpDirections": [
+          "One changed boundary only"
+        ],
+        "question": "What is the order of the four logs, and why?"
+      },
+      "seedId": "javascript-event-loop",
+      "turns": [
+        {
+          "aiAssisted": true,
+          "role": "candidate",
+          "text": "A, D, C, B. Synchronous script first, then the promise microtask, then the timer task.",
+          "timestamp": ""
+        }
+      ]
+    },
+    "kind": "p1"
+  },
+  {
+    "feedback": {
+      "dimensions": [
+        {
+          "evidence": "独立回答中没有给出关于 READ COMMITTED 下 SELECT 快照与提交可见性的机制解释。第一题的解释来自AI代答，不能作为候选人独立能力的证据，本维度未独立体现。",
+          "improvement": "用 PostgreSQL 的语句级快照概念独立复述：每条普通 SELECT 在开始执行时取得快照，只能看到此前已提交的数据，并用两种提交时点各自推演一次。",
+          "name": "principles",
+          "rating": "missing"
+        },
+        {
+          "evidence": "本次问题未涉及具体做法的选择理由，独立回答中也没有对任何做法的理由作出说明，本维度未考察。",
+          "improvement": "可以在后续练习中比较行锁（如 SELECT ... FOR UPDATE）与普通 SELECT 在这一场景下的适用理由，并说明为什么普通 SELECT 不会阻塞写入。",
+          "name": "selection_rationale",
+          "rating": "missing"
+        },
+        {
+          "evidence": "本次问题未涉及局部代价或取舍的讨论，独立回答中也没有相关内容，本维度未考察。",
+          "improvement": "练习时可以比较 READ COMMITTED 与 REPEATABLE READ 在两次读取一致性上的代价与收益，说明各自的使用边界。",
+          "name": "tradeoffs",
+          "rating": "missing"
+        },
+        {
+          "evidence": "独立回答中没有涉及提交时点与快照建立先后关系的判断，也没有给出可见性边界的任何说明。第一题的解释来自AI代答，不计为候选人独立证据。",
+          "improvement": "用时间线练习：列出 T1 第二次 SELECT 的快照建立、T2 提交两个时点，分别判断两种先后顺序下读到的版本，并说明依据。",
+          "name": "failure_and_correctness",
+          "rating": "missing"
+        },
+        {
+          "evidence": "候选人明确说明“我还不知道，不能独立解释这个时点”，边界表达清楚，但没有给出任何可以评价推理结构的内容。",
+          "improvement": "遇到不确定的问题时，可以先说明已确定的前提（例如快照在哪个时点建立），再说明卡在哪一步，用这种结构练习表达。",
+          "name": "communication",
+          "rating": "partial"
+        }
+      ],
+      "gaps": [],
+      "nextPracticeTopics": [
+        "PostgreSQL READ COMMITTED 下语句级快照的建立时点与可见性规则",
+        "提交时点早于或晚于 SELECT 快照建立时，同一事务两次读取结果的推演",
+        "普通 SELECT 与 SELECT ... FOR UPDATE 在读取可见版本上的区别",
+        "REPEATABLE READ 下事务级快照与 READ COMMITTED 的对比"
+      ],
+      "strengths": [
+        "能够坦诚说明自己无法独立解释该时点，没有编造结论"
+      ],
+      "summary": "本次使用过 AI 辅助；以下评价仅依据独立回答，不将代答计为独立能力证据。\n本次面试存在1次AI辅助（第一题的参考代答），独立回答仅1次。独立证据只有对提交时点追问的“不知道”，它只说明候选人目前缺乏独立判断的证据，不能据此推断其已掌握或未掌握 READ COMMITTED 的语句级快照机制。因此本次不能对因果机制、局部取舍、时序边界等能力作出判断，相关维度均标为 missing，建议在不看参考答案的情况下独立复述该场景的时间线推演。"
+    },
+    "followUp": null,
+    "input": {
+      "expected": [
+        "Exclude the AI answer from grading context",
+        "Disclose assistance and assess only the unsure independent answer",
+        "Do not credit the AI explanation as an independent strength"
+      ],
+      "feedbackOnly": true,
+      "id": "p1-mixed-mvcc-zh",
+      "lang": "zh",
+      "question": {
+        "background": "PostgreSQL 18 READ COMMITTED：余额初值100，T1首次读取100；T2更新为80并提交，之后T1在同一事务中再次读取。",
+        "constraints": [
+          "无其他写入",
+          "两次都是普通 SELECT，不加行锁"
+        ],
+        "evaluationChecklist": [
+          "说明每条语句的新快照使第二次读取可见已提交80"
+        ],
+        "followUpDirections": [
+          "One changed boundary only"
+        ],
+        "question": "T1 的第二次普通 SELECT 会读到哪个余额，为什么？"
+      },
+      "seedId": "mvcc-snapshots",
+      "turns": [
+        {
+          "aiAssisted": true,
+          "role": "candidate",
+          "text": "第二次读80；READ COMMITTED每语句建立新快照，能看到在它开始前已提交的版本。",
+          "timestamp": ""
+        },
+        {
+          "aiAssisted": false,
+          "role": "interviewer",
+          "text": "现在只改变提交时点：T2在第二次SELECT快照建立后才提交，这次会看到哪个版本？",
+          "timestamp": ""
+        },
+        {
+          "aiAssisted": false,
+          "role": "candidate",
+          "text": "我还不知道，不能独立解释这个时点。",
+          "timestamp": ""
+        }
+      ]
+    },
+    "kind": "p1"
+  },
+  {
+    "feedback": {
+      "assessment": {
+        "architecture": {
+          "evidence": "在发布与确认顺序的问题中，候选人说明所有块先在对象存储达到持久化条件，再由元数据事务发布manifest和变更日志，成功后才确认。mermaid图包含Client到Objects、Client到API、API到Metadata三条连线，但没有体现发布提交、变更日志或对象存储与元数据之间的确认关系。",
+          "improvement": "把上传路径的数据流画全，标出块上传、元数据事务提交、变更日志和确认返回各自的位置，并说明失败时各步骤的重试与清理方式。",
+          "rating": "partial"
+        },
+        "availability": {
+          "evidence": "在替代架构的问题中，候选人给出故障取舍：单区域跨AZ满足已定义故障域；跨区异步方案声明非零RPO；若区域级RPO为零则采用同步确认，代价是写延迟上升和分区时拒写。",
+          "improvement": "题设中的区域灾难RPO仍待澄清，先确定目标值，再据此选择异步或同步方案，并补充RTO和切换过程。",
+          "rating": "good"
+        },
+        "communication": {
+          "evidence": "候选人明确标注示例假设、单位和十进制换算，并说明未测压缩率因此按未压缩估算；取舍部分也说明切换阈值需实测，不凭空给机器吞吐。",
+          "improvement": "回答结构已清楚，后续可以在每段开头先给结论，再展开公式或取舍依据，便于面试官快速跟进。",
+          "rating": "good"
+        },
+        "correctness": {
+          "evidence": "候选人描述块先持久、元数据事务提交后确认的顺序，并说明版本条件更新会拒绝静默覆盖、另存冲突副本。该顺序与题设及其自身的持久化假设一致，没有出现矛盾。",
+          "improvement": "可进一步说明提交失败后的孤儿块清理，以及并发提交时冲突副本如何被用户感知。",
+          "rating": "good"
+        },
+        "estimation": {
+          "evidence": "候选人给出示例假设：100万日活，每人每天5次变更，每次2 MB。计算结果为每天500万次变更，平均约57.9次/秒，原始数据10 TB/天，30天300 TB，三副本900 TB。算式和单位均正确，并且明确声明这是示例假设，不代表题设容量。",
+          "improvement": "按题设500万日活、每人每天10次、平均5 MB重新代入，并补充峰值系数下的写入QPS及元数据QPS，以便与题设规模对照。",
+          "rating": "good"
+        },
+        "requirements": {
+          "evidence": "未考察。会话中没有需求澄清类问题，候选人未对范围、区域灾难RPO、保留期或并发假设做澄清。",
+          "improvement": "后续练习中先澄清题设中的功能范围、区域RPO目标和保留策略，再进行估算。",
+          "rating": "missing"
+        },
+        "scalability": {
+          "evidence": "候选人在取舍中提到关系库事务加对象存储按租户分片，大租户存在热点问题；分片KV加独立版本协调可扩展写吞吐。但没有给出分片数量、热点租户的写入量或扩展阈值的计算。",
+          "improvement": "用题设规模估算每个分片的写入量和热点租户的峰值，并说明分片键、迁移方式以及何时需要切换架构。",
+          "rating": "partial"
+        },
+        "tradeoffs": {
+          "evidence": "候选人比较了两种替代方案：关系库事务加对象存储的权限事务简单但存在大租户热点，分片KV加独立版本协调扩展性更好但跨对象权限事务与日志提交更复杂。并说明切换阈值需实测。",
+          "improvement": "进一步量化两种方案的临界条件，例如热点租户的写入比例达到多少时需要切换，并说明实测需要采集哪些指标。",
+          "rating": "good"
+        }
+      },
+      "gaps": [],
+      "nextPracticeTopics": [
+        "需求澄清：区域灾难RPO与RTO目标、保留期与并发假设的确认方式",
+        "按题设500万日活、每人每天10次、平均5 MB重算存储与峰值写入QPS，并区分平均值与峰值",
+        "设备游标的单调递增与重放机制，以及离线设备重新同步的流程",
+        "分享撤销后的可见性传播与权限缓存失效策略",
+        "大租户热点的分片与迁移方案，以及跨区域复制对写延迟的影响"
+      ],
+      "strengths": [
+        "估算假设、公式与单位清楚，算式正确，并明确标注示例假设与题设规模的区别",
+        "发布顺序清楚：块持久化在前，元数据事务提交在后，确认在最后，并说明版本条件更新与冲突副本的处理",
+        "故障取舍有条理，能将RPO目标与同步或异步复制、写延迟和分区拒写联系起来",
+        "替代架构对比给出了具体的权衡点，并明确切换阈值需要实测"
+      ],
+      "summary": "本次会话围绕估算、发布与确认顺序以及替代架构的故障、延迟和一致性取舍进行。候选人能够说明示例假设与计算过程，发布顺序和冲突处理描述清楚，取舍讨论具有可比较的依据。需求澄清、峰值与扩展性细节、设备同步和分享撤销未在问答中考察，相关内容列为后续练习。\n\n本次讨论的阶段：容量估算、整体架构、跨组件权衡。"
+    },
+    "followUp": {
+      "followUpQuestion": "围绕“跨区异步方案声明非零RPO”这一取舍，请只改变一个条件：若区域级RPO要求改为零，同步确认会增加哪条路径上的写延迟，并在网络分区时系统应拒写还是接受本地写？请说明依据并标出需要实测的参数。",
+      "observation": "候选人先用明确声明的示例假设（100万DAU、每人5次、2 MB）完成估算，并正确指出其低于题设规模需按题设重算；发布顺序也已说明块持久化先于元数据提交与确认。本阶段给出关系库分片与分片KV两种替代，并说明单区域跨AZ与跨区异步的RPO差异。一个缺口是：同步跨区方案的写延迟与分区行为尚未展开，切换阈值依赖实测，uncertain。",
+      "suggestedStage": "tradeoffs"
+    },
+    "input": {
+      "diagram": "flowchart LR\n Client-->Objects\n Client-->API\n API-->Metadata",
+      "expected": [
+        "Recognize that the lower-scale baseline is explicitly illustrative and its arithmetic is correct",
+        "Accept the explicitly reasoned SQL/object-store and KV alternatives",
+        "Do not invent compression ratios or exact instance counts",
+        "Do not silently reverse chunk durability and metadata-commit order"
+      ],
+      "id": "p2-file-alternative-zh",
+      "lang": "zh",
+      "notes": "Scripted probe only. Durable chunks precede metadata commit. No assumed compression savings.",
+      "question": {
+        "background": "训练场景：分块上传、设备游标、版本历史与分享撤销。",
+        "constraints": [
+          "训练基准为500万日活，每人每日10次变更，平均变更文件5 MB，保留30天",
+          "成功确认版本在单AZ故障后不丢；区域灾难的RPO待澄清",
+          "元数据p99低于300ms，不把它当平均服务时间"
+        ],
+        "evaluationChecklist": [
+          "按声明假设校验推导与完整数据流，接受合理替代架构"
+        ],
+        "followUpDirections": [
+          "One changed boundary only"
+        ],
+        "question": "设计文件存储与多端同步服务，先澄清范围再逐阶段讨论。"
+      },
+      "seedId": "file-sync",
+      "stage": "tradeoffs",
+      "turns": [
+        {
+          "observation": null,
+          "role": "interviewer",
+          "stage": "estimation",
+          "text": "请说明估算假设、公式与单位。"
+        },
+        {
+          "observation": null,
+          "role": "candidate",
+          "stage": "estimation",
+          "text": "先用明确的示例假设：100万日活，每人每天5次变更，每次2 MB，十进制单位。每天500万次变更，平均57.9次/秒，原始数据10 TB/天，30天300 TB，三副本900 TB，不含索引与备份。这是较低规模的演示，不代表满足题设容量；题设值应重新代入。未测压缩率，先按未压缩估算。"
+        },
+        {
+          "observation": null,
+          "role": "interviewer",
+          "stage": "high_level",
+          "text": "请说明发布与确认顺序。"
+        },
+        {
+          "observation": null,
+          "role": "candidate",
+          "stage": "high_level",
+          "text": "所有块先在对象存储达到持久化条件，然后元数据事务发布manifest和变更日志，成功后才确认；版本条件更新拒绝静默覆盖，另存冲突副本。"
+        },
+        {
+          "observation": null,
+          "role": "interviewer",
+          "stage": "tradeoffs",
+          "text": "请选择一个替代架构，说明故障、延迟与一致性的取舍。"
+        },
+        {
+          "observation": null,
+          "role": "candidate",
+          "stage": "tradeoffs",
+          "text": "先用关系库事务加对象存储，按租户分片，权限事务简单但需处理大租户热点。分片KV加独立版本协调可扩展写吞吐，但跨对象权限事务与日志提交更复杂。单区域跨AZ满足已定义故障域；跨区异步方案声明非零RPO，若要求区域级RPO为零则同步确认并接受写延迟和分区拒写。切换阈值要实测，不凭空给机器吞吐。"
+        }
+      ]
+    },
+    "kind": "p2"
+  },
+  {
+    "feedback": {
+      "assessment": {
+        "architecture": {
+          "evidence": "Not assessed: the candidate gave no architecture or data-flow answer in this estimation-only conversation.",
+          "improvement": "Not assessed in this session; practise component and data-flow design when that stage is opened.",
+          "rating": "missing"
+        },
+        "availability": {
+          "evidence": "Not assessed: no failure-handling or durability answer was submitted.",
+          "improvement": "Not assessed in this session; later practise how acknowledged samples survive a node failure.",
+          "rating": "missing"
+        },
+        "communication": {
+          "evidence": "The candidate stated an explicitly illustrative lower baseline, separated the task baseline, and stated that compression, peak multiplier and machine throughput need measurement.",
+          "improvement": "Keep labelling assumptions and task substitutions as clearly as this answer did when moving between stages.",
+          "rating": "good"
+        },
+        "correctness": {
+          "evidence": "Not assessed beyond the estimate: no consistency or correctness design was submitted.",
+          "improvement": "Not assessed in this session; practise durability and acknowledgement semantics in a later stage.",
+          "rating": "missing"
+        },
+        "estimation": {
+          "evidence": "Illustrative baseline: 100000*100/15 = 666667 samples/s, and 16 bytes over 15 days gives 13.824 TB. Task baseline 500000 targets: 500000*100/15 = 3333333 samples/s, and 5 times 13.824 TB gives 69.12 TB raw. The sample rate and raw storage arithmetic and units are correct, and the answer explicitly declared its assumptions and excluded overheads.",
+          "improvement": "Next, state the rule for converting the answer to the task baseline before using it for later sizing; you may also show per-day raw volume to make the retention arithmetic easier to check.",
+          "rating": "good"
+        },
+        "requirements": {
+          "evidence": "The answer used the stated task inputs: 500000 targets, 100 series per target, 15-second sampling, 16 bytes per sample and 15 days retention. It did not restate the query or durability requirements in this stage.",
+          "improvement": "Before estimating, briefly restate which constraints (last-hour query p95, durability under node failure) drive later design so the estimate has a purpose.",
+          "rating": "partial"
+        },
+        "scalability": {
+          "evidence": "The answer noted that peak multiplier and machine throughput need measurement and that p95 latency is not used as mean service time. No scaling design was submitted.",
+          "improvement": "Not yet assessed as a design; in later stages, explain how the 3.3 million samples/s rate would be spread across partitions or nodes.",
+          "rating": "partial"
+        },
+        "tradeoffs": {
+          "evidence": "Not assessed: no design trade-off was presented, only the explicitly declared exclusions from the raw estimate.",
+          "improvement": "Not assessed in this session; later practise comparing storage overhead, compression and replication choices.",
+          "rating": "missing"
+        }
+      },
+      "gaps": [],
+      "nextPracticeTopics": [
+        "Extend the storage estimate to include label and index overhead, replication factor and compression as explicit measured parameters",
+        "Design the ingestion path that absorbs the 3.3 million samples/s rate, including partitioning by tenant and target",
+        "Explain how acknowledged samples survive a node failure, including replication and write-ahead logging",
+        "Design the last-hour query path to meet a two-second p95 target",
+        "Compare time-series storage layouts and their effect on query and retention cost"
+      ],
+      "strengths": [
+        "Declared an explicitly illustrative lower baseline and separated it from the task baseline",
+        "Computed the sample rate and raw retention storage with correct units and formulas",
+        "Clearly excluded overheads and avoided treating p95 latency as mean processing time"
+      ],
+      "summary": "AI reference help was used in this session, but the estimation answer shown here is the user's own submitted answer and is not AI-assisted. The candidate estimated sample rate and raw 15-day retention storage with clear, correctly calculated arithmetic, explicitly declared assumptions and noted that compression and peak multipliers need measurement. Architecture, availability, correctness, trade-offs and communication were not assessed in this estimation-only session.\n\nStages discussed: Estimation."
+    },
+    "followUp": {
+      "followUpQuestion": "Your sample-rate and raw-storage arithmetic checks out for both the declared illustrative baseline and the task baseline. Staying in estimation, how many raw samples would a last-hour query over the 500000-target task baseline need to scan, and what does that imply for scan volume relative to the two-second p95 constraint without treating p95 as mean service time?",
+      "observation": "The candidate correctly computes 100000*100/15 ≈ 666,667 samples/s for the declared illustrative baseline, 16 bytes/sample over 15 days ≈ 13.824 TB, and scales both by five to ≈ 3,333,333 samples/s and ≈ 69.12 TB for the task baseline. The assumptions (excluding labels, indexes, WAL, replicas, backups, compression) are explicitly stated, and the candidate correctly avoids treating p95 latency as mean processing time. The main unassessed point is the read side: the last-hour query-latency constraint has not yet been translated into an estimated data volume.",
+      "suggestedStage": "estimation"
+    },
+    "input": {
+      "diagram": "",
+      "expected": [
+        "Credit correct formulas and explicit baseline alignment",
+        "Do not invent a compression percentage, instance count or measured throughput",
+        "Unasked architecture dimensions stay missing rather than becoming demonstrated gaps"
+      ],
+      "id": "p2-metrics-estimate-en",
+      "lang": "en",
+      "notes": "",
+      "question": {
+        "background": "Local training assumptions, not real production metrics.",
+        "constraints": [
+          "500000 targets, 100 active series/target, one sample every 15 seconds",
+          "16 uncompressed bytes/sample excluding labels/indexes, retain raw data for 15 days",
+          "Last-hour query p95 below two seconds; acknowledged samples survive a node failure"
+        ],
+        "evaluationChecklist": [
+          "Check explicitly stated baselines, arithmetic and additional overhead"
+        ],
+        "followUpDirections": [
+          "One changed boundary only"
+        ],
+        "question": "Design a multi-tenant metrics ingestion, query and alerting service."
+      },
+      "seedId": "metrics-platform",
+      "stage": "estimation",
+      "turns": [
+        {
+          "observation": null,
+          "role": "interviewer",
+          "stage": "estimation",
+          "text": "Estimate sample rate and raw retention storage, stating assumptions."
+        },
+        {
+          "observation": null,
+          "role": "candidate",
+          "stage": "estimation",
+          "text": "For an explicitly illustrative lower baseline of 100000 targets, each with 100 series sampled every 15 seconds: 100000*100/15 = about 666667 samples/s. At 16 bytes/sample for 15 days, raw samples need 13.824 decimal TB. This excludes labels, indexes, WAL, replicas, backups and compression. The task baseline of 500000 targets multiplies these figures by five: about 3333333 samples/s and 69.12 TB raw. Actual peak multiplier, compression and machine throughput need measurement; I am not using p95 latency as mean service time."
+        }
+      ]
+    },
+    "kind": "p2"
+  }
+]

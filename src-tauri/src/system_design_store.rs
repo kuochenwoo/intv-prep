@@ -50,7 +50,7 @@ pub fn cache_question(
         content,
     };
     c.execute(
-        "INSERT INTO sd_questions VALUES(?1,'system-design-v2-calibrated',?2)",
+        "INSERT INTO sd_questions VALUES(?1,'system-design-v3-reviewed',?2)",
         params![q.id, serde_json::to_string(&q).map_err(err)?],
     )
     .map_err(err)?;

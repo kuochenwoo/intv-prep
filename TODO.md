@@ -14,24 +14,28 @@ This list records the agreed next step and future feature ideas. Recording an it
 
 These completed workflows do not imply that every model-generated question or judgement is correct.
 
-## AI calibration: implemented, with live-review findings
+## AI calibration: completed for the agreed Claude baseline
 
-- [ ] Improve P1 question generation: assess one core mechanism in a concrete scenario, avoid giving away the answer in visible constraints, and keep optional extensions out of mandatory opening-question criteria.
+- [x] Improve P1 question generation: assess one core mechanism in a concrete scenario, avoid giving away the answer in visible constraints, and keep optional extensions out of mandatory opening-question criteria.
 - [x] Improve follow-ups in both modules: respond to the actual answer, acknowledge what is already explained, avoid repetitive demands, and explicitly identify changed assumptions. Keep P1 at mechanism/local-boundary depth and P2 at its selected architecture stage.
-- [ ] Improve evidence-based feedback: do not count unasked material or unanswered interviewer questions as demonstrated weaknesses. Accept equivalent explanations rather than requiring keywords or a prescribed phrasing.
+- [x] Improve evidence-based feedback: do not count unasked material or unanswered interviewer questions as demonstrated weaknesses. Accept equivalent explanations rather than requiring keywords or a prescribed phrasing.
 - [x] Reliably exclude AI-assisted answers from evidence of independent understanding. AI-only evidence must not receive independent-ability credit; disclose assistance and use `missing` for dimensions with no independent evidence.
 - [x] Calibrate P2 estimates: recognize explicitly stated illustrative or alternative assumptions, distinguish them from task defaults, verify formulas/units, and explain when task figures should be substituted. Do not invent benchmark results or demand unsupported precision.
 - [x] Calibrate P2 architecture feedback: accept defensible alternatives, evaluate end-to-end data flow and cross-component trade-offs, and distinguish genuine contradictions from an interviewer silently changing the failure window.
 - [x] Build regression samples from new P1 topics and P2 scenarios using correct, partially correct, incorrect and "I do not know" answers. Include AI-assisted and mixed independent/assisted histories, bilingual cases and the failures already observed in live probes.
 - [x] Add necessary automated checks and review real-provider samples. Record provider/model, input assumptions, expected behavior and observed defects. Report transport/schema success separately from semantic-quality acceptance; never mock a successful live request or judgement.
 
-Both approved DeepSeek batches completed: 16 initial plus 8 focused logical requests. Targeted refinements pass 44 local checks (one Keychain test intentionally ignored); the focused samples fixed visible MVCC result leakage, event-loop follow-up repetition and unasked material in P2 gaps. The remaining unchecked goals reflect actual residual findings, not pending execution.
+The earlier DeepSeek batches remain historical evidence. Claude Haiku 5.5 closeout now has **11 human-reviewed positive question/feedback outputs, three rejected adversarial probes, and a separately verified epoll prerequisite follow-up**; the final affected test suite passed 54 checks, with one intentionally ignored Keychain round-trip. The earlier broader suite passed 74 checks. Failed attempts, scope corrections and final real-provider verdicts are preserved under `review/`.
 
-Remaining quality work:
+Closeout work:
 
-- [ ] Remove mechanism hints from generated opening backgrounds and optional comparisons from opening evaluation checklists.
-- [ ] Improve feedback summary/assessment consistency: preserve all actually discussed stages, count assessed dimensions correctly and avoid broader unasked omissions in evidence text.
-- [ ] Validate these refined semantics with Claude when a separate real-provider run is scheduled; this round called only DeepSeek. See [AI quality calibration](docs/AI_QUALITY_CALIBRATION.md) for exact findings and the limits of acceptance.
+- [x] Strict generation-only answer terms, legacy cache compatibility and semantic review for synonymous hints/checklist scope.
+- [x] Summaries derived from real ratings, independent/assisted counts and actual P2 stages; `missing` means insufficient independent evidence, not necessarily an unasked question or an error.
+- [x] Preserve evidence supplied in any stage; check actual gap relevance rather than trusting a question citation.
+- [x] Dedicated question/feedback review roles and bounded repair carrying the exact prior proposal plus critique; rejected/failed requests remain failures.
+- [x] Final Claude live acceptance, including cross-stage reasoning, AI-assisted/mixed histories and adversarial hints, irrelevant gaps and uncertain-versus-missing probes.
+
+See [calibration report](docs/AI_QUALITY_CALIBRATION.md) and [acceptance manifest](review/calibration-closeout-acceptance.json). This completes the agreed scripted baseline; it does not guarantee all future model judgements. Model review adds latency/API usage and can still reject valid content or miss defects. New policies do not rewrite old histories; final-policy DeepSeek semantics were not revalidated in this Claude-only closeout. No deferred feature below has started.
 
 Existing evidence and defects:
 
