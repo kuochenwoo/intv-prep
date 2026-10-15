@@ -119,6 +119,8 @@ fn provider(
     c: &rusqlite::Connection,
     session_id: Option<&str>,
     lang: interview::Lang,
+    path: PathBuf,
+    operation: &str,
 ) -> Result<llm::InterviewProvider, String> {
     let mut config = credentials::settings(c)?;
     if let Some(id) = session_id {
@@ -128,12 +130,23 @@ fn provider(
     }
     let app = app.clone();
     let last = Mutex::new(std::time::Instant::now());
+    let show_stream = operation != "generation";
     // Only one interview request runs at a time, so one event name is enough.
     // Throttled: the UI only needs a few repaints per second of the growing text.
     Ok(
         llm::InterviewProvider::new(&config, credentials::read_key(&config.provider)?)?
             .lang(lang)
+            .record_usage(swe_interview_prep::usage::Context {
+                path,
+                module: "p1".into(),
+                session_id: session_id.map(str::to_owned),
+                operation: operation.into(),
+            })
             .on_text(move |text| {
+                // Do not expose opening-question drafts before validation/review accepts them.
+                if !show_stream {
+                    return;
+                }
                 let mut last = last.lock().unwrap_or_else(|e| e.into_inner());
                 if text.is_empty() || last.elapsed() >= std::time::Duration::from_millis(80) {
                     *last = std::time::Instant::now();
@@ -190,9 +203,19 @@ async fn generate_interview_question(
             .map_err(|_| "已有面试请求正在运行")?;
         let c = state.own_connection()?;
         let config = credentials::settings(&c)?;
-        let q = provider(&app, &c, None, lang.unwrap_or_default())?
-            .generate_question(&interview::topic(&topic_id)?)?;
-        interview_store::cache_question(&c, &topic_id, &config, &q)
+        let after = swe_interview_prep::usage::latest_id(&c)?;
+        let q = provider(
+            &app,
+            &c,
+            None,
+            lang.unwrap_or_default(),
+            state.path.clone(),
+            "generation",
+        )?
+        .generate_question(&interview::topic(&topic_id)?)?;
+        let cached = interview_store::cache_question(&c, &topic_id, &config, &q)?;
+        swe_interview_prep::usage::link_question(&c, "p1", &cached.id, after)?;
+        Ok(cached)
     })
     .await
 }
@@ -206,7 +229,9 @@ fn start_interview(
         .try_lock()
         .map_err(|_| "请等待当前面试请求完成")?;
     let c = state.db();
-    interview_store::start(&c, &question_id, &credentials::settings(&c)?)
+    let session = interview_store::start(&c, &question_id, &credentials::settings(&c)?)?;
+    swe_interview_prep::usage::link_session(&c, "p1", &question_id, &session.id)?;
+    Ok(session)
 }
 #[tauri::command]
 fn get_interview_session(
@@ -238,7 +263,14 @@ async fn submit_interview_answer(
             .try_lock()
             .map_err(|_| "已有面试请求正在运行")?;
         let c = state.own_connection()?;
-        let api = provider(&app, &c, Some(&session_id), lang.unwrap_or_default())?;
+        let api = provider(
+            &app,
+            &c,
+            Some(&session_id),
+            lang.unwrap_or_default(),
+            state.path.clone(),
+            "follow_up",
+        )?;
         interview_store::begin_answer(&c, &session_id, &answer)?;
         interview_store::retry_pending(&c, &session_id, &api)
     })
@@ -258,7 +290,14 @@ async fn finish_interview(
             .try_lock()
             .map_err(|_| "已有面试请求正在运行")?;
         let c = state.own_connection()?;
-        let api = provider(&app, &c, Some(&session_id), lang.unwrap_or_default())?;
+        let api = provider(
+            &app,
+            &c,
+            Some(&session_id),
+            lang.unwrap_or_default(),
+            state.path.clone(),
+            "feedback",
+        )?;
         interview_store::begin_feedback(&c, &session_id)?;
         interview_store::retry_pending(&c, &session_id, &api)
     })
@@ -281,7 +320,14 @@ async fn retry_interview(
         interview_store::retry_pending(
             &c,
             &session_id,
-            &provider(&app, &c, Some(&session_id), lang.unwrap_or_default())?,
+            &provider(
+                &app,
+                &c,
+                Some(&session_id),
+                lang.unwrap_or_default(),
+                state.path.clone(),
+                "retry",
+            )?,
         )
     })
     .await
@@ -305,7 +351,14 @@ async fn submit_interview_reference(
             &c,
             &session_id,
             turn_index,
-            &provider(&app, &c, Some(&session_id), lang.unwrap_or_default())?,
+            &provider(
+                &app,
+                &c,
+                Some(&session_id),
+                lang.unwrap_or_default(),
+                state.path.clone(),
+                "reference_submit",
+            )?,
         )
     })
     .await
@@ -331,7 +384,14 @@ async fn show_interview_reference(
             &c,
             &session_id,
             turn_index,
-            &provider(&app, &c, Some(&session_id), lang.unwrap_or_default())?,
+            &provider(
+                &app,
+                &c,
+                Some(&session_id),
+                lang.unwrap_or_default(),
+                state.path.clone(),
+                "reference",
+            )?,
         )?;
         interview_store::session(&c, &session_id)
     })
@@ -386,7 +446,9 @@ fn sd_start(
         .try_lock()
         .map_err(|_| "请等待当前面试请求完成")?;
     let c = state.db();
-    system_design_store::start(&c, &question_id, &credentials::settings(&c)?)
+    let session = system_design_store::start(&c, &question_id, &credentials::settings(&c)?)?;
+    swe_interview_prep::usage::link_session(&c, "p2", &question_id, &session.id)?;
+    Ok(session)
 }
 #[tauri::command]
 fn sd_session(
@@ -419,13 +481,27 @@ fn sd_provider(
     app: &AppHandle,
     config: &credentials::LlmSettings,
     lang: interview::Lang,
+    path: PathBuf,
+    session_id: Option<&str>,
+    operation: &str,
 ) -> Result<llm::InterviewProvider, String> {
     let app = app.clone();
     let last = Mutex::new(std::time::Instant::now());
+    let show_stream = operation != "generation";
     Ok(
         llm::InterviewProvider::new(config, credentials::read_key(&config.provider)?)?
             .lang(lang)
+            .record_usage(swe_interview_prep::usage::Context {
+                path,
+                module: "p2".into(),
+                session_id: session_id.map(str::to_owned),
+                operation: operation.into(),
+            })
             .on_text(move |text| {
+                // Do not expose opening-question drafts before validation/review accepts them.
+                if !show_stream {
+                    return;
+                }
                 let mut last = last.lock().unwrap_or_else(|e| e.into_inner());
                 if text.is_empty() || last.elapsed() >= std::time::Duration::from_millis(80) {
                     *last = std::time::Instant::now();
@@ -450,9 +526,12 @@ async fn sd_generate(
             .map_err(|_| "已有面试请求正在运行")?;
         let c = state.own_connection()?;
         let config = credentials::settings(&c)?;
-        let q = sd_provider(&app, &config, lang)?
+        let after = swe_interview_prep::usage::latest_id(&c)?;
+        let q = sd_provider(&app, &config, lang, state.path.clone(), None, "generation")?
             .generate_design(&system_design::scenario(&scenario_id)?, lang)?;
-        system_design_store::cache_question(&c, &scenario_id, lang, &config, q)
+        let cached = system_design_store::cache_question(&c, &scenario_id, lang, &config, q)?;
+        swe_interview_prep::usage::link_question(&c, "p2", &cached.id, after)?;
+        Ok(cached)
     })
     .await
 }
@@ -475,7 +554,14 @@ async fn sd_request(
         let mut config = credentials::settings(&c)?;
         config.provider = s.provider;
         config.model = s.model;
-        let api = sd_provider(&app, &config, s.question.lang)?;
+        let api = sd_provider(
+            &app,
+            &config,
+            s.question.lang,
+            state.path.clone(),
+            Some(&session_id),
+            &action,
+        )?;
         match action.as_str() {
             "answer" => system_design_store::begin_answer(
                 &c,
@@ -508,13 +594,62 @@ async fn sd_reference(
         let mut config = credentials::settings(&c)?;
         config.provider = s.provider;
         config.model = s.model;
-        let api = sd_provider(&app, &config, s.question.lang)?;
+        let api = sd_provider(
+            &app,
+            &config,
+            s.question.lang,
+            state.path.clone(),
+            Some(&session_id),
+            if submit_turn.is_some() {
+                "reference_submit"
+            } else {
+                "reference"
+            },
+        )?;
         match submit_turn {
             Some(turn) => system_design_store::submit_reference(&c, &session_id, turn, &api),
             None => system_design_store::generate_reference(&c, &session_id, &api),
         }
     })
     .await
+}
+
+#[tauri::command]
+fn session_timing(
+    state: State<AppState>,
+    module: String,
+    session_id: String,
+    action: String,
+    minutes: Option<i64>,
+) -> Result<Option<swe_interview_prep::session_tools::MockClock>, String> {
+    swe_interview_prep::session_tools::timing(&state.db(), &module, &session_id, &action, minutes)
+}
+#[tauri::command]
+fn export_interview(
+    state: State<AppState>,
+    module: String,
+    session_id: String,
+    format: String,
+    lang: String,
+) -> Result<swe_interview_prep::session_tools::Export, String> {
+    swe_interview_prep::session_tools::export(&state.db(), &module, &session_id, &format, &lang)
+}
+#[tauri::command]
+fn api_usage(
+    state: State<AppState>,
+    module: Option<String>,
+    session_id: Option<String>,
+) -> Result<serde_json::Value, String> {
+    swe_interview_prep::usage::overview(&state.db(), module.as_deref(), session_id.as_deref())
+}
+#[tauri::command]
+fn save_api_prices(
+    state: State<AppState>,
+    provider: String,
+    model: String,
+    rates: swe_interview_prep::usage::Rates,
+) -> Result<(), String> {
+    swe_interview_prep::usage::save_rates(&state.db(), &provider, &model, &rates)
 }
 
 fn main() {
@@ -531,6 +666,10 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            session_timing,
+            export_interview,
+            api_usage,
+            save_api_prices,
             sd_overview,
             sd_start,
             sd_session,

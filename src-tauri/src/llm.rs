@@ -78,7 +78,7 @@ pub fn feedback_schema() -> Value {
     ])
 }
 pub fn request_body(model: &str, lang: Lang, task: &str, context: Value, schema: Value) -> Value {
-    json!({"model":model,"stream":true,"thinking":{"type":"disabled"},"max_tokens":4096,
+    json!({"model":model,"stream":true,"stream_options":{"include_usage":true},"thinking":{"type":"disabled"},"max_tokens":4096,
         "response_format":{"type":"json_object"},
         "messages":[{"role":"system","content":system_prompt(lang, task, &schema)},
                     {"role":"user","content":serde_json::to_string(&context).expect("JSON context")} ]})
@@ -213,12 +213,23 @@ impl Failure {
 }
 /// Receives the model's text so far while a streamed response arrives.
 pub type TextSink = dyn Fn(&str) + Send + Sync;
+#[cfg(test)]
 async fn post_async<T: DeserializeOwned + Validated>(
     client: &Client,
     url: &str,
     key: &str,
     body: Value,
     on_text: &TextSink,
+) -> Result<T, Failure> {
+    post_observed(client, url, key, body, on_text, &|_, _| {}).await
+}
+async fn post_observed<T: DeserializeOwned + Validated>(
+    client: &Client,
+    url: &str,
+    key: &str,
+    body: Value,
+    on_text: &TextSink,
+    observe: &(dyn Fn(&Value, bool) + Send + Sync),
 ) -> Result<T, Failure> {
     let claude = body.get("system").is_some();
     let request = client.post(url);
@@ -254,7 +265,7 @@ async fn post_async<T: DeserializeOwned + Validated>(
         .and_then(|v| v.to_str().ok())
         .is_some_and(|v| v.starts_with("text/event-stream"));
     if streamed {
-        let envelope = read_stream(&mut response, claude, on_text).await?;
+        let envelope = read_stream(&mut response, claude, on_text, observe).await?;
         let bytes = envelope.to_string().into_bytes();
         return if claude {
             decode_claude(&bytes)
@@ -275,6 +286,9 @@ async fn post_async<T: DeserializeOwned + Validated>(
             return Err("API 响应超过 1 MiB 限制，请重试".into());
         }
         bytes.extend_from_slice(&chunk);
+    }
+    if let Ok(envelope) = serde_json::from_slice::<Value>(&bytes) {
+        observe(&envelope["usage"], true);
     }
     if claude {
         decode_claude(&bytes)
@@ -297,12 +311,15 @@ async fn read_stream(
     response: &mut reqwest::Response,
     claude: bool,
     on_text: &TextSink,
+    observe: &(dyn Fn(&Value, bool) + Send + Sync),
 ) -> Result<Value, Failure> {
     let mut pending = Vec::new();
     let mut total = 0u64;
     let mut text = String::new();
     let mut stop: Option<String> = None;
     let mut refusal = String::new();
+    let mut usage = json!({});
+    let mut usage_complete = false;
     while let Some(chunk) = response.chunk().await.map_err(read_error)? {
         total += chunk.len() as u64;
         if total > MAX_STREAM_BYTES {
@@ -318,11 +335,29 @@ async fn read_stream(
             };
             let data = data.trim();
             if data == "[DONE]" {
+                usage_complete = true;
+                observe(&usage, true);
                 continue;
             }
             let event: Value = serde_json::from_str(data).map_err(|_| {
                 Failure::Content("供应商返回无效 JSON，可重试；本地回答已保留".into())
             })?;
+            let reported = if event["type"] == "message_start" {
+                &event["message"]["usage"]
+            } else {
+                &event["usage"]
+            };
+            if let Some(fields) = reported.as_object() {
+                for (key, value) in fields {
+                    usage[key] = value.clone();
+                }
+                // Output counters are cumulative snapshots, not deltas to add.
+                observe(&usage, false);
+            }
+            if event["type"] == "message_stop" {
+                usage_complete = true;
+                observe(&usage, true);
+            }
             if claude {
                 match event["type"].as_str() {
                     Some("content_block_delta") if event["delta"]["type"] == "text_delta" => {
@@ -360,6 +395,9 @@ async fn read_stream(
         }
     }
     // A stream cut off before its stop reason decodes as a truncated response.
+    if !usage_complete {
+        observe(&usage, false);
+    }
     let stop = stop.unwrap_or_default();
     Ok(if claude {
         json!({"stop_reason":stop,"content":[{"type":"text","text":text}]})
@@ -395,6 +433,7 @@ pub struct InterviewProvider {
     lang: Lang,
     on_review: Box<ReviewSink>,
     before_request: Box<dyn Fn() -> Result<(), String> + Send + Sync>,
+    usage: Option<crate::usage::Context>,
 }
 type ReviewSink = dyn Fn(&Value, &crate::quality::Review) + Send + Sync;
 impl InterviewProvider {
@@ -411,7 +450,12 @@ impl InterviewProvider {
             lang: Lang::Zh,
             on_review: Box::new(|_, _| {}),
             before_request: Box::new(|| Ok(())),
+            usage: None,
         })
+    }
+    pub fn record_usage(mut self, context: crate::usage::Context) -> Self {
+        self.usage = Some(context);
+        self
     }
     /// Reports the partial model output of each streamed request (reset to "" on retry).
     pub fn on_text(mut self, sink: impl Fn(&str) + Send + Sync + 'static) -> Self {
@@ -543,6 +587,7 @@ impl InterviewProvider {
         silent: bool,
     ) -> Result<T, String> {
         let task = if lang == Lang::En { en } else { zh };
+        let usage_operation = crate::usage::purpose(&schema, &context, silent);
         let (url, mut body) = if self.provider == "claude" {
             (
                 CLAUDE_ENDPOINT,
@@ -571,15 +616,31 @@ impl InterviewProvider {
                 (self.on_text)("");
             }
             (self.before_request)()?;
+            let record = self
+                .usage
+                .as_ref()
+                .map(|ctx| {
+                    let mut scoped = ctx.clone();
+                    if let Some(purpose) = usage_operation {
+                        scoped.operation = purpose.into();
+                    }
+                    crate::usage::begin(&scoped, &self.provider, &self.model, silent)
+                })
+                .transpose()?;
+            let observed = std::sync::Mutex::new((Value::Null, false));
+            let observe = |v: &Value, complete: bool| {
+                *observed.lock().unwrap_or_else(|e| e.into_inner()) = (v.clone(), complete);
+            };
             let result = self.runtime.block_on(async {
                 tokio::time::timeout(
                     self.timeout,
-                    post_async(
+                    post_observed(
                         &self.client,
                         url,
                         &self.key,
                         body.clone(),
                         if silent { &|_| {} } else { &*self.on_text },
+                        &observe,
                     ),
                 )
                 .await
@@ -589,6 +650,15 @@ impl InterviewProvider {
                     ))
                 })
             });
+            if let (Some(ctx), Some(id)) = (&self.usage, record) {
+                let (v, complete) = observed.into_inner().unwrap_or_else(|e| e.into_inner());
+                let status = match &result {
+                    Ok(_) => "success",
+                    Err(Failure::Content(_)) => "content_error",
+                    Err(_) => "transport_error",
+                };
+                crate::usage::finish(&ctx.path, id, status, &self.provider, &v, complete)?;
+            }
             match result {
                 Err(Failure::Content(_)) if attempts_left > 0 => continue,
                 other => return other.map_err(Failure::message),
@@ -1318,6 +1388,95 @@ mod tests {
             request_body("m", Lang::Zh, "t", json!({}), question_schema()),
         );
         assert!(r.is_err());
+    }
+    #[test]
+    fn usage_snapshots_merge_cumulative_counters_and_keep_partial_streams_unknown() {
+        for claude in [true, false] {
+            let value = question_value().to_string();
+            let mut body = if claude {
+                sse(&[
+                    json!({"type":"message_start","message":{"usage":{"input_tokens":100,"output_tokens":1,"cache_read_input_tokens":20,"cache_creation_input_tokens":0}}}),
+                    json!({"type":"content_block_delta","delta":{"type":"text_delta","text":value}}),
+                    json!({"type":"message_delta","delta":{},"usage":{"output_tokens":10}}),
+                    json!({"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":15}}),
+                    json!({"type":"message_stop"}),
+                ])
+            } else {
+                sse(&[
+                    json!({"choices":[{"delta":{"content":value},"finish_reason":null}]}),
+                    json!({"choices":[{"delta":{},"finish_reason":"stop"}]}),
+                    json!({"choices":[],"usage":{"prompt_tokens":100,"completion_tokens":15,"prompt_cache_hit_tokens":20,"prompt_cache_miss_tokens":80}}),
+                ]) + "data: [DONE]\n\n"
+            };
+            let (url, worker) = fixture("200 OK", body.clone(), 0);
+            let seen = std::sync::Mutex::new((Value::Null, false));
+            let result: Result<GeneratedQuestion, _> = runtime().unwrap().block_on(post_observed(
+                &client(3, false).unwrap(),
+                &url,
+                "fixture-only-key",
+                if claude {
+                    json!({"system":"test","stream":true})
+                } else {
+                    json!({"stream":true})
+                },
+                &|_| {},
+                &|v, complete| {
+                    *seen.lock().unwrap() = (v.clone(), complete);
+                },
+            ));
+            result.unwrap_or_else(|e| panic!("{}", e.message()));
+            worker.join().unwrap();
+            let (usage, complete) = seen.into_inner().unwrap();
+            assert!(complete);
+            let tokens = crate::usage::tokens(if claude { "claude" } else { "deepseek" }, &usage);
+            assert_eq!(tokens[0], Some(100));
+            assert_eq!(tokens[1], Some(15));
+            assert_eq!(tokens[2], Some(20));
+            if claude {
+                body = body.replace("data: {\"type\":\"message_stop\"}\n\n", "");
+            } else {
+                body = body.replace("data: [DONE]\n\n", "");
+            }
+            let (url, worker) = fixture("200 OK", body, 0);
+            let seen = std::sync::Mutex::new(false);
+            let _: Result<GeneratedQuestion, _> = runtime().unwrap().block_on(post_observed(
+                &client(3, false).unwrap(),
+                &url,
+                "fixture-only-key",
+                if claude {
+                    json!({"system":"test","stream":true})
+                } else {
+                    json!({"stream":true})
+                },
+                &|_| {},
+                &|_, complete| {
+                    *seen.lock().unwrap() = complete;
+                },
+            ));
+            worker.join().unwrap();
+            assert!(!seen.into_inner().unwrap());
+        }
+    }
+    #[test]
+    fn invalid_content_still_reports_real_provider_usage() {
+        let body=json!({"usage":{"prompt_tokens":30,"completion_tokens":5,"prompt_cache_hit_tokens":0},"choices":[{"finish_reason":"stop","message":{"content":"not json"}}]}).to_string();
+        let (url, worker) = fixture("200 OK", body, 0);
+        let seen = std::sync::Mutex::new((Value::Null, false));
+        let result: Result<GeneratedQuestion, _> = runtime().unwrap().block_on(post_observed(
+            &client(3, false).unwrap(),
+            &url,
+            "fixture-only-key",
+            json!({}),
+            &|_| {},
+            &|v, complete| {
+                *seen.lock().unwrap() = (v.clone(), complete);
+            },
+        ));
+        worker.join().unwrap();
+        assert!(matches!(result, Err(Failure::Content(_))));
+        let (usage, complete) = seen.into_inner().unwrap();
+        assert!(complete);
+        assert_eq!(usage["completion_tokens"], 5);
     }
     #[test]
     fn production_client_rejects_plain_http() {

@@ -249,6 +249,7 @@ pub fn begin_feedback(c: &Connection, id: &str) -> Result<(), String> {
     s.status = "feedback_pending".into();
     s.last_error = None;
     put(&tx, &s)?;
+    crate::session_tools::stop(&tx, "p2", id)?;
     tx.commit().map_err(err)
 }
 pub fn retry_pending(
@@ -311,15 +312,23 @@ pub fn retry_pending(
     outcome
 }
 pub fn delete_session(c: &Connection, id: &str) -> Result<(), String> {
-    c.execute("DELETE FROM sd_sessions WHERE id=?1", [id])
+    let tx = c.unchecked_transaction().map_err(err)?;
+    tx.execute("DELETE FROM sd_sessions WHERE id=?1", [id])
         .map_err(err)?;
-    Ok(())
+    tx.execute(
+        "DELETE FROM mock_clocks WHERE module=?1 AND session_id=?2",
+        params!["p2", id],
+    )
+    .map_err(err)?;
+    tx.commit().map_err(err)
 }
 /// Deletes every system design session and cached question; P1 and coding data are untouched.
 pub fn clear_history(c: &Connection) -> Result<(), String> {
     let tx = c.unchecked_transaction().map_err(err)?;
     tx.execute("DELETE FROM sd_sessions", []).map_err(err)?;
     tx.execute("DELETE FROM sd_questions", []).map_err(err)?;
+    tx.execute("DELETE FROM mock_clocks WHERE module=?1", ["p2"])
+        .map_err(err)?;
     tx.commit().map_err(err)
 }
 /// Generates one reference answer for the current question; asking again returns the saved one.

@@ -1,6 +1,6 @@
 # Project TODO
 
-Updated: 2026-10-15 (Asia/Tokyo).
+Updated: 2026-10-16 (Asia/Tokyo).
 
 This list records the agreed next step and future feature ideas. Recording an item does not start its implementation. Finish AI-quality calibration before adding the deferred features below.
 
@@ -35,7 +35,7 @@ Closeout work:
 - [x] Dedicated question/feedback review roles and bounded repair carrying the exact prior proposal plus critique; rejected/failed requests remain failures.
 - [x] Final Claude live acceptance, including cross-stage reasoning, AI-assisted/mixed histories and adversarial hints, irrelevant gaps and uncertain-versus-missing probes.
 
-See [calibration report](docs/AI_QUALITY_CALIBRATION.md) and [acceptance manifest](review/calibration-closeout-acceptance.json). This completes the agreed scripted baseline; it does not guarantee all future model judgements. Model review adds latency/API usage and can still reject valid content or miss defects. New policies do not rewrite old histories; final-policy DeepSeek semantics were not revalidated in this Claude-only closeout. No deferred feature below has started.
+See [calibration report](docs/AI_QUALITY_CALIBRATION.md) and [acceptance manifest](review/calibration-closeout-acceptance.json). This completes the agreed scripted baseline; it does not guarantee all future model judgements. Model review adds latency/API usage and can still reject valid content or miss defects. New policies do not rewrite old histories; final-policy DeepSeek semantics were not revalidated in this Claude-only closeout. The user subsequently authorized exports, hint/scope cleanup, timed interviews and API accounting; see the completed entries below.
 
 Existing evidence and defects:
 
@@ -61,22 +61,30 @@ Existing evidence and defects:
 - [ ] Turn weak points and past practice into a manageable review queue.
 - [ ] Schedule spaced revisits and track whether previously weak concepts have improved.
 
-### 4. Timed mock interviews
+### 4. Timed mock interviews — completed
 
-- [ ] Add timed practice to P1/P2, combining answers, follow-ups and a final review into an interview session.
-- [ ] Make the time budget and progress visible while preserving drafts and existing recovery behavior.
+- [x] Add timed practice to P1/P2, combining answers, follow-ups and a final review into an interview session.
+- [x] Make the time budget and progress visible while preserving drafts and existing recovery behavior.
 
-### 5. API usage and cost records
+### 5. API usage and cost records — completed
 
-- [ ] Record usage for question generation, follow-ups, reference answers and feedback by provider/model and interview.
-- [ ] Show provider-reported token usage where available; distinguish cost estimates from billed amounts and unknown usage from zero usage.
-- [ ] Keep credentials out of usage records and exports.
+- [x] Record usage for question generation, follow-ups, reference answers and feedback by provider/model and interview.
+- [x] Show provider-reported token usage where available; distinguish cost estimates from billed amounts and unknown usage from zero usage.
+- [x] Keep credentials out of usage records and exports.
 
-### 6. Interview exports
+### 6. Interview exports — completed
 
-- [ ] Export questions, answers, follow-ups and feedback for later review.
-- [ ] Include P2 design notes and diagram source, and preserve language and AI-assistance labels.
-- [ ] Choose export formats when this feature is scheduled.
+- [x] Export questions, answers, follow-ups and feedback for later review.
+- [x] Include P2 design notes and diagram source, and preserve language and AI-assistance labels.
+- [x] Export Markdown for reading and versioned JSON for structured review; include saved notes, diagram source, assistance labels, timing and session usage, and omit drafts/private checkpoints.
+
+### 7. Remove question hints and out-of-scope checkpoints — completed
+
+- [x] Preserve strict new-question answer-term checks and bounded semantic review for synonymous hints and opening-question scope.
+- [x] Remove P1 seed focus/extension lists and P2 deep-dive directions from visible preparation panels; narrow the P1 answer placeholder to the current question.
+- [x] Keep private checklists/directions out of streamed candidate text, feedback evidence and exports; withhold new-question previews until validation/review completes. Legacy histories remain unchanged rather than being silently rewritten.
+
+See [session tools delivery](docs/SESSION_TOOLS.md) for behavior, validation and limits. Timers default to off, offer 10/20/30 minutes, and require an explicit Start. API estimates require explicit local rates and are not invoices; old usage is not backfilled.
 
 ## Implementation constraints
 

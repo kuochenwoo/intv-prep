@@ -14,6 +14,7 @@ import { lookup, useI18n } from "../../i18n";
 import { localizeError } from "../../errors";
 import { LiveResponse } from "./LiveResponse";
 import "./interview.css";
+import { SessionTools, UsagePanel } from "./SessionTools";
 type Config = { provider: string; model: string; timeoutSeconds: number };
 type Settings = { config: Config; keyStatus: string; credentialSource: string };
 type Topic = {
@@ -635,14 +636,6 @@ export default function InterviewApp() {
             {topic && (
               <>
                 <h2>{topic.title}</h2>
-                <p>{topic.focus.join(" / ")}</p>
-                <p className="muted">
-                  {t("seedConstraints", {
-                    c: topic.scenarioConstraints.join(
-                      lang === "zh" ? "；" : "; ",
-                    ),
-                  })}
-                </p>
                 <div className="actions">
                   <Button
                     label={t("generateStart")}
@@ -723,7 +716,15 @@ export default function InterviewApp() {
           </section>
           <section className="conversation-panel card">
             {!session ? (
-              <p className="muted">{t("noSession")}</p>
+              <>
+                <p className="muted">{t("noSession")}</p>
+                <UsagePanel
+                  module="p1"
+                  provider={config.provider}
+                  model={config.model}
+                  refreshKey={String(busy)}
+                />
+              </>
             ) : (
               <>
                 <div className="session-heading">
@@ -744,6 +745,16 @@ export default function InterviewApp() {
                     onClick={() => setConfirm("session")}
                   />
                 </div>
+                <SessionTools
+                  key={session.id}
+                  module="p1"
+                  sessionId={session.id}
+                  status={session.status}
+                  provider={session.provider}
+                  model={session.model}
+                  busy={busy || saving}
+                  turns={answered}
+                />
                 <div className="question-context">
                   <h3>{session.question.question}</h3>
                   <p>{session.question.background}</p>

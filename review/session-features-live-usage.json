@@ -1,0 +1,91 @@
+{
+  "error": null,
+  "model": "deepseek-chat",
+  "priceNote": "Illustrative test rates only; not provider prices or billed amounts",
+  "provider": "deepseek",
+  "question": {
+    "answerTerms": [
+      "run-to-completion",
+      "microtask checkpoint",
+      "task queue ordering"
+    ],
+    "background": "A browser page loads a single classic script that executes these statements in order: console.log(\"A\"); setTimeout(() => console.log(\"B\"), 0); Promise.resolve().then(() => console.log(\"C\")); console.log(\"D\");. There are no other tasks or exceptions, and the comparison is only among these four logs, not actual millisecond delays or Node.js behavior.",
+    "constraints": [
+      "The script is a classic script running to completion as the current task on the main thread.",
+      "The promise is already fulfilled when .then is called.",
+      "The timer is scheduled with a delay of 0 in the same browser page."
+    ],
+    "evaluationChecklist": [
+      "States that A and D run before any asynchronous callback because the current task runs to completion without interruption.",
+      "States that C runs before B because fulfilled promise callbacks go through the microtask queue and are processed before the next task.",
+      "Explains that B cannot run until the current task ends and the microtask queue is empty, and that the setTimeout delay of 0 does not make it run immediately."
+    ],
+    "followUpDirections": [
+      "Explain what happens if the promise's .then callback takes a long time to run, and whether that changes the relative order of the remaining logs.",
+      "Give a concrete counterexample or ordering variant where a callback scheduled from inside C changes when B runs.",
+      "Describe a local fix that would move both C and a second microtask relative to the timer, and state its execution-order cost."
+    ],
+    "question": "What is the exact order of the four logged strings, and what causes each one to run when it does?"
+  },
+  "status": "success",
+  "usage": {
+    "prices": [
+      {
+        "model": "deepseek-chat",
+        "provider": "deepseek",
+        "rates": {
+          "cacheRead": 0.1,
+          "cacheWrite": 0.0,
+          "input": 1.0,
+          "output": 2.0
+        }
+      }
+    ],
+    "records": [
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-15T15:08:41.155Z",
+        "estimatedUsd": 0.000778,
+        "id": 2,
+        "inputTokens": 756,
+        "model": "deepseek-chat",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 11,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": {
+          "cacheRead": 0.1,
+          "cacheWrite": 0.0,
+          "input": 1.0,
+          "output": 2.0
+        },
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 512,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-15T15:08:37.775Z",
+        "estimatedUsd": 0.0014742,
+        "id": 1,
+        "inputTokens": 1155,
+        "model": "deepseek-chat",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 390,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": {
+          "cacheRead": 0.1,
+          "cacheWrite": 0.0,
+          "input": 1.0,
+          "output": 2.0
+        },
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      }
+    ]
+  }
+}

@@ -27,3 +27,7 @@ Write project documentation, developer descriptions, and code comments in Englis
 ## UI
 
 The frontend uses Meta's Astryx design system (`@astryxdesign/core`, neutral theme, pinned to 0.7.0) with a violet accent and light/dark modes. Use Astryx components and its CSS tokens (`var(--color-...)`) instead of hard-coded colors.
+
+## Session tools
+
+The user authorized interview exports, hint/scope cleanup, timed P1/P2 practice, and API accounting on 2026-10-16. Shared tools live in `session_tools.rs`, `usage.rs`, and `SessionTools.tsx`; see `docs/SESSION_TOOLS.md`. Timers default to off, offer only 10/20/30 minutes, and require explicit Start. Expiry never auto-submits or generates feedback; preserve drafts. Export public question fields, submitted history, assistance labels, feedback and saved P2 notes/diagram, excluding drafts, credentials, settings and private generation metadata. Usage is recorded per actual HTTP attempt, including retries/reviews/repairs. Use provider-reported counters only, preserve unknowns, snapshot explicitly configured USD-per-million rates, and label costs as estimates rather than billed amounts. Cached reuse must not create fake usage. Existing history is not retroactively rewritten or usage-backfilled. Voice/review/study-plan items remain deferred.

@@ -245,6 +245,7 @@ pub fn begin_feedback(c: &Connection, id: &str) -> Result<(), String> {
         [id],
     )
     .map_err(err)?;
+    crate::session_tools::stop(&tx, "p1", id)?;
     tx.commit().map_err(err)
 }
 pub fn retry_pending(
@@ -373,15 +374,23 @@ pub fn submit_reference(
     retry_pending(c, id, provider)
 }
 pub fn delete_session(c: &Connection, id: &str) -> Result<(), String> {
-    c.execute("DELETE FROM interview_sessions WHERE id=?1", [id])
+    let tx = c.unchecked_transaction().map_err(err)?;
+    tx.execute("DELETE FROM interview_sessions WHERE id=?1", [id])
         .map_err(err)?;
-    Ok(())
+    tx.execute(
+        "DELETE FROM mock_clocks WHERE module=?1 AND session_id=?2",
+        params!["p1", id],
+    )
+    .map_err(err)?;
+    tx.commit().map_err(err)
 }
 pub fn clear_history(c: &Connection) -> Result<(), String> {
     let tx = c.unchecked_transaction().map_err(err)?;
     tx.execute("DELETE FROM interview_sessions", [])
         .map_err(err)?;
     tx.execute("DELETE FROM generated_questions", [])
+        .map_err(err)?;
+    tx.execute("DELETE FROM mock_clocks WHERE module=?1", ["p1"])
         .map_err(err)?;
     tx.commit().map_err(err)
 }

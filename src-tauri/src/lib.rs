@@ -11,3 +11,6 @@ pub mod system_design;
 pub mod system_design_store;
 
 pub mod quality;
+
+pub mod session_tools;
+pub mod usage;

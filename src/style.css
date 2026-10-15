@@ -378,3 +378,12 @@ details.case summary {
   margin: 8px 0;
   line-height: var(--line-height-reading);
 }
+
+/* Shared P1/P2 session tools keep tabular records independently scrollable. */
+.session-tools { border-block: 1px solid var(--color-border); padding-block: 12px; margin-block: 12px; }
+.session-tools .actions { flex-wrap: wrap; gap: 8px; }
+.usage-table-wrap { overflow-x: auto; max-height: 340px; margin-block: 12px; }
+.usage-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: start; }
+.usage-table th, .usage-table td { padding: 8px; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+.usage-table th { position: sticky; top: 0; background: var(--color-background-card); }
+.usage-rates { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 10px; margin-bottom: 12px; }

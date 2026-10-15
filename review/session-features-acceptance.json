@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-16",
+  "status": "accepted",
+  "features": [
+    "interview_exports",
+    "hint_scope_cleanup",
+    "timed_interviews",
+    "api_accounting"
+  ],
+  "tests": {
+    "passed": 66,
+    "ignored": 1,
+    "ignoredReason": "Explicit Keychain round-trip remains outside the env-only scope"
+  },
+  "builds": {
+    "frontend": "passed",
+    "desktop": "passed"
+  },
+  "uiChecks": [
+    "P1 default off and explicit Start",
+    "10-minute countdown and pause",
+    "Pause survives full app relaunch",
+    "Actual Markdown download",
+    "Actual P2 JSON download without private metadata/drafts",
+    "P1/P2 usage panels collapsed by default"
+  ],
+  "live": {
+    "provider": "deepseek",
+    "model": "deepseek-chat",
+    "attempts": 2,
+    "approvedCeiling": 12,
+    "status": "success",
+    "artifact": "review/session-features-live-usage.json",
+    "rates": "illustrative isolation-test rates, not provider prices"
+  },
+  "limits": [
+    "Existing histories/caches are not rewritten",
+    "Usage starts at this release; no historical backfill",
+    "Costs require configured rates and complete provider counters, and are estimates, not invoices",
+    "Timed expiry is advisory and never submits answers"
+  ],
+  "sourceSha256": {
+    "src-tauri/src/session_tools.rs": "77c527e921e943d11fb5a0d5ab9a143693d41d97db26d29924e3ce8a73cbacd2",
+    "src-tauri/src/usage.rs": "2f98a6396756a23ef39fecb0c9cce775105a57d23e97d5728551ac2e61bc80d2",
+    "src-tauri/src/llm.rs": "1a1589608d2f85e672fdcdb6d9f3a1cf706cebd1a6ecebe21a2ef10ab5222f30",
+    "src-tauri/src/main.rs": "36019c522dd3693c04adf5372ddbbbdd61dd90d6eb294a1c24a76fe7cc70f5aa",
+    "src/features/interview/SessionTools.tsx": "6ae4bd80fb7e5a01c55afa0a77969b9d935257181e5d4a03f506d5ccaa10e02b"
+  }
+}

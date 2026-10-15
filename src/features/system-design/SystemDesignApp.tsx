@@ -16,6 +16,7 @@ import { LiveResponse } from "../interview/LiveResponse";
 import { Diagram, Markdown } from "./DesignDocument";
 import "../interview/interview.css";
 import "./system-design.css";
+import { SessionTools, UsagePanel } from "../interview/SessionTools";
 
 const stages = [
   "requirements",
@@ -676,8 +677,6 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
                 {list(seed.scaleRanges)}
                 <h3>{t("sdReliability")}</h3>
                 {list(seed.reliabilityConstraints)}
-                <h3>{t("sdDirections")}</h3>
-                {list(seed.deepDiveDirections)}
               </Collapsible>
               <div className="actions">
                 <Button
@@ -732,7 +731,15 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
             </section>
           )}
           {!session ? (
-            <p>{t("sdEmpty")}</p>
+            <>
+              <p>{t("sdEmpty")}</p>
+              <UsagePanel
+                module="p2"
+                provider={config.provider}
+                model={config.model}
+                refreshKey={String(busy)}
+              />
+            </>
           ) : (
             <section className="conversation-panel card">
               <div className="session-heading">
@@ -759,6 +766,19 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
                   onClick={() => setConfirm("session")}
                 />
               </div>
+              <SessionTools
+                key={session.id}
+                module="p2"
+                sessionId={session.id}
+                status={session.status}
+                provider={session.provider}
+                model={session.model}
+                busy={busy || saving}
+                turns={
+                  session.turns.filter((t) => t.role === "candidate").length
+                }
+                stage={session.stage}
+              />
               <div className="question-context">
                 <h3>{session.question.content.question}</h3>
                 <p>{session.question.content.background}</p>

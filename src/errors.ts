@@ -3,6 +3,14 @@ import type { Lang } from "./i18n";
 // The Rust backend reports errors in Chinese. In English mode the UI translates
 // them here, so keep this table in sync when adding or rewording a backend error.
 const EXACT: [string, string][] = [
+  ["无效的费用设置", "Invalid cost settings"],
+  ["未知面试模块", "Unknown interview module"],
+  ["计时面试已结束", "The timed interview has ended"],
+  ["无效的计时操作", "Invalid timer action"],
+  ["无法开始计时面试", "Cannot start a timed interview"],
+  ["尚未开始计时面试", "The timed interview has not started"],
+  ["无效的导出格式", "Invalid export format"],
+
   [
     "AI 内容未通过质量检查，请重试；本地回答已保留",
     "AI content failed quality review; please retry. Your local answer has been preserved",
