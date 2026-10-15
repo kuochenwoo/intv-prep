@@ -107,6 +107,21 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
     [questionId, setQuestionId] = useState("");
   const [session, setSession] = useState<Session | null>(null),
     [workspace, setWorkspace] = useState<Workspace>(emptyWorkspace);
+  const [scenarioSearch, setScenarioSearch] = useState("");
+  const visibleScenarios = (data?.scenarios ?? []).filter((scenario) => {
+    const text = lang === "en" ? scenario.en : scenario;
+    return [
+      scenario.id,
+      scenario.title,
+      scenario.en.title,
+      text.description,
+      ...text.functionalRequirements,
+      ...text.deepDiveDirections,
+    ]
+      .join(" ")
+      .toLocaleLowerCase()
+      .includes(scenarioSearch.trim().toLocaleLowerCase());
+  });
   const [busy, setBusy] = useState(false),
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
@@ -483,33 +498,69 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
               label={t("topicCount", { n: data?.scenarios.length ?? 0 })}
             />
           </div>
+          <TextInput
+            label={t("sdSearch")}
+            placeholder={t("sdSearchHint")}
+            size="sm"
+            width="100%"
+            value={scenarioSearch}
+            onChange={setScenarioSearch}
+          />
+          <p className="muted topic-match-count" role="status">
+            {t("sdMatches", {
+              n: visibleScenarios.length,
+              total: data?.scenarios.length ?? 0,
+            })}
+          </p>
+          {scenarioSearch && (
+            <Button
+              label={t("sdClearSearch")}
+              size="sm"
+              variant="ghost"
+              onClick={() => setScenarioSearch("")}
+            />
+          )}
           <Button
             label={t("randomTopic")}
             size="sm"
             width="100%"
-            isDisabled={busy || !data}
+            isDisabled={busy || !visibleScenarios.length}
             onClick={() => {
-              // Never lands on the scenario already open, so a click always changes it.
-              const others = data!.scenarios.filter((x) => x.id !== scenarioId);
+              // Prefer a different match; a single matching scenario remains selectable.
+              const others = visibleScenarios.filter(
+                (x) => x.id !== scenarioId,
+              );
+              const candidates = others.length ? others : visibleScenarios;
               setScenarioId(
-                others[Math.floor(Math.random() * others.length)].id,
+                candidates[Math.floor(Math.random() * candidates.length)].id,
               );
               setQuestionId("");
             }}
           />
-          {data?.scenarios.map((s) => (
-            <button
-              className={`problem ${s.id === scenarioId ? "active" : ""}`}
-              key={s.id}
-              disabled={busy}
-              onClick={() => {
-                setScenarioId(s.id);
-                setQuestionId("");
-              }}
-            >
-              <strong>{lang === "en" ? s.en.title : s.title}</strong>
-            </button>
-          ))}
+          <div
+            className="topic-list"
+            role="region"
+            aria-label={t("sdScenarios")}
+            tabIndex={0}
+          >
+            {!visibleScenarios.length && (
+              <p className="muted">{t("sdNoMatches")}</p>
+            )}
+            {visibleScenarios.map((s) => (
+              <button
+                className={`problem ${s.id === scenarioId ? "active" : ""}`}
+                key={s.id}
+                disabled={busy}
+                aria-pressed={s.id === scenarioId}
+                onClick={() => {
+                  setScenarioId(s.id);
+                  setQuestionId("");
+                }}
+              >
+                <strong>{lang === "en" ? s.en.title : s.title}</strong>
+              </button>
+            ))}
+          </div>
           <h3>{t("sdHistory")}</h3>
           {data?.sessions.length === 0 && (
             <p className="muted">{t("noSessions")}</p>
@@ -553,12 +604,15 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
               <h2>{seed.title}</h2>
               <p>{seed.description}</p>
               <Collapsible trigger={t("sdSeed")} defaultIsOpen={false}>
+                <p className="muted">{t("sdLocalTargets")}</p>
                 <h3>{t("sdFunctions")}</h3>
                 {list(seed.functionalRequirements)}
                 <h3>{t("sdScale")}</h3>
                 {list(seed.scaleRanges)}
                 <h3>{t("sdReliability")}</h3>
                 {list(seed.reliabilityConstraints)}
+                <h3>{t("sdDirections")}</h3>
+                {list(seed.deepDiveDirections)}
               </Collapsible>
               <div className="actions">
                 <Button

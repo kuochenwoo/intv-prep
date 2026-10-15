@@ -223,5 +223,455 @@
         "Storage partitions and recovery"
       ]
     }
+  },
+  {
+    "id": "file-sync",
+    "title": "文件存储与多端同步",
+    "description": "设计支持断点续传、版本历史和离线修改的个人文件同步服务。",
+    "functionalRequirements": [
+      "上传、下载和分块断点续传",
+      "跨设备变更同步与版本历史",
+      "文件分享、撤销分享与删除"
+    ],
+    "scaleRanges": [
+      "100万–1000万 日活用户；每人每日上传或修改 5–20 个文件",
+      "平均变更文件 2–10 MB，单文件上限 10 GB；历史版本保留 30 天"
+    ],
+    "reliabilityConstraints": [
+      "元数据操作 p99 低于 300 ms；完整文件传输时间按文件大小与带宽另算",
+      "成功确认的版本须持久化；离线并发修改不可静默覆盖，撤销分享的传播边界需明确"
+    ],
+    "deepDiveDirections": [
+      "内容分块、元数据提交与孤儿块回收",
+      "变更日志、设备游标与冲突副本",
+      "跨租户去重泄漏、权限校验和恢复点目标"
+    ],
+    "en": {
+      "title": "File Storage and Multi-Device Sync",
+      "description": "Design personal file sync with resumable uploads, version history and offline edits.",
+      "functionalRequirements": [
+        "Upload, download and resume chunked transfers",
+        "Sync changes across devices and retain versions",
+        "Share files, revoke access and delete"
+      ],
+      "scaleRanges": [
+        "1–10 million daily active users; 5–20 uploaded or modified files/user/day",
+        "Mean changed file size 2–10 MB, maximum file size 10 GB; keep old versions for 30 days"
+      ],
+      "reliabilityConstraints": [
+        "Metadata operation p99 below 300 ms; estimate full-file transfer time separately from size and bandwidth",
+        "Acknowledged versions must be durable; no silent overwrites of concurrent offline edits; define access-revocation propagation"
+      ],
+      "deepDiveDirections": [
+        "Content chunks, metadata commits and orphan cleanup",
+        "Change logs, device cursors and conflict copies",
+        "Cross-tenant deduplication leakage, authorization and recovery-point objectives"
+      ]
+    }
+  },
+  {
+    "id": "video-streaming",
+    "title": "视频上传与点播",
+    "description": "设计从上传、异步转码到自适应码率播放的视频点播平台，不含直播。",
+    "functionalRequirements": [
+      "大文件上传与处理状态查询",
+      "生成多档码率与播放清单",
+      "鉴权播放、下架与观看进度"
+    ],
+    "scaleRanges": [
+      "每日上传 1万–10万 条视频；平均每条 10 分钟、原始码率 8 Mbps",
+      "10万–100万 峰值同时观看；平均下发码率 2–5 Mbps，视频保留 1 年"
+    ],
+    "reliabilityConstraints": [
+      "在约定网络条件下首帧 p95 低于 2 秒；播放成功率目标 99.9%",
+      "未完成转码的版本不可发布；下架内容的清单和 CDN 缓存失效时限需明确"
+    ],
+    "deepDiveDirections": [
+      "上传与转码状态机、重复任务和失败重试",
+      "切片、码率阶梯与 CDN 回源流量",
+      "原片、转码副本存储与撤销权限的成本"
+    ],
+    "en": {
+      "title": "Video Upload and On-Demand Streaming",
+      "description": "Design upload, asynchronous transcoding and adaptive playback for on-demand video, excluding live streams.",
+      "functionalRequirements": [
+        "Upload large files and query processing state",
+        "Produce bitrate variants and playback manifests",
+        "Authorize playback, remove content and resume viewing"
+      ],
+      "scaleRanges": [
+        "10k–100k uploads/day; mean duration 10 minutes at source bitrate 8 Mbps",
+        "100k–1 million peak concurrent viewers; mean delivery bitrate 2–5 Mbps; retain videos for one year"
+      ],
+      "reliabilityConstraints": [
+        "First frame p95 below two seconds under agreed network conditions; playback success target 99.9%",
+        "Do not publish incomplete transcodes; define removal deadlines for manifests and CDN caches"
+      ],
+      "deepDiveDirections": [
+        "Upload/transcode state machines, duplicate jobs and retries",
+        "Segments, bitrate ladders and CDN origin traffic",
+        "Source/variant storage and access-revocation costs"
+      ]
+    }
+  },
+  {
+    "id": "search-autocomplete",
+    "title": "搜索词自动补全",
+    "description": "设计按输入前缀返回热门搜索词的服务，不包含完整网页搜索或个性化推荐。",
+    "functionalRequirements": [
+      "前缀查询与前 10 条建议",
+      "从搜索事件更新热门度并过滤违规词",
+      "支持多语言词表与租户隔离"
+    ],
+    "scaleRanges": [
+      "1000万–1亿 个候选词；平均每词 30 字节文本，计数与索引额外估算",
+      "峰值 1万–10万 次前缀请求/秒；每日 1亿–10亿 条搜索事件"
+    ],
+    "reliabilityConstraints": [
+      "建议查询 p99 低于 100 ms；可用性目标 99.9%",
+      "热门度允许 5 分钟延迟；违规词删除需在 1 分钟内影响在线建议"
+    ],
+    "deepDiveDirections": [
+      "前缀索引分区、热门前缀缓存与内存预算",
+      "事件聚合、索引快照构建与版本切换",
+      "新鲜度与查询延迟、删除优先级和降级策略"
+    ],
+    "en": {
+      "title": "Search Autocomplete",
+      "description": "Design popular search suggestions by prefix, excluding full web search and personalized recommendations.",
+      "functionalRequirements": [
+        "Return the top ten suggestions for a prefix",
+        "Update popularity from search events and filter blocked terms",
+        "Support multilingual dictionaries and tenant isolation"
+      ],
+      "scaleRanges": [
+        "10–100 million candidate terms; mean text size 30 bytes/term, with counters and indexes estimated separately",
+        "10k–100k peak prefix requests/s; 100 million–1 billion search events/day"
+      ],
+      "reliabilityConstraints": [
+        "Suggestion query p99 below 100 ms; availability target 99.9%",
+        "Popularity may lag by five minutes; blocked-term removal must affect online results within one minute"
+      ],
+      "deepDiveDirections": [
+        "Prefix-index partitions, popular-prefix caches and memory budgets",
+        "Event aggregation, index snapshots and version swaps",
+        "Freshness vs latency, deletion priority and degradation"
+      ]
+    }
+  },
+  {
+    "id": "notification-platform",
+    "title": "多渠道通知平台",
+    "description": "设计支持站内信、邮件和移动推送的多租户通知平台。",
+    "functionalRequirements": [
+      "提交单发或批量通知并查询状态",
+      "按用户偏好、免打扰时段和模板发送",
+      "计划发送、取消与失败重试"
+    ],
+    "scaleRanges": [
+      "每日 1000万–1亿 条逻辑通知；平均每条触发 1–3 个渠道投递",
+      "峰值为平均 10 倍；状态记录每条 500 字节、保留 30 天，正文另算"
+    ],
+    "reliabilityConstraints": [
+      "提交接口 p99 低于 200 ms；即时通知正常负载下 99% 在 30 秒内完成首次供应商调用",
+      "已受理通知不得静默丢失；供应商受理不等于用户已收到，过期通知不应无限重试"
+    ],
+    "deepDiveDirections": [
+      "扇出、渠道队列隔离与租户配额",
+      "幂等键、供应商超时和状态回调对账",
+      "偏好变更、取消竞争和端到端投递语义"
+    ],
+    "en": {
+      "title": "Multi-Channel Notification Platform",
+      "description": "Design a multi-tenant platform for inbox messages, email and mobile push.",
+      "functionalRequirements": [
+        "Submit individual or bulk notifications and query status",
+        "Apply preferences, quiet hours and templates",
+        "Schedule, cancel and retry delivery"
+      ],
+      "scaleRanges": [
+        "10–100 million logical notifications/day; mean 1–3 channel deliveries per notification",
+        "Peak load ten times average; 500 bytes/status record retained for 30 days, excluding message bodies"
+      ],
+      "reliabilityConstraints": [
+        "Submission p99 below 200 ms; at normal load 99% of immediate notifications reach their first provider attempt within 30 seconds",
+        "No silent loss after acceptance; provider acceptance is not user receipt, and expired notifications must not retry forever"
+      ],
+      "deepDiveDirections": [
+        "Fan-out, isolated channel queues and tenant quotas",
+        "Idempotency, provider timeouts and callback reconciliation",
+        "Preference changes, cancellation races and end-to-end delivery semantics"
+      ]
+    }
+  },
+  {
+    "id": "web-crawler",
+    "title": "大规模网页爬虫",
+    "description": "设计对公开网页进行增量抓取、去重与内容存储的爬虫平台。",
+    "functionalRequirements": [
+      "维护 URL 待抓队列与发现新链接",
+      "遵守 robots 规则和按站点限速",
+      "内容去重、重抓计划和失败重试"
+    ],
+    "scaleRanges": [
+      "每日抓取 1000万–1亿 个页面；平均压缩后内容 100 KB",
+      "最多 1000万 个站点；原始页面保留 30 天，URL 元数据单独估算"
+    ],
+    "reliabilityConstraints": [
+      "已入队 URL 可在故障后恢复；允许至少一次抓取并去重",
+      "每站点并发和请求间隔须可配置；站点拒绝与 robots 获取失败的处理策略需明确"
+    ],
+    "deepDiveDirections": [
+      "抓取前沿分区、站点公平性和热点域名",
+      "URL 规范化、循环链接与内容去重",
+      "DNS、重定向与 SSRF 隔离，以及重抓新鲜度成本"
+    ],
+    "en": {
+      "title": "Large-Scale Web Crawler",
+      "description": "Design incremental crawling, deduplication and storage of public web pages.",
+      "functionalRequirements": [
+        "Maintain a URL frontier and discover links",
+        "Respect robots rules and per-site rate controls",
+        "Deduplicate content, schedule recrawls and retry failures"
+      ],
+      "scaleRanges": [
+        "10–100 million pages/day; mean compressed content size 100 KB",
+        "Up to ten million sites; retain raw pages for 30 days and estimate URL metadata separately"
+      ],
+      "reliabilityConstraints": [
+        "Queued URLs must recover after failure; at-least-once fetching with deduplication is allowed",
+        "Configure per-site concurrency and request spacing; explicitly handle site rejection and failure to retrieve robots rules"
+      ],
+      "deepDiveDirections": [
+        "Frontier partitions, site fairness and hot domains",
+        "URL normalization, link cycles and content deduplication",
+        "DNS/redirect handling, SSRF isolation and recrawl freshness costs"
+      ]
+    }
+  },
+  {
+    "id": "metrics-platform",
+    "title": "指标采集与告警平台",
+    "description": "设计多租户时序指标写入、查询和告警服务，不包含全文日志检索。",
+    "functionalRequirements": [
+      "采集带标签的指标样本",
+      "按时间窗口聚合查询与仪表盘展示",
+      "告警规则执行、去重与通知"
+    ],
+    "scaleRanges": [
+      "10万–100万 个采集目标，每个目标 100 个活跃序列，每 15 秒采样一次",
+      "每样本按 16 字节未压缩数据估算，不含标签索引；原始数据保留 15 天"
+    ],
+    "reliabilityConstraints": [
+      "已确认写入可恢复；重复或乱序样本的接纳边界需定义",
+      "最近 1 小时聚合查询 p95 低于 2 秒；规则每 30 秒评估，定义数据延迟下的告警行为"
+    ],
+    "deepDiveDirections": [
+      "时间序列分片、写入日志与标签基数限制",
+      "分层存储、降采样与跨分片聚合",
+      "写入背压、租户隔离和告警恢复后的重放语义"
+    ],
+    "en": {
+      "title": "Metrics Ingestion and Alerting",
+      "description": "Design multi-tenant time-series ingestion, queries and alerts, excluding full-text log search.",
+      "functionalRequirements": [
+        "Collect labelled metric samples",
+        "Aggregate time windows and serve dashboards",
+        "Evaluate alert rules, deduplicate and notify"
+      ],
+      "scaleRanges": [
+        "100k–1 million scrape targets, each with 100 active series sampled every 15 seconds",
+        "Assume 16 uncompressed bytes/sample excluding label indexes; retain raw data for 15 days"
+      ],
+      "reliabilityConstraints": [
+        "Acknowledged writes must recover; define acceptance boundaries for duplicate and out-of-order samples",
+        "Last-hour aggregate query p95 below two seconds; evaluate rules every 30 seconds and define behavior under ingestion lag"
+      ],
+      "deepDiveDirections": [
+        "Series partitioning, write-ahead logs and label-cardinality limits",
+        "Storage tiers, downsampling and cross-partition aggregation",
+        "Ingestion backpressure, tenant isolation and alert replay after recovery"
+      ]
+    }
+  },
+  {
+    "id": "collaborative-editor",
+    "title": "多人协作文档",
+    "description": "设计支持多人实时编辑和离线重连的纯文本协作文档服务。",
+    "functionalRequirements": [
+      "创建文档、共享权限与同时编辑",
+      "离线修改重连合并与版本历史",
+      "在线光标与文档导出"
+    ],
+    "scaleRanges": [
+      "100万–1000万 日活用户；10万–100万 峰值编辑连接",
+      "每个活跃连接每秒 1–5 次编辑操作、每次约 200 字节；单文档最多 50 人同时编辑"
+    ],
+    "reliabilityConstraints": [
+      "同区域在线编辑传播 p95 低于 200 ms；已确认操作须持久化",
+      "分区后重连需收敛且不可静默丢失已确认编辑；权限撤销的离线写入边界需明确"
+    ],
+    "deepDiveDirections": [
+      "文档路由、连接网关与持久操作日志",
+      "OT 或 CRDT 与中心序列器的跨组件取舍",
+      "快照压缩、历史回收与长期离线客户端兼容"
+    ],
+    "en": {
+      "title": "Collaborative Text Documents",
+      "description": "Design realtime plain-text collaboration with offline reconnection.",
+      "functionalRequirements": [
+        "Create/share documents and edit concurrently",
+        "Merge offline edits on reconnect and retain history",
+        "Show presence cursors and export documents"
+      ],
+      "scaleRanges": [
+        "1–10 million daily active users; 100k–1 million peak editing connections",
+        "Each active connection emits 1–5 edits/s at about 200 bytes/edit; up to 50 concurrent editors/document"
+      ],
+      "reliabilityConstraints": [
+        "Same-region edit propagation p95 below 200 ms; acknowledged operations must be durable",
+        "Reconnect after partitions must converge without silently losing acknowledged edits; define offline writes after permission revocation"
+      ],
+      "deepDiveDirections": [
+        "Document routing, connection gateways and durable operation logs",
+        "Cross-component trade-offs of OT/CRDT vs central sequencing",
+        "Snapshots, history compaction and long-offline client compatibility"
+      ]
+    }
+  },
+  {
+    "id": "ride-dispatch",
+    "title": "附近司机与实时派单",
+    "description": "设计按位置查找附近司机并完成叫车匹配的服务，不含路径规划和计费。",
+    "functionalRequirements": [
+      "司机上报位置与在线状态",
+      "乘客查询附近司机并发起叫车",
+      "司机接单、取消与匹配状态查询"
+    ],
+    "scaleRanges": [
+      "10万–100万 在线司机，每 3 秒上报一次位置，每次约 100 字节",
+      "峰值每秒 1000–10000 次叫车；位置查询量为叫车量 10 倍，历史位置保留 7 天"
+    ],
+    "reliabilityConstraints": [
+      "附近司机查询 p99 低于 300 ms；正常负载下派单决定 p95 低于 3 秒",
+      "每位司机只能有一个有效行程；允许位置短暂陈旧，但重复派单不可只靠地理索引防止"
+    ],
+    "deepDiveDirections": [
+      "地理分区与移动司机跨格更新",
+      "候选召回、司机预留与超时重新匹配",
+      "热点区域扩容、位置新鲜度和一致性权衡"
+    ],
+    "en": {
+      "title": "Nearby Drivers and Ride Dispatch",
+      "description": "Design location lookup and ride matching, excluding routing and billing.",
+      "functionalRequirements": [
+        "Receive driver locations and availability",
+        "Find nearby drivers and request rides",
+        "Accept/cancel matches and query ride state"
+      ],
+      "scaleRanges": [
+        "100k–1 million online drivers reporting every three seconds at about 100 bytes/update",
+        "1k–10k peak ride requests/s; location queries ten times ride requests; retain location history for seven days"
+      ],
+      "reliabilityConstraints": [
+        "Nearby lookup p99 below 300 ms; at normal load dispatch decisions p95 below three seconds",
+        "At most one active trip per driver; slightly stale locations are allowed, but a spatial index alone must not prevent double assignment"
+      ],
+      "deepDiveDirections": [
+        "Geographic partitions and movement across cells",
+        "Candidate retrieval, driver reservations and rematching timeouts",
+        "Hot-area scaling, location freshness and consistency trade-offs"
+      ]
+    }
+  },
+  {
+    "id": "ticket-booking",
+    "title": "选座与票务预订",
+    "description": "设计演出票的座位查询、限时预留和购票确认服务。",
+    "functionalRequirements": [
+      "查询座位图与可售状态",
+      "限时预留座位和确认订单",
+      "取消、预留过期与订单结果查询"
+    ],
+    "scaleRanges": [
+      "每场 1万–10万 个座位；同时售卖 10–100 场活动",
+      "单场开售峰值每秒 1万–10万 次座位查询、1000–10000 次预留；预留有效期 5 分钟"
+    ],
+    "reliabilityConstraints": [
+      "同一座位不得对应两个已确认订单；座位图可有明确的短暂陈旧",
+      "预留接口 p99 低于 500 ms；外部支付回调可能重复、延迟或晚于预留过期"
+    ],
+    "deepDiveDirections": [
+      "活动分区、热点座位与权威预留事务",
+      "订单、支付结果和库存状态机对账",
+      "排队准入、过期释放与晚到成功回调补偿"
+    ],
+    "en": {
+      "title": "Seat Reservation and Ticket Booking",
+      "description": "Design seat availability, temporary holds and booking confirmation for events.",
+      "functionalRequirements": [
+        "Query seat maps and availability",
+        "Hold seats temporarily and confirm orders",
+        "Cancel, expire holds and query booking outcomes"
+      ],
+      "scaleRanges": [
+        "10k–100k seats/event; 10–100 events selling concurrently",
+        "Per-event opening peaks of 10k–100k seat-map queries/s and 1k–10k hold requests/s; holds last five minutes"
+      ],
+      "reliabilityConstraints": [
+        "A seat must not have two confirmed bookings; seat maps may have explicitly bounded staleness",
+        "Hold request p99 below 500 ms; external payment callbacks may duplicate, lag or arrive after hold expiry"
+      ],
+      "deepDiveDirections": [
+        "Event partitions, hot seats and authoritative hold transactions",
+        "Reconciling order, payment-result and inventory state machines",
+        "Admission queues, expiry release and compensation for late success callbacks"
+      ]
+    }
+  },
+  {
+    "id": "distributed-rate-limiter",
+    "title": "多租户分布式限流",
+    "description": "设计供 API 网关使用的多租户配额和突发流量控制服务。",
+    "functionalRequirements": [
+      "按租户和接口配置速率及突发额度",
+      "网关查询并扣减额度，返回允许或拒绝",
+      "策略热更新、使用统计与租户隔离"
+    ],
+    "scaleRanges": [
+      "100万 个租户；全局峰值每秒 100万–1000万 次限流判定",
+      "100–1000 个网关实例；单个热点租户最高占总流量 10%，统计保留 7 天"
+    ],
+    "reliabilityConstraints": [
+      "同区域附加判定延迟 p99 低于 5 ms；判定可用性目标 99.99%",
+      "配额精度、故障放行或拒绝、跨区域超额上界必须显式约定，不能同时默认全局精确与分区下无阻塞"
+    ],
+    "deepDiveDirections": [
+      "按键分片、热点隔离与网关本地额度租赁",
+      "原子扣减、时间来源与策略版本传播",
+      "集中计数与分区额度的精度、延迟和可用性取舍"
+    ],
+    "en": {
+      "title": "Multi-Tenant Distributed Rate Limiter",
+      "description": "Design quotas and burst control for API gateways across tenants.",
+      "functionalRequirements": [
+        "Configure per-tenant and per-endpoint rates and burst budgets",
+        "Gateways check/decrement budgets and receive allow/deny decisions",
+        "Hot-update policies, report usage and isolate tenants"
+      ],
+      "scaleRanges": [
+        "One million tenants; 1–10 million peak decisions/s globally",
+        "100–1000 gateway instances; a hot tenant may produce 10% of total load; retain usage statistics for seven days"
+      ],
+      "reliabilityConstraints": [
+        "Same-region added decision latency p99 below five milliseconds; decision availability target 99.99%",
+        "Explicitly agree quota precision, fail-open/fail-closed behavior and cross-region overshoot bounds; do not assume exact global quotas with nonblocking partitions"
+      ],
+      "deepDiveDirections": [
+        "Key partitioning, hot-tenant isolation and gateway quota leases",
+        "Atomic consumption, time sources and policy-version propagation",
+        "Precision, latency and availability of central counters vs partitioned budgets"
+      ]
+    }
   }
 ]

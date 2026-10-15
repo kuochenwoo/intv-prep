@@ -1,0 +1,81 @@
+[
+  {
+    "scenarioId": "file-sync",
+    "sources": [
+      "https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/content-hash",
+      "https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html"
+    ],
+    "reviewNote": "Compare content transfer with metadata commit, permissions and conflict handling. Chunk hashes validate content, not access rights; atomic metadata publication does not automatically clean abandoned chunks.",
+    "capacityExample": "At 1m users, 5 changed files/day and 2 MB/file: 10 TB/day of full-file upload before deduplication, retained versions, replication, downloads and metadata. State a changed-byte ratio before claiming delta savings."
+  },
+  {
+    "scenarioId": "video-streaming",
+    "sources": [
+      "https://www.rfc-editor.org/rfc/rfc8216.html",
+      "https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html"
+    ],
+    "reviewNote": "Connect upload storage, asynchronous transcode jobs, publishable manifests and delivery caches. HLS is a protocol option, not a required vendor architecture; define cache/revocation boundaries.",
+    "capacityExample": "At 10k uploads/day, 600 seconds/video and 8 Mbps source: 6 TB/day of source data. At 100k concurrent viewers and 2 Mbps: 200 Gbps viewer delivery, not origin bandwidth after CDN caching."
+  },
+  {
+    "scenarioId": "search-autocomplete",
+    "sources": [
+      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-suggesters"
+    ],
+    "reviewNote": "Separate event ingestion and offline/incremental popularity updates from latency-critical prefix lookup. Completion indexes are one approach; a blocked-term removal path needs a tighter bound than general index refresh.",
+    "capacityExample": "At 10m terms and 30 bytes/term: 300 MB of text only. Prefix structures, per-prefix top-k entries, counters, replicas and language normalization add overhead."
+  },
+  {
+    "scenarioId": "notification-platform",
+    "sources": [
+      "https://firebase.google.com/docs/cloud-messaging/customize-messages/setting-message-lifespan"
+    ],
+    "reviewNote": "Follow accepted work through fan-out queues, providers and callbacks. Do not equate provider acceptance or transport acknowledgement with user receipt; expire stale notifications and bound retries.",
+    "capacityExample": "At 10m notifications/day and 3 channels: 30m delivery attempts/day before retries, about 347.2/s average and 3472/s at tenfold peak. One 500-byte status row per logical notification for 30 days is 150 GB; per-channel history is additional."
+  },
+  {
+    "scenarioId": "web-crawler",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9309.html"],
+    "reviewNote": "Connect frontier scheduling, per-site politeness, fetching, parsing and deduplication. Robots rules are not authorization. Revalidate destination safety after DNS resolution and redirects; crawling does not bypass access controls.",
+    "capacityExample": "At 10m pages/day and 100 KB/page: 1 TB/day, 30 TB for 30 days of compressed pages before replicas, URL metadata and duplicate savings; average fetch rate is about 115.7/s."
+  },
+  {
+    "scenarioId": "metrics-platform",
+    "sources": [
+      "https://prometheus.io/docs/practices/naming/",
+      "https://prometheus.io/docs/prometheus/latest/storage/"
+    ],
+    "reviewNote": "Follow ingestion WAL, series partitions, query aggregation and alert evaluation. Label cardinality multiplies series. The seed uses uncompressed 16-byte samples; published compression observations are not a quota or a universal storage guarantee.",
+    "capacityExample": "At 100k targets, 100 series/target and one sample/15 seconds: about 666667 samples/s. At 16 bytes/sample for 15 days: 13.824 TB raw samples before indexes, WAL, replicas and compression."
+  },
+  {
+    "scenarioId": "collaborative-editor",
+    "sources": [
+      "https://docs.yjs.dev/api/document-updates",
+      "https://docs.yjs.dev/getting-started/working-with-shared-types"
+    ],
+    "reviewNote": "Compare sequencing/OT/CRDT choices without insisting on one. Merge convergence does not provide durable acknowledgement, authorization, transport or presence semantics by itself; design snapshots and offline compatibility.",
+    "capacityExample": "At 100k active connections and 1 edit/s at 200 bytes: 20 MB/s incoming edit payload, excluding protocol, WAL, snapshots and recipient fan-out. Connection count is not simultaneously active editing count unless assumed."
+  },
+  {
+    "scenarioId": "ride-dispatch",
+    "sources": [
+      "https://redis.io/docs/latest/develop/ai/search-and-query/query/geo-spatial/",
+      "https://www.postgresql.org/docs/18/transaction-iso.html"
+    ],
+    "reviewNote": "Separate approximate spatial candidate lookup from authoritative driver/trip reservation. A spatial index cannot enforce exclusive assignment. Movement, stale locations and expiring reservations cross component boundaries.",
+    "capacityExample": "At 100k drivers reporting every 3 seconds: about 33333 updates/s and 3.333 MB/s at 100 bytes/update. Seven-day continuous reporting is 2.016 TB raw history, before indexes and replicas."
+  },
+  {
+    "scenarioId": "ticket-booking",
+    "sources": ["https://www.postgresql.org/docs/18/transaction-iso.html"],
+    "reviewNote": "Seat holds and confirmation need authoritative transitions; cached maps can lag. Distinguish this from generic flash-sale inventory using individual seats, hold expiry and a late payment-success callback race. Evaluate alternatives without claiming exactly-once external payment.",
+    "capacityExample": "At 10 simultaneous events each with 10k peak seat-map queries/s: 100k aggregate reads/s. Do not multiply one event peak by all events unless simultaneous openings are an explicit assumption; hold attempts and live holds are different quantities."
+  },
+  {
+    "scenarioId": "distributed-rate-limiter",
+    "sources": ["https://redis.io/docs/latest/commands/incr/"],
+    "reviewNote": "Compare central atomic counters, sharded budgets and gateway leases. Atomic commands on one Redis instance do not yield exact quotas across regions or after asynchronous failover; explicitly bound overshoot and define partition behavior.",
+    "capacityExample": "At 1m decisions/s across 100 gateways: 10k decisions/s/gateway if evenly distributed. A hot tenant producing 10% contributes 100k decisions/s and can dominate one key; aggregate throughput does not guarantee balanced partitions."
+  }
+]

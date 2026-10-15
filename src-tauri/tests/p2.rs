@@ -101,14 +101,34 @@ fn start(c: &rusqlite::Connection) -> DesignSession {
     store::start(c, &q.id, &config()).unwrap()
 }
 #[test]
-fn five_bilingual_scenarios_and_distinct_system_design_prompts() {
+fn fifteen_bilingual_scenarios_and_distinct_system_design_prompts() {
     let seeds = scenarios();
-    assert_eq!(seeds.len(), 5);
+    assert_eq!(seeds.len(), 15);
     let unique: std::collections::HashSet<_> = seeds.iter().map(|s| s.id.as_str()).collect();
-    assert_eq!(unique.len(), 5);
+    assert_eq!(unique.len(), 15);
+    for id in [
+        "url-shortener",
+        "flash-sale",
+        "chat",
+        "activity-feed",
+        "task-queue",
+    ] {
+        assert!(unique.contains(id), "missing original scenario: {id}");
+    }
     for seed in seeds {
         for text in [&seed.text, &seed.en] {
-            assert!(!text.title.is_empty());
+            assert!(!text.title.trim().is_empty());
+            assert!(!text.description.trim().is_empty());
+            assert!(
+                text.functional_requirements
+                    .iter()
+                    .chain(&text.scale_ranges)
+                    .chain(&text.reliability_constraints)
+                    .chain(&text.deep_dive_directions)
+                    .all(|item| !item.trim().is_empty()),
+                "{}",
+                seed.id
+            );
             assert!(text.functional_requirements.len() >= 3);
             assert!(text.scale_ranges.len() >= 2);
             assert!(text.reliability_constraints.len() >= 2);
@@ -132,6 +152,66 @@ fn five_bilingual_scenarios_and_distinct_system_design_prompts() {
             .len(),
         8
     );
+}
+#[test]
+fn expanded_scenarios_have_sources_and_roundtrip_bilingual_caches_offline() {
+    let seeds = scenarios();
+    let reviews: serde_json::Value =
+        serde_json::from_str(include_str!("../../content/system-design/review.json")).unwrap();
+    let mut reviewed = std::collections::HashSet::new();
+    for entry in reviews.as_array().unwrap() {
+        let id = entry["scenarioId"].as_str().unwrap();
+        assert!(reviewed.insert(id), "duplicate review: {id}");
+        assert!(seeds.iter().any(|s| s.id == id), "orphan review: {id}");
+        assert!(!entry["reviewNote"].as_str().unwrap().trim().is_empty());
+        assert!(!entry["capacityExample"].as_str().unwrap().trim().is_empty());
+        let sources = entry["sources"].as_array().unwrap();
+        assert!(!sources.is_empty());
+        assert!(sources
+            .iter()
+            .all(|url| url.as_str().unwrap().starts_with("https://")));
+    }
+    assert_eq!(reviewed.len(), 10);
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("expanded-scenarios.sqlite3");
+    let c = db::open(&path).unwrap();
+    let mut cached_ids = Vec::new();
+    for (index, seed) in seeds.iter().enumerate() {
+        if index >= 5 {
+            assert!(
+                reviewed.contains(seed.id.as_str()),
+                "missing review: {}",
+                seed.id
+            );
+        }
+        for lang in [Lang::Zh, Lang::En] {
+            // Explicit storage fixture, not a generated question or live-provider claim.
+            let mut fixture = question();
+            fixture.question = if lang == Lang::En {
+                &seed.en.title
+            } else {
+                &seed.text.title
+            }
+            .clone();
+            let cached = store::cache_question(&c, &seed.id, lang, &config(), fixture).unwrap();
+            cached_ids.push((cached.id, seed.id.clone(), lang));
+        }
+    }
+    drop(c);
+    let c = db::open(&path).unwrap();
+    assert_eq!(store::questions(&c).unwrap().len(), 30);
+    for (id, seed_id, lang) in cached_ids {
+        let restored = store::question(&c, &id).unwrap();
+        assert_eq!(restored.seed_id, seed_id);
+        assert_eq!(restored.lang, lang);
+        let s = store::start(&c, &id, &config()).unwrap();
+        assert_eq!(s.question.seed_id, seed_id);
+        assert_eq!(s.question.lang, lang);
+        assert_eq!(s.stage, Stage::Requirements);
+        assert_eq!(s.turns.len(), 1);
+        assert_eq!(s.turns[0].role, "interviewer");
+        assert_eq!(s.turns[0].text, Stage::Requirements.guide(lang));
+    }
 }
 #[test]
 fn stages_preserve_separate_drafts_and_workspace_after_restart() {

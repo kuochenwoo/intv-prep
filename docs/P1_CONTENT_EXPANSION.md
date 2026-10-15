@@ -86,4 +86,21 @@ INTERVIEW_PROVIDER=deepseek INTERVIEW_MODEL=deepseek-flash \
 npm run build
 ```
 
-Verification results are recorded below after execution.
+Verification on 2026-10-15:
+
+- Backend library and P1 integration tests: **27 passed, 0 failed, 1 intentionally ignored OS Keychain test**. This includes the expanded-content review check and bilingual/prompt-policy checks, plus existing reference, retry and persistence coverage. Logs: `/tmp/intv-p1-expansion-tests.log`.
+- `npm run build` and native debug app packaging passed. Vite reports the existing large-chunk warning. Logs: `/tmp/intv-p1-expansion-build.log` and `/tmp/intv-p1-expansion-desktop.log`.
+- Native computer-use acceptance verified all 40 topics, English and Chinese title search in the English UI, the five-topic Networking category, random selection within that category, topic focus/assumptions, and the zero-match state with random selection disabled. The dark layout keeps controls readable and the topic list bounded; existing interview history and an empty saved draft remained intact. Appearance, language, provider settings and credentials were not changed. No UI generation request was made.
+- Live acceptance was initially blocked by automatic approval review over the new content payload. After the user explicitly approved these two topic payloads and their generated answers, the same probe was submitted for execution. The approved probe completed as described below.
+
+## Live sample review
+
+The explicitly approved DeepSeek `deepseek-flash` run completed eight real logical requests: generation, reference answer, follow-up and five-dimension feedback for `mvcc-snapshots` in Chinese and `javascript-event-loop` in English. Both generated questions used the selected small scenario rather than a complete architecture task; the reference explanations correctly described statement snapshots and browser log order A, D, C, B. Logs: `/tmp/intv-p1-expansion-live.log`; complete generated content: `/tmp/intv-p1-expansion-live.json`. No application history or credentials were written.
+
+Transport and schema completion passed, but semantic quality did **not** fully pass:
+
+- The English event-loop question's visible constraints already explained the queue rules and its question stated the final output order. This weakens the assessment even though the seed itself does not give the answer.
+- The Chinese generated checklist included a Repeatable Read comparison not asked in the opening question; optional extensions should not become mandatory opening coverage.
+- Both feedback samples disclosed AI assistance but still assigned some `good`/`partial` ratings to AI-only evidence, contrary to the existing policy that such dimensions should be `missing`. The English sample also put unasked selection rationale in `gaps` and discounted an explanation that already stated the checkpoint order.
+
+These are recorded model-output defects, not claims of user weakness or successful semantic acceptance. The content-expansion change deliberately retains the current prompt and feedback implementation. The next AI-quality iteration should address answer leakage, optional-checklist scope, and reliable exclusion of AI-assisted evidence, with regression samples from this report. The 40 authored seeds and local navigation are complete; broad semantic certification across all topics remains out of scope for this content batch.

@@ -29,6 +29,24 @@ const strings = {
     "Practise complete architectures, capacity and cross-component trade-offs. You control stages; AI only suggests.",
   ],
   sdScenarios: ["设计场景", "Design scenarios"],
+  sdSearch: ["搜索设计场景", "Search design scenarios"],
+  sdSearchHint: [
+    "标题、功能或架构关键词",
+    "Title, feature or architecture keyword",
+  ],
+  sdMatches: [
+    "显示 {n} / {total} 个场景 · 随机选择遵循筛选",
+    "Showing {n} / {total} scenarios · random respects filters",
+  ],
+  sdClearSearch: ["清除搜索", "Clear search"],
+  sdNoMatches: [
+    "没有匹配场景，试试其他关键词或清除搜索。",
+    "No matching scenarios. Try another keyword or clear search.",
+  ],
+  sdLocalTargets: [
+    "以下规模与可靠性目标均为本地训练假设，并非真实产品的官方指标。估算时请明确平均值、峰值、字节单位、副本和额外开销。",
+    "Scale and reliability targets below are local training assumptions, not official production metrics. State averages, peaks, byte units, replicas and additional overhead in estimates.",
+  ],
   sdGenerate: [
     "生成设计题并开始（联网）",
     "Generate design question and start (online)",
@@ -48,6 +66,7 @@ const strings = {
   sdFunctions: ["功能范围", "Functional scope"],
   sdScale: ["规模范围", "Scale ranges"],
   sdReliability: ["可靠性约束", "Reliability constraints"],
+  sdDirections: ["可选架构深挖方向", "Optional architecture deep dives"],
   sdCurrent: ["当前设计面试", "Current design interview"],
   sdStage_requirements: ["需求澄清", "Requirements"],
   sdStage_estimation: ["容量估算", "Estimation"],

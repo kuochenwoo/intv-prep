@@ -1,6 +1,6 @@
 # P2 System Design
 
-P2 is a separate whole-system design module. P1's topic library, prompts, five-dimension rubric, reference-answer workflow and session data remain separate. Further P1 knowledge-library expansion is deferred to the later content phase.
+P2 is a separate whole-system design module. P1's topic library, prompts, five-dimension rubric, reference-answer workflow and session data remain separate. P1 now has 40 scenario-based fundamentals topics; P2 now has [15 whole-system scenarios](P2_CONTENT_EXPANSION.md).
 
 ## Run
 
@@ -11,7 +11,7 @@ npm run tauri dev
 
 A C++20 compiler is needed only for LC judging. Open **System Design** in the header. Use the shared model settings to select Claude or DeepSeek; the configured Claude model is `claude-haiku-5-5`. Existing provider-specific keys remain in the Git-ignored `.env`; this change neither migrates keys to Keychain nor stores them in SQLite.
 
-1. Choose URL Shortener, Coupons and Flash Sales, Chat and Realtime Messaging, Activity Feed, or Distributed Task Queue. All seeds have Chinese and English content with functional scope, scale ranges, reliability targets and deep-dive directions. These are local training assumptions, not claims about real services.
+1. Choose any of the 15 scenarios. The original five are URL Shortener, Coupons and Flash Sales, Chat and Realtime Messaging, Activity Feed, and Distributed Task Queue; the [content expansion](P2_CONTENT_EXPANSION.md) adds ten more. Search by title, feature or architecture keyword; random selection respects the search. All seeds have Chinese and English content with functional scope, scale ranges, reliability targets and deep-dive directions. These are local training assumptions, not claims about real services.
 2. Generate a question online. The concrete variation is cached, with its language and generation provenance. Reuse a cached question to start another interview offline.
 3. Move freely among Requirements, Estimation, Architecture, Deep Dive and Trade-offs. Stage changes are local; AI suggestions never change the stage. Each stage retains its own draft. Sessions pin the provider/model selected at their start and the question language.
 4. Write Markdown notes and Mermaid source in the design workspace. Both save locally. Preview Markdown and render Mermaid without a model call. Notes and diagram source accompany submitted answers and feedback requests; unsubmitted answer drafts do not. Raw HTML, remote images and clickable external links are excluded from note rendering. Mermaid uses strict rendering and an isolated iframe for its SVG preview.
@@ -21,7 +21,7 @@ A C++20 compiler is needed only for LC judging. Open **System Design** in the he
 
 ## Implementation boundaries
 
-- `content/system-design/scenarios.json`: five bilingual seeds.
+- `content/system-design/scenarios.json`: 15 bilingual seeds.
 - `src-tauri/src/system_design.rs`: contracts, stage guidance, independent bilingual prompts and strict eight-dimension validation.
 - `src-tauri/src/system_design_store.rs`: two new SQLite tables, atomic session updates and durable pending states. Existing coding and P1 tables are preserved.
 - `src/features/system-design/`: Astryx UI, Markdown and lazy-loaded Mermaid preview.
@@ -55,7 +55,7 @@ The live probe uses clearly scripted candidate inputs, not evidence about a huma
 
 ## Deferred
 
-Further P1/SD content expansion, a drag-and-drop whiteboard, numerical scoring/radar charts, and Keychain migration are outside this change. DeepSeek subsequently passed a real staged interview and recovery checks; see [the reliability follow-up](RELIABILITY_2026-10-15.md). Provider availability can still vary. Model judgement quality still benefits from review across more scenarios and candidate answers.
+This document originally recorded the five-scenario implementation. The subsequent P1/P2 content expansions are linked above. A drag-and-drop whiteboard, numerical scoring/radar charts and Keychain migration remain outside this change. DeepSeek subsequently passed a real staged interview and recovery checks; see [the reliability follow-up](RELIABILITY_2026-10-15.md). Provider availability can still vary. Model judgement quality still benefits from review across more scenarios and candidate answers.
 
 ### Acceptance results (2026-10-15)
 
@@ -67,4 +67,4 @@ Further P1/SD content expansion, a drag-and-drop whiteboard, numerical scoring/r
 
 - Final app restart restored the completed UI interview and all eight feedback entries. Expanding the read-only design workspace showed the saved Markdown notes and valid Mermaid source; the compact default panels and feedback order were also checked in the rebuilt app.
 
-The focused checks above do not claim exhaustive accessibility, viewport, provider or scenario coverage. Further topic expansion remains deferred as requested.
+The focused checks above do not claim exhaustive accessibility, viewport, provider or scenario coverage. Subsequent P2 expansion results are recorded in [P2 content expansion](P2_CONTENT_EXPANSION.md).
