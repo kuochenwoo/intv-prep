@@ -189,8 +189,8 @@ A complete nested-loop program without counters also passed the real Judge: Acce
 ```text
 content/leetcode/problems/      Problem, template, and logical-test JSON
 src/main.tsx                   LC UI, Monaco, and Tauri calls
-content/leetcode/adapters/      C++ main wrappers for Function mode
-src-tauri/src/content.rs        Bundled library, input adapters, and comparators
+src-tauri/src/content.rs        Bundled library (loaded once), validation, and lookup
+src-tauri/src/harness.rs        Typed `io` spec: stdin serializer, generated C++ main, checkers
 src-tauri/src/code_runner.rs    Compilation, subprocess control, and judging
 src-tauri/src/db.rs             SQLite initialization and LC drafts/status
 src/features/interview/         Deep Dive settings, topics, sessions, feedback, and history UI
@@ -201,9 +201,32 @@ src-tauri/src/credentials.rs    Temporary .env credentials; retained system adap
 content/deep-dive/topics.json   Ten topic seeds
 src-tauri/src/main.rs           Tauri commands
 src-tauri/tests/p0.rs           Integration tests with real compilation and execution
+src-tauri/tests/harness.rs      Generated-harness tests for trees, grids, strings, and checkers
 ```
 
-Problems are embedded into Rust at compile time. Monaco and its workers are bundled by Vite; there is no runtime CDN or LeetCode API dependency. After installing dependencies and packaging, LC problems, editing, judging, and storage work without external network access. SQLite uses Tauri's application-data directory, for example on macOS:
+Problems are embedded into Rust at compile time. `build.rs` embeds every `content/leetcode/problems/*.json`, so adding a problem needs no Rust or C++ adapter change. The library is parsed and validated once per process and listed by problem number; hidden tests are not sent to the UI.
+
+### Adding a problem
+
+Each problem JSON carries an `io` block that drives Function-mode wrapping, ACM stdin, and checking:
+
+```json
+"io": {
+  "method": "twoSum",
+  "params": [{ "name": "nums", "type": "int[]" }, { "name": "target", "type": "int" }],
+  "returns": "int[]",
+  "stdin": ["nums.length target", "nums"],
+  "checker": "valid_pair"
+}
+```
+
+- Types: `int`, `long`, `double`, `bool`, `string` (one raw line), `int[]`, `long[]`, `string[]`, `int[][]`, `char[][]`, `string[][]`, `ListNode`, `TreeNode` (LeetCode level order with `null`), or `void` for `returns`.
+- `output`: `"return"` (default) or a parameter name checked after an in-place call, e.g. `"returns": "void", "output": "nums"`.
+- `stdin` (optional): one string per line of `name` / `name.length` items for scalars and 1-D arrays. Without it each parameter uses its default layout: scalars and strings on one line; 1-D arrays as a length line then values; `string[]` as a count then one line each; `int[][]` as a row count then `k v1..vk` per row; `char[][]` as a row count then one string per row; `string[][]` as a group count then `k` and `k` lines per group; trees as a token count then level-order tokens.
+- stdout uses the same shapes, except 1-D arrays, lists, and trees print values only (no length) and `int[][]` rows print values only. `bool` prints `true`/`false` (`1`/`0` accepted); `double` compares with 1e-5 relative tolerance.
+- `checker`: `exact` (default), `unordered` (outer order ignored), `unordered_nested` (outer and inner order ignored), or `valid_pair` (Two Sum style index pair).
+- `logicalInput` is the bare value for one parameter, or an object keyed by parameter name. Every test's input and expected value is type-checked when the library loads, and `cargo test` fails on a malformed problem.
+- Design problems (LRU Cache, Min Stack, Trie, and similar operation sequences) are not covered by this spec yet. Monaco and its workers are bundled by Vite; there is no runtime CDN or LeetCode API dependency. After installing dependencies and packaging, LC problems, editing, judging, and storage work without external network access. SQLite uses Tauri's application-data directory, for example on macOS:
 
 ```text
 ~/Library/Application Support/local.swe.interview-prep/prep.sqlite3
@@ -217,4 +240,4 @@ Execution boundary: run only personally authored, trusted C++ code. Each Judge r
 
 - Keep temporary `.env` testing mode as requested; enable system-credential storage before distribution. DeepSeek's real multi-turn acceptance remains pending service recovery.
 - P2: System Design scenarios, stage control, and explainable feedback.
-- P3: Complete and verify the full Hot 100, add adapters/comparators, and improve quality.
+- P3: Complete and verify the full Hot 100 (add `io` specs and tests; design-class problems need an operation-sequence harness), and improve quality.

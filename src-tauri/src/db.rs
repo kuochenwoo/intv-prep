@@ -40,7 +40,7 @@ pub fn load(c: &Connection) -> Result<Vec<Progress>, String> {
         .map_err(|e| e.to_string())
 }
 pub fn save(c: &Connection, id: &str, mode: &str, code: &str) -> Result<(), String> {
-    crate::content::problem(id)?;
+    crate::content::find(id)?;
     if !["function", "acm"].contains(&mode) || code.len() > 256 * 1024 {
         return Err("无效的草稿".into());
     }

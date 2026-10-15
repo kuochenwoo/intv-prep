@@ -1,5 +1,7 @@
+use crate::harness::{self, Io, Ty};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::{collections::HashMap, sync::OnceLock};
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Problem {
@@ -13,6 +15,9 @@ pub struct Problem {
     pub limits: JudgeLimits,
     pub examples: Value,
     pub cpp: Cpp,
+    pub io: Io,
+    // Hidden tests stay in the backend; the problem list sent to the UI omits them.
+    #[serde(skip_serializing)]
     pub tests: Vec<Test>,
 }
 #[derive(Clone, Serialize, Deserialize)]
@@ -36,9 +41,7 @@ pub struct JudgeLimits {
 pub struct Cpp {
     pub function_template: String,
     pub acm_template: String,
-    pub function_harness_id: String,
     pub acm_io_spec: String,
-    pub comparator_id: String,
 }
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -48,45 +51,74 @@ pub struct Test {
     pub expected: Value,
     pub is_sample: bool,
 }
-pub fn problems() -> Vec<Problem> {
-    [
-        include_str!("../../content/leetcode/problems/lc-1.json"),
-        include_str!("../../content/leetcode/problems/lc-3.json"),
-        include_str!("../../content/leetcode/problems/lc-206.json"),
-        include_str!("../../content/leetcode/problems/lc-283.json"),
-    ]
-    .iter()
-    .map(|s| serde_json::from_str(s).expect("bundled problem JSON"))
-    .collect()
+// build.rs embeds every content/leetcode/problems/*.json as (file name, contents).
+include!(concat!(env!("OUT_DIR"), "/problem_files.rs"));
+struct Library {
+    problems: Vec<Problem>,
+    by_id: HashMap<String, usize>,
 }
-pub fn problem(id: &str) -> Result<Problem, String> {
-    problems()
-        .into_iter()
-        .find(|p| p.id == id)
+fn library() -> &'static Library {
+    static LIBRARY: OnceLock<Library> = OnceLock::new();
+    LIBRARY.get_or_init(|| {
+        let mut problems: Vec<Problem> = PROBLEM_FILES
+            .iter()
+            .map(|(file, text)| {
+                let p: Problem = serde_json::from_str(text)
+                    .unwrap_or_else(|e| panic!("bundled problem {file} is invalid JSON: {e}"));
+                if let Err(e) = validate(&p) {
+                    panic!("bundled problem {file} is invalid: {e}");
+                }
+                p
+            })
+            .collect();
+        problems.sort_by_key(|p| {
+            let n = p.id.trim_start_matches(|c: char| !c.is_ascii_digit());
+            (n.parse::<u32>().unwrap_or(u32::MAX), p.id.clone())
+        });
+        let mut by_id = HashMap::new();
+        for (i, p) in problems.iter().enumerate() {
+            if by_id.insert(p.id.clone(), i).is_some() {
+                panic!("duplicate problem id {}", p.id);
+            }
+        }
+        Library { problems, by_id }
+    })
+}
+/// Structural checks every bundled problem must pass before it is shown or judged.
+pub fn validate(p: &Problem) -> Result<(), String> {
+    p.io.validate()?;
+    if p.tests.is_empty() || !p.tests.iter().any(|t| t.is_sample) {
+        return Err("needs at least one sample test".into());
+    }
+    for (i, t) in p.tests.iter().enumerate() {
+        if p.tests[..i].iter().any(|u| u.id == t.id) {
+            return Err(format!("duplicate test id {}", t.id));
+        }
+        p.io.stdin_for(&t.logical_input)
+            .map_err(|e| format!("test {}: logicalInput: {e}", t.id))?;
+        p.io.check_expected(&t.expected)
+            .map_err(|e| format!("test {}: expected: {e}", t.id))?;
+    }
+    Ok(())
+}
+/// All bundled problems, parsed and validated once per process.
+pub fn problems() -> &'static [Problem] {
+    &library().problems
+}
+pub fn find(id: &str) -> Result<&'static Problem, String> {
+    let lib = library();
+    lib.by_id
+        .get(id)
+        .map(|&i| &lib.problems[i])
         .ok_or_else(|| "未知题目".into())
 }
-pub const HEADERS: &str = "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\n#include <unordered_set>\n#include <queue>\n#include <stack>\n#include <set>\n#include <map>\n#include <climits>\nusing namespace std;\n";
-pub const LIST: &str = "struct ListNode { int val; ListNode* next; ListNode(int x=0, ListNode* n=nullptr): val(x), next(n) {} };\n";
-pub fn input(p: &Problem, t: &Test) -> String {
-    let v = &t.logical_input;
-    match p.cpp.function_harness_id.as_str() {
-        "substring" => format!("{}\n", v.as_str().unwrap()),
-        "two_sum" => format!(
-            "{} {}\n{}\n",
-            v["nums"].as_array().unwrap().len(),
-            v["target"],
-            numbers(&v["nums"])
-        ),
-        _ => format!("{}\n{}\n", v.as_array().unwrap().len(), numbers(v)),
-    }
+pub fn problem(id: &str) -> Result<Problem, String> {
+    find(id).cloned()
 }
-fn numbers(v: &Value) -> String {
-    v.as_array()
-        .unwrap()
-        .iter()
-        .map(|x| x.to_string())
-        .collect::<Vec<_>>()
-        .join(" ")
+pub const HEADERS: &str = "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\n#include <unordered_set>\n#include <queue>\n#include <stack>\n#include <set>\n#include <map>\n#include <climits>\nusing namespace std;\n";
+pub fn input(p: &Problem, t: &Test) -> String {
+    p.io.stdin_for(&t.logical_input)
+        .expect("tests are validated when the library loads")
 }
 pub fn source(p: &Problem, mode: &str, code: &str) -> Result<String, String> {
     if mode == "acm" {
@@ -95,48 +127,20 @@ pub fn source(p: &Problem, mode: &str, code: &str) -> Result<String, String> {
     if mode != "function" {
         return Err("未知编程模式".into());
     }
-    let harness = match p.cpp.function_harness_id.as_str() {
-        "substring" => include_str!("../../content/leetcode/adapters/substring.cpp"),
-        "two_sum" => include_str!("../../content/leetcode/adapters/two_sum.cpp"),
-        "move_zeroes" => include_str!("../../content/leetcode/adapters/move_zeroes.cpp"),
-        "reverse_list" => include_str!("../../content/leetcode/adapters/reverse_list.cpp"),
-        _ => return Err("未实现的适配器".into()),
-    };
+    let mut prelude = String::from(HEADERS);
+    if p.io.uses(Ty::List) {
+        prelude += harness::LIST_STRUCT;
+    }
+    if p.io.uses(Ty::Tree) {
+        prelude += harness::TREE_STRUCT;
+    }
     Ok(format!(
-        "{}{}\n#line 1 \"user.cpp\"\n{}\n#line 1 \"harness.cpp\"\n{}",
-        HEADERS,
-        if p.cpp.function_harness_id == "reverse_list" {
-            LIST
-        } else {
-            ""
-        },
+        "{}\n#line 1 \"user.cpp\"\n{}\n#line 1 \"harness.cpp\"\n{}",
+        prelude,
         code,
-        harness
+        p.io.cpp_main()
     ))
 }
 pub fn compare(p: &Problem, t: &Test, output: &str) -> bool {
-    let parsed: Result<Vec<i64>, _> = output.split_whitespace().map(str::parse).collect();
-    let Ok(values) = parsed else {
-        return false;
-    };
-    if p.cpp.comparator_id == "valid_pair" {
-        if values.len() != 2 || values[0] == values[1] {
-            return false;
-        }
-        let nums = t.logical_input["nums"].as_array().unwrap();
-        let (a, b) = (values[0], values[1]);
-        a >= 0
-            && b >= 0
-            && (a as usize) < nums.len()
-            && (b as usize) < nums.len()
-            && nums[a as usize].as_i64().unwrap() + nums[b as usize].as_i64().unwrap()
-                == t.logical_input["target"].as_i64().unwrap()
-    } else {
-        let expected: Vec<i64> = if let Some(a) = t.expected.as_array() {
-            a.iter().map(|x| x.as_i64().unwrap()).collect()
-        } else {
-            vec![t.expected.as_i64().unwrap()]
-        };
-        values == expected
-    }
+    p.io.accepts(&t.logical_input, &t.expected, output)
 }

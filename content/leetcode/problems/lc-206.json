@@ -855,9 +855,12 @@
   "cpp": {
     "functionTemplate": "// ListNode is provided: int val; ListNode* next;\nclass Solution {\npublic:\n    ListNode* reverseList(ListNode* head) {\n        return head; // Reverse the links.\n    }\n};",
     "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n",
-    "functionHarnessId": "reverse_list",
-    "acmIoSpec": "stdin：第一行节点数 n；随后 n 个整数表示链表值。stdout：反转后的 n 个值，以空白分隔。空链表输出空行。",
-    "comparatorId": "integer_sequence"
+    "acmIoSpec": "stdin：第一行节点数 n；随后 n 个整数表示链表值。stdout：反转后的 n 个值，以空白分隔。空链表输出空行。"
+  },
+  "io": {
+    "method": "reverseList",
+    "params": [{ "name": "head", "type": "ListNode" }],
+    "returns": "ListNode"
   },
   "examples": [
     {

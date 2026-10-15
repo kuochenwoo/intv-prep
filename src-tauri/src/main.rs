@@ -13,13 +13,13 @@ struct AppState {
     interview: Arc<Mutex<()>>,
 }
 #[tauri::command]
-fn list_problems() -> Vec<content::Problem> {
+fn list_problems() -> &'static [content::Problem] {
     content::problems()
 }
 #[tauri::command(async)]
 fn open_problem_source(problem_id: String) -> Result<(), String> {
     // Only open bundled, known problem URLs; never run a user-provided shell command.
-    let url = content::problem(&problem_id)?.complexity.source_url;
+    let url = &content::find(&problem_id)?.complexity.source_url;
     let launcher = if cfg!(target_os = "macos") {
         "open"
     } else if cfg!(target_os = "linux") {
@@ -72,7 +72,7 @@ fn run_judge(
     let c = db::open(&state.path)?;
     db::save(&c, &problem_id, &mode, &code)?;
     let result = code_runner::judge(
-        &content::problem(&problem_id)?,
+        content::find(&problem_id)?,
         &mode,
         &code,
         samples,

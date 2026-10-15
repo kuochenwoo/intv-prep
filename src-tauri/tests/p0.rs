@@ -21,12 +21,12 @@ fn solution(id: &str, mode: &str) -> &'static str {
 fn all_four_problems_pass_real_cpp20_in_both_modes() {
     for p in content::problems() {
         let code = solution(&p.id, "function");
-        let r = judge(&p, "function", code, false, "").unwrap();
+        let r = judge(p, "function", code, false, "").unwrap();
         assert_eq!(r.status, "accepted", "{}: {}", p.id, r.diagnostics);
         assert_eq!(r.passed, p.tests.len());
         // Independently written full programs verify the documented IO protocol.
         let acm = solution(&p.id, "acm");
-        let r = judge(&p, "acm", acm, false, "").unwrap();
+        let r = judge(p, "acm", acm, false, "").unwrap();
         assert_eq!(r.status, "accepted", "{} ACM", p.id);
         assert_eq!(r.passed, p.tests.len());
     }

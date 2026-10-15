@@ -10,7 +10,7 @@ Follow `SWE_Interview_Prep_Requirements.md` and the user's currently authorized 
 - Every problem must provide `limits.timeLimitMs`, `limits.memoryLimitMb`, and `limits.outputLimitKb`; the Judge must read and enforce them. Choose budgets using the problem's input scale and real execution results rather than mechanically copying existing values.
 - Do not invent unverified official millisecond/MiB quotas. Clearly label local budgets. Measured execution time, process RSS, and asymptotic complexity are different metrics; finite tests cannot automatically prove arbitrary code's Big-O or in-place behavior.
 - Function and ACM modes must share semantic tests, including maximum-size or representative worst-case inputs and necessary resource-limit regression tests. Expected answers must be verifiable. Never mock successful compilation, execution, or judging.
-- Integrate new problems into the problem library and common policy checks. Verify complexity metadata, resource settings, both mode adapters, and correct solutions before considering a problem complete.
+- Integrate new problems into the problem library and common policy checks. Verify complexity metadata, resource settings, the `io` spec (it generates the Function-mode wrapper, ACM stdin, and checking; see README "Adding a problem"), and correct solutions in both modes before considering a problem complete.
 
 ## Current phase status
 

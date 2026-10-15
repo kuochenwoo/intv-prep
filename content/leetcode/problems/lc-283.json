@@ -885,9 +885,13 @@
   "cpp": {
     "functionTemplate": "class Solution {\npublic:\n    void moveZeroes(vector<int>& nums) {\n        // Modify nums in place.\n    }\n};",
     "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n",
-    "functionHarnessId": "move_zeroes",
-    "acmIoSpec": "stdin：第一行数组长度 n；随后 n 个整数。stdout：修改后的 n 个整数，空数组输出空行。",
-    "comparatorId": "integer_sequence"
+    "acmIoSpec": "stdin：第一行数组长度 n；随后 n 个整数。stdout：修改后的 n 个整数，空数组输出空行。"
+  },
+  "io": {
+    "method": "moveZeroes",
+    "params": [{ "name": "nums", "type": "int[]" }],
+    "returns": "void",
+    "output": "nums"
   },
   "examples": [
     {
