@@ -85,6 +85,25 @@ problem = {
     "difficulty": "easy",
     "tags": ["栈", "树", "深度优先搜索", "二叉树"],
     "statement": "给定二叉树的根节点 root，按“左子树 → 根 → 右子树”的中序顺序返回所有节点值。空树返回空数组。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入输出中的树均为 LeetCode 层序表示，null 表示空位。",
+    "en": {'title': 'Binary Tree Inorder Traversal',
+     'tags': ['Stack', 'Tree', 'Depth-First Search', 'Binary Tree'],
+     'statement': 'Given the root of a binary tree, return all node values in inorder order (left subtree → root '
+                  '→ right subtree). Return an empty array for an empty tree.\n'
+                  '\n'
+                  'Node definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. Trees in '
+                  'input and output use LeetCode level-order representation, with null marking empty positions.',
+     'constraints': ['The number of nodes is in the range [0, 100]; -100 ≤ Node.val ≤ 100'],
+     'complexity': {'time': 'O(n)',
+                    'space': 'O(h) extra space (explicit stack or recursion stack, h is the tree height, worst '
+                             'case O(n)); Morris traversal achieves O(1). The output array is not counted.',
+                    'officialRequirement': 'No official complexity requirement; the follow-up asks for an '
+                                           'iterative rather than recursive implementation.',
+                    'notes': 'n is the number of nodes and h is the tree height (about log n when balanced, n '
+                             'when degenerated into a chain). Local tests include a random 100-node tree and a '
+                             'worst-case single chain.'},
+     'acmIoSpec': 'stdin: line 1 is m (the number of level-order tokens, 0 for an empty tree); line 2 has m '
+                  "tokens (integers or null), the tree's LeetCode level-order representation. stdout: one line "
+                  'with the inorder node values, space-separated (an empty line for an empty tree).'},
     "constraints": ["节点数在 [0, 100] 范围内；-100 ≤ Node.val ≤ 100"],
     "complexity": {
         "time": "O(n)",

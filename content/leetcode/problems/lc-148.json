@@ -10,6 +10,27 @@
     "归并排序"
   ],
   "statement": "给定链表的头节点 head，把链表按节点值升序排列并返回排序后的头节点。\n\n节点定义：struct ListNode { int val; ListNode* next; };",
+  "en": {
+    "title": "Sort List",
+    "tags": [
+      "Linked List",
+      "Two Pointers",
+      "Divide and Conquer",
+      "Sorting",
+      "Merge Sort"
+    ],
+    "statement": "Given the head of a linked list, sort the list in ascending order of node values and return the head of the sorted list.\n\nNode definition: struct ListNode { int val; ListNode* next; };",
+    "constraints": [
+      "0 ≤ number of nodes ≤ 50000; -100000 ≤ node value ≤ 100000"
+    ],
+    "complexity": {
+      "time": "O(n log n) (local training target)",
+      "space": "Bottom-up merge sort uses O(1) extra space; top-down recursive merge sort needs an O(log n) call stack",
+      "officialRequirement": "Official follow-up asks for O(n log n) time and O(1) extra memory (i.e., constant space).",
+      "notes": "n is the number of nodes; the input list does not count toward extra space. Bottom-up merge: segment lengths go 1, 2, 4, ...; each pass cuts off two adjacent segments, merges them, and reattaches the result. The largest test uses the official limit n = 50000, but to keep the problem bank small its node values are in [-999, 999] (smaller random tests cover the full value range); copying into an array and using std::sort also passes the local tests but does not meet O(1) space."
+    },
+    "acmIoSpec": "stdin: line 1 is the node count n; line 2 has n integers, the list values. stdout: one line with the values in ascending order, space-separated; an empty list prints an empty line."
+  },
   "constraints": [
     "0 ≤ 节点数 ≤ 50000；-100000 ≤ 节点值 ≤ 100000"
   ],

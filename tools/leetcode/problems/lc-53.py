@@ -8,6 +8,25 @@ problem = {
     "difficulty": "medium",
     "tags": ["数组", "分治", "动态规划"],
     "statement": "给定整数数组 nums，找出和最大的连续非空子数组，返回这个最大和。",
+    "en": {
+        "title": "Maximum Subarray",
+        "tags": [
+            "Array",
+            "Divide and Conquer",
+            "Dynamic Programming"
+        ],
+        "statement": "Given an integer array nums, find the contiguous non-empty subarray with the largest sum and return that sum.",
+        "constraints": [
+            "1 ≤ nums.length ≤ 100000; -10^4 ≤ nums[i] ≤ 10^4"
+        ],
+        "complexity": {
+            "time": "O(n) (local training target)",
+            "space": "O(1) extra space (Kadane); divide and conquer uses an O(log n) recursion stack",
+            "officialRequirement": "No official complexity requirement; the follow-up suggests also trying a divide-and-conquer solution beyond the O(n) one (no complexity specified).",
+            "notes": "n is the array length. Kadane: the best sum ending at i = max(nums[i], result at the previous position + nums[i]). Divide and conquer is O(n log n) (or O(n) when merging segment info). For an all-negative array the answer is the largest single element. The maximum sum does not exceed 10^9, within 32-bit integer range. The largest local test has 60000 elements (official limit 100000, reduced to keep the problem bank small)."
+        },
+        "acmIoSpec": "stdin: first line n; second line n integers. stdout: one integer, the maximum subarray sum."
+    },
     "constraints": ["1 ≤ nums.length ≤ 100000；-10^4 ≤ nums[i] ≤ 10^4"],
     "complexity": {
         "time": "O(n)（本地训练目标）",

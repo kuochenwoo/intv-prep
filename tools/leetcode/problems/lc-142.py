@@ -13,6 +13,35 @@ problem = {
         "评测输出你返回的节点在链表中的下标，返回 nullptr 时输出 -1；返回不属于该链表的节点判为错误。\n\n"
         "节点定义：struct ListNode { int val; ListNode* next; };"
     ),
+    "en": {'title': 'Linked List Cycle II',
+     'tags': ['Hash Table', 'Linked List', 'Two Pointers'],
+     'statement': 'Given the head of a singly linked list, return the first node at which the list '
+                  'enters its cycle; if the list has no cycle, return nullptr. You must not modify the '
+                  'list.\n'
+                  '\n'
+                  "In the test data, pos is the index (0-based) of the node that the tail's next "
+                  'pointer refers to; pos = -1 means there is no cycle. pos is only used to build the '
+                  'list and is not passed to your function. The judge prints the index of the node you '
+                  'return within the list, or -1 if you return nullptr; returning a node that does not '
+                  'belong to the list is judged wrong.\n'
+                  '\n'
+                  'Node definition: struct ListNode { int val; ListNode* next; };',
+     'constraints': ['0 ≤ number of nodes ≤ 10000; -100000 ≤ node value ≤ 100000',
+                     'pos is -1 or a valid index in the list'],
+     'complexity': {'time': 'O(n) (local training target)',
+                    'space': 'Fast/slow pointers use O(1) extra space; a hash set with O(n) also '
+                             'passes',
+                    'officialRequirement': 'Official follow-up asks for only O(1) (constant) extra '
+                                           'memory.',
+                    'notes': 'n is the number of nodes. Floyd: after the fast and slow pointers meet, '
+                             'move one pointer back to the head and advance both at the same speed; '
+                             'where they meet again is the cycle entry (if a is the distance from the '
+                             'head to the entry, then a ≡ distance from the meeting point to the entry '
+                             '(mod cycle length)). The largest test uses the official limit n = '
+                             '10000.'},
+     'acmIoSpec': 'stdin: line 1 is the node count n; line 2 has n integers, the list values; line 3 '
+                  'is pos (the index the tail links to, -1 for no cycle). stdout: one integer, the '
+                  '0-based index of the cycle-entry node, or -1 if there is no cycle.'},
     "constraints": [
         "0 ≤ 节点数 ≤ 10000；-100000 ≤ 节点值 ≤ 100000",
         "pos 为 -1 或链表中的合法下标",

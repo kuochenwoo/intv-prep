@@ -7,6 +7,26 @@
     "设计"
   ],
   "statement": "设计一个栈类 MinStack，除常规操作外还能随时取得栈中的最小值：MinStack() 创建空栈；push(val) 压入 val；pop() 弹出栈顶；top() 返回栈顶元素；getMin() 返回栈中当前最小元素。pop、top、getMin 只会在栈非空时调用。",
+  "en": {
+    "title": "Min Stack",
+    "tags": [
+      "Stack",
+      "Design"
+    ],
+    "statement": "Design a stack class MinStack that, besides the usual operations, can return the minimum value in the stack at any time: MinStack() creates an empty stack; push(val) pushes val; pop() removes the top element; top() returns the top element; getMin() returns the current minimum element in the stack. pop, top and getMin are only called when the stack is non-empty.",
+    "constraints": [
+      "-2³¹ ≤ val ≤ 2³¹ - 1",
+      "pop, top and getMin are always called on a non-empty stack",
+      "Total calls to push, pop, top and getMin ≤ 30000"
+    ],
+    "complexity": {
+      "time": "O(1) per operation (official requirement)",
+      "space": "O(n) extra space",
+      "officialRequirement": "Official requirement: every function must run in O(1) time.",
+      "notes": "n is the number of elements in the stack. Use an auxiliary stack that records the minimum at each level (equal values must also be pushed), or have each element carry the minimum at the time it was pushed. The largest local test has 13000 calls (official limit is 30000, reduced to keep the problem bank small); finite tests cannot prove O(1)."
+    },
+    "acmIoSpec": "stdin: line 1 is the operation count m; then m lines, each an operation name (MinStack / push / pop / top / getMin); then a line with m, followed by m argument lines, each giving the argument count k and then k integers (1 for push, 0 for the others). stdout: line 1 is m, then m lines, one result per operation: the constructor, push and pop print null; top and getMin print an integer."
+  },
   "constraints": [
     "-2³¹ ≤ val ≤ 2³¹ - 1",
     "pop、top、getMin 总在非空栈上调用",

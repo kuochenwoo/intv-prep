@@ -7,6 +7,26 @@
     "二分查找"
   ],
   "statement": "一个元素互不相同、长度为 n 的升序数组被旋转了 1 到 n 次（每次把末尾元素移到开头），得到数组 nums。返回 nums 中的最小元素。",
+  "en": {
+    "title": "Find Minimum in Rotated Sorted Array",
+    "tags": [
+      "Array",
+      "Binary Search"
+    ],
+    "statement": "An ascending array of length n with distinct elements has been rotated between 1 and n times (each rotation moves the last element to the front), producing nums. Return the minimum element of nums.",
+    "constraints": [
+      "1 ≤ n ≤ 5000",
+      "-5000 ≤ nums[i] ≤ 5000, all elements distinct",
+      "nums is an ascending array rotated 1 to n times"
+    ],
+    "complexity": {
+      "time": "O(log n)",
+      "space": "O(1) extra space",
+      "officialRequirement": "Official requirement: O(log n) time complexity.",
+      "notes": "n is the array length. Compare nums[mid] with nums[hi]: if nums[mid] > nums[hi], the minimum is in the right half; otherwise it is in [lo, mid]. Rotating n times is the same as no rotation. The local judge needs O(n) to read input, so running time cannot distinguish binary search from a linear scan."
+    },
+    "acmIoSpec": "stdin: line 1 is n; line 2 has n integers nums. stdout: one integer, the minimum value."
+  },
   "constraints": [
     "1 ≤ n ≤ 5000",
     "-5000 ≤ nums[i] ≤ 5000，元素互不相同",

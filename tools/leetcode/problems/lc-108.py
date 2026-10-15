@@ -85,6 +85,28 @@ problem = {
     "difficulty": "easy",
     "tags": ["树", "二叉搜索树", "数组", "分治", "二叉树"],
     "statement": "给定一个严格递增的整数数组 nums，构造一棵高度平衡的二叉搜索树并返回其根节点，使其中序遍历恰好为 nums。高度平衡指每个节点左右子树的高度差不超过 1。答案可能不唯一，返回任意一棵满足要求的树即可。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输出的树为 LeetCode 层序表示，null 表示空位。",
+    "en": {'title': 'Convert Sorted Array to Binary Search Tree',
+     'tags': ['Tree', 'Binary Search Tree', 'Array', 'Divide and Conquer', 'Binary Tree'],
+     'statement': 'Given a strictly increasing integer array nums, build a height-balanced binary search tree '
+                  'whose inorder traversal is exactly nums, and return its root. Height-balanced means the '
+                  "heights of every node's left and right subtrees differ by at most 1. The answer may not be "
+                  'unique; any tree meeting the requirements is accepted.\n'
+                  '\n'
+                  'Node definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. The output '
+                  'tree uses LeetCode level-order representation, with null marking empty positions.',
+     'constraints': ['1 ≤ nums.length ≤ 10^4; -10^4 ≤ nums[i] ≤ 10^4; nums is strictly increasing'],
+     'complexity': {'time': 'O(n)',
+                    'space': 'O(log n) recursion stack (taking the midpoint each time keeps the depth about log '
+                             'n); the n new nodes are output and not counted.',
+                    'officialRequirement': 'No official complexity requirement.',
+                    'notes': 'n is the array length. Using the midpoint of the range as the root and recursing '
+                             'on both sides guarantees balance. The checker accepts any height-balanced BST '
+                             'whose inorder traversal is nums (it need not match the reference answer). The '
+                             'largest local test has n = 10^4. The output is large, so the output limit is '
+                             'raised to 256 KiB.'},
+     'acmIoSpec': 'stdin: line 1 is n; line 2 has n strictly increasing integers nums. stdout: one line with the '
+                  'level-order tokens of the constructed balanced BST (integers or null, space-separated, '
+                  'trailing nulls omitted). Any valid answer is accepted.'},
     "constraints": ["1 ≤ nums.length ≤ 10^4；-10^4 ≤ nums[i] ≤ 10^4；nums 严格递增"],
     "complexity": {
         "time": "O(n)",

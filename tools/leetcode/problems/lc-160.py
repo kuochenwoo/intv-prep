@@ -16,6 +16,43 @@ problem = {
         "注意：两段值相同但属于不同节点的链表并不相交。\n\n"
         "节点定义：struct ListNode { int val; ListNode* next; };"
     ),
+    "en": {'title': 'Intersection of Two Linked Lists',
+     'tags': ['Hash Table', 'Linked List', 'Two Pointers'],
+     'statement': 'Given the heads headA and headB of two singly linked lists, find the first node the '
+                  'two lists share (judged by node identity, not node value), or return nullptr if '
+                  'there is none. The whole structure contains no cycles, and both lists must keep '
+                  'their original structure after the function returns.\n'
+                  '\n'
+                  "The test data follows LeetCode's format: intersectVal is the value of the "
+                  'intersection node (0 if they do not intersect), listA and listB are the value '
+                  'sequences of the two lists, and skipA and skipB are the numbers of nodes to skip '
+                  'from each head to reach the intersection node; the judge uses these to make the '
+                  "tail of listB reuse listA's nodes directly. The judge prints the index (0-based) in "
+                  'list A of the node you return, or -1 if you return nullptr; returning a node that '
+                  'does not belong to list A is judged wrong. Note: two lists with identical values '
+                  'but different nodes do not intersect.\n'
+                  '\n'
+                  'Node definition: struct ListNode { int val; ListNode* next; };',
+     'constraints': ['listA has length m and listB has length n; 1 ≤ m, n ≤ 30000; 1 ≤ node value ≤ '
+                     '100000',
+                     '0 ≤ skipA ≤ m; 0 ≤ skipB ≤ n; if they do not intersect, intersectVal = 0, skipA '
+                     '= m and skipB = n',
+                     'If they intersect, intersectVal == listA[skipA] == listB[skipB], and the two '
+                     'lists are identical from that point on'],
+     'complexity': {'time': 'O(m + n) (local training target)',
+                    'space': 'Two pointers use O(1) extra space; a hash set with O(m) also passes',
+                    'officialRequirement': 'Official follow-up asks for O(m + n) time and only O(1) '
+                                           'extra memory.',
+                    'notes': 'm and n are the two list lengths; the input lists do not count toward '
+                             'extra space. Each of the two pointers, after finishing its own list, '
+                             "switches to the other list's head; both travel the same total distance, "
+                             'so they must meet at the intersection (or reach nullptr together). The '
+                             'largest test uses the official limits m = n = 30000 with only the last '
+                             'node shared, so O(mn) brute-force comparison will time out.'},
+     'acmIoSpec': 'stdin: line 1 is intersectVal; line 2 is m; line 3 has m integers listA; line 4 is '
+                  'n; line 5 has n integers listB; line 6 is skipA; line 7 is skipB. stdout: one '
+                  'integer, the 0-based index of the intersection node in list A, or -1 if they do not '
+                  'intersect.'},
     "constraints": [
         "listA 长度为 m，listB 长度为 n；1 ≤ m, n ≤ 30000；1 ≤ 节点值 ≤ 100000",
         "0 ≤ skipA ≤ m；0 ≤ skipB ≤ n；不相交时 intersectVal = 0，且 skipA = m、skipB = n",

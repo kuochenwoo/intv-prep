@@ -85,6 +85,30 @@ problem = {
     "difficulty": "medium",
     "tags": ["栈", "树", "深度优先搜索", "链表", "二叉树"],
     "statement": "给定二叉树的根节点 root，原地将其展开为一条“链表”：仍使用 TreeNode，每个节点的 right 指向链表中的下一个节点，left 一律置为 nullptr，且节点顺序与原树的先序遍历（根 → 左 → 右）一致。函数无返回值，判题时输出展开后的 root。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入输出中的树均为 LeetCode 层序表示，null 表示空位（展开后形如 1 null 2 null 3 ...）。",
+    "en": {'title': 'Flatten Binary Tree to Linked List',
+     'tags': ['Stack', 'Tree', 'Depth-First Search', 'Linked List', 'Binary Tree'],
+     'statement': 'Given the root of a binary tree, flatten it in place into a "linked list": still using '
+                  "TreeNode, each node's right points to the next node in the list, every left is set to "
+                  "nullptr, and the node order matches the original tree's preorder traversal (root → left → "
+                  'right). The function returns nothing; the judge outputs the flattened root.\n'
+                  '\n'
+                  'Node definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. Trees in '
+                  'input and output use LeetCode level-order representation, with null marking empty positions '
+                  '(a flattened tree looks like 1 null 2 null 3 ...).',
+     'constraints': ['The number of nodes is in the range [0, 2000]; -100 ≤ Node.val ≤ 100'],
+     'complexity': {'time': 'O(n)',
+                    'space': 'O(1) extra space (find the rightmost node of the left subtree and splice, '
+                             'Morris-style); recursive or stack-based versions use O(h)/O(n).',
+                    'officialRequirement': 'Official follow-up asks to flatten in place using only O(1) extra '
+                                           'space.',
+                    'notes': 'n is the number of nodes and h is the tree height. In the O(1) solution each edge '
+                             'is walked at most one extra time, so total time is still O(n). The largest local '
+                             'test is a random 2000-node tree, plus a 2000-node left chain (which becomes a '
+                             'right chain after flattening).'},
+     'acmIoSpec': 'stdin: line 1 is m (the number of level-order tokens, 0 for an empty tree); line 2 has m '
+                  "tokens (integers or null), the tree's LeetCode level-order representation. stdout: one line "
+                  "with the flattened tree's level-order tokens (of the form v1 null v2 null v3 …, trailing "
+                  'nulls omitted; an empty line for an empty tree).'},
     "constraints": ["节点数在 [0, 2000] 范围内；-100 ≤ Node.val ≤ 100"],
     "complexity": {
         "time": "O(n)",

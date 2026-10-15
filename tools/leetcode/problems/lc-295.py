@@ -8,6 +8,29 @@ problem = {
     "difficulty": "hard",
     "tags": ["设计", "双指针", "数据流", "排序", "堆（优先队列）"],
     "statement": "设计类 MedianFinder 维护一个不断加入整数的数据流：MedianFinder() 初始化；addNum(num) 加入一个整数；findMedian() 返回目前所有元素的中位数（元素个数为奇数时取正中间的数，为偶数时取中间两个数的平均值，返回浮点数）。",
+    "en": {
+        "title": "Find Median from Data Stream",
+        "tags": [
+            "Design",
+            "Two Pointers",
+            "Data Stream",
+            "Sorting",
+            "Heap (Priority Queue)"
+        ],
+        "statement": "Design a class MedianFinder that maintains a stream of integers being added: MedianFinder() initializes the object; addNum(num) adds an integer; findMedian() returns the median of all elements so far (the middle element when the count is odd, the average of the two middle elements when it is even, returned as a floating-point number).",
+        "constraints": [
+            "-100000 ≤ num ≤ 100000",
+            "There is at least one element in the data structure before findMedian is called",
+            "Total calls to addNum and findMedian ≤ 50000"
+        ],
+        "complexity": {
+            "time": "addNum O(log n), findMedian O(1) (local training target)",
+            "space": "O(n) extra space",
+            "officialRequirement": "No official complexity requirement; the follow-up asks how to optimize if all numbers are in [0, 100], or if 99% of numbers are in [0, 100].",
+            "notes": "n is the number of elements added so far. A max-heap holds the smaller half and a min-heap holds the larger half, keeping their sizes within 1 of each other. With a bounded value range, a counting array or Fenwick tree can also find elements by rank. Results are compared with a tolerance of 1e-5. The largest local test has 12000 calls (official limit 50000, reduced to keep the problem bank small)."
+        },
+        "acmIoSpec": "stdin: line 1 is the number of operations m; then m lines, each with one operation name (MedianFinder / addNum / findMedian); then a line with m, followed by m lines of arguments, each starting with the argument count k followed by k integers (1 for addNum, 0 for the others). stdout: line 1 is m, followed by m lines, one result per operation: the constructor and addNum print null, findMedian prints the median (e.g. 2, 2.5 or -1.5; an error of at most 1e-5 from the answer is accepted)."
+    },
     "constraints": [
         "-100000 ≤ num ≤ 100000",
         "调用 findMedian 之前数据结构中至少有一个元素",

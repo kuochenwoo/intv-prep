@@ -9,6 +9,26 @@
     "二叉树"
   ],
   "statement": "给定二叉树的根节点 root，想象自己站在树的右侧，从上到下返回每一层能看到的节点值（即每层最右侧的节点）。空树返回空数组。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入中的树为 LeetCode 层序表示，null 表示空位。",
+  "en": {
+    "title": "Binary Tree Right Side View",
+    "tags": [
+      "Tree",
+      "Depth-First Search",
+      "Breadth-First Search",
+      "Binary Tree"
+    ],
+    "statement": "Given the root of a binary tree, imagine standing on its right side and return, from top to bottom, the node values you can see on each level (i.e., the rightmost node of each level). An empty tree returns an empty array.\n\nNode definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. The input tree uses LeetCode's level-order representation, with null marking empty positions.",
+    "constraints": [
+      "The number of nodes is in [0, 100]; -100 ≤ Node.val ≤ 100"
+    ],
+    "complexity": {
+      "time": "O(n)",
+      "space": "BFS uses an O(w) queue; right-before-left DFS uses an O(h) recursion stack. Worst case O(n). Output not counted.",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the number of nodes, h the tree height, w the maximum level width. Note that when the left subtree is deeper, the right side view sees nodes on the left. Local tests include a random tree with 100 nodes and a left-only chain."
+    },
+    "acmIoSpec": "stdin: line 1 is m (the number of level-order tokens, 0 for an empty tree); line 2 has m tokens (integers or null), the tree's LeetCode level-order representation. stdout: one line with the value of the rightmost node of each level, top to bottom, space-separated (an empty tree prints an empty line)."
+  },
   "constraints": [
     "节点数在 [0, 100] 范围内；-100 ≤ Node.val ≤ 100"
   ],

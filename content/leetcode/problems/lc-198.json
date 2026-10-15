@@ -7,6 +7,24 @@
     "动态规划"
   ],
   "statement": "一条街上有 n 间房屋排成一排，第 i 间存有现金 nums[i]。相邻的两间房屋不能在同一晚都被偷（否则触发警报）。在不触发警报的前提下，最多能偷到多少现金？",
+  "en": {
+    "title": "House Robber",
+    "tags": [
+      "Array",
+      "Dynamic Programming"
+    ],
+    "statement": "There are n houses in a row on a street; house i holds nums[i] in cash. Two adjacent houses cannot both be robbed on the same night (that triggers the alarm). What is the maximum amount of cash you can rob without triggering the alarm?",
+    "constraints": [
+      "1 ≤ n ≤ 100; 0 ≤ nums[i] ≤ 400"
+    ],
+    "complexity": {
+      "time": "O(n) (local training target)",
+      "space": "O(1) extra space (rolling variables; a dp array is O(n))",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the number of houses. dp[i] = max(dp[i-1], dp[i-2] + nums[i]). Recursion without memoization is exponential."
+    },
+    "acmIoSpec": "stdin: line 1 is n; line 2 has n integers nums. stdout: one integer, the maximum amount."
+  },
   "constraints": [
     "1 ≤ n ≤ 100；0 ≤ nums[i] ≤ 400"
   ],

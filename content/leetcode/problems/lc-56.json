@@ -7,6 +7,24 @@
     "排序"
   ],
   "statement": "给定若干闭区间 intervals[i] = [start_i, end_i]，合并所有有重叠的区间（端点相接，如 [1,4] 与 [4,5]，也算重叠），返回互不重叠且恰好覆盖所有输入区间的区间列表。结果中区间的顺序不限。",
+  "en": {
+    "title": "Merge Intervals",
+    "tags": [
+      "Array",
+      "Sorting"
+    ],
+    "statement": "Given closed intervals intervals[i] = [start_i, end_i], merge all overlapping intervals (intervals that touch at an endpoint, such as [1,4] and [4,5], also count as overlapping) and return a list of non-overlapping intervals that exactly covers all input intervals. The intervals in the result may be in any order.",
+    "constraints": [
+      "1 ≤ intervals.length ≤ 10000; intervals[i].length == 2; 0 ≤ start_i ≤ end_i ≤ 10000"
+    ],
+    "complexity": {
+      "time": "O(n log n) (local training target, dominated by sorting)",
+      "space": "O(log n) to O(n) for sorting; output not counted",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the number of intervals. Sort by left endpoint, then scan linearly: whenever the current interval's left endpoint ≤ the merged interval's right endpoint, extend the right endpoint. Since the value range is only 10^4, a difference/coverage array solution in O(n + V) also works (V is the value range)."
+    },
+    "acmIoSpec": "stdin: first line the number of intervals n; then n lines, each \"2 start end\" (the element count 2 comes first). stdout: first line the number of merged intervals m; then m lines, each with two integers start end, intervals in any order."
+  },
   "constraints": [
     "1 ≤ intervals.length ≤ 10000；intervals[i].length == 2；0 ≤ start_i ≤ end_i ≤ 10000"
   ],

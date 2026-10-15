@@ -16,6 +16,24 @@ problem = {
         "notes": "sz 为节点数，输入链表不计入额外空间。哑节点 + 快慢指针：快指针先走 n 步，再同步前进至表尾，慢指针的下一个节点即待删节点。先求长度再删除的两趟做法同样能通过本地测试。最大测试为官方上限 sz = 30。",
         "sourceUrl": "https://leetcode.com/problems/remove-nth-node-from-end-of-list/",
     },
+    "en": {
+        "title": "Remove Nth Node From End of List",
+        "tags": [
+            "Linked List",
+            "Two Pointers"
+        ],
+        "statement": "Given the head of a linked list and an integer n, remove the n-th node from the end of the list (n = 1 means the last node) and return the head of the resulting list.\n\nNode definition: struct ListNode { int val; ListNode* next; };",
+        "constraints": [
+            "1 ≤ number of nodes sz ≤ 30; 0 ≤ node value ≤ 100; 1 ≤ n ≤ sz"
+        ],
+        "complexity": {
+            "time": "O(sz) (local training target)",
+            "space": "O(1) extra space",
+            "officialRequirement": "Official follow-up asks for doing it in a single pass (no additional space requirement).",
+            "notes": "sz is the number of nodes; the input list does not count toward extra space. Dummy node + fast/slow pointers: the fast pointer first advances n steps, then both advance together until the end, and the node after the slow pointer is the one to delete. The two-pass approach (compute the length, then delete) also passes the local tests. The largest test uses the official limit sz = 30."
+        },
+        "acmIoSpec": "stdin: line 1 is the number of nodes sz; line 2 has sz integers, the list values; line 3 is n. stdout: one line with the values of the resulting list, separated by spaces; output an empty line if the result is empty."
+    },
     "cpp": {
         "functionTemplate": "// ListNode is provided: int val; ListNode* next;\nclass Solution {\npublic:\n    ListNode* removeNthFromEnd(ListNode* head, int n) {\n        return head; // Head after removing the n-th node from the end.\n    }\n};",
         "acmIoSpec": "stdin：第一行节点数 sz；第二行 sz 个整数表示链表值；第三行 n。stdout：一行，删除后链表的值，以空格分隔；结果为空时输出空行。",

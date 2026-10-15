@@ -903,6 +903,26 @@
       "output": "[0]"
     }
   ],
+  "en": {
+    "title": "Move Zeroes",
+    "tags": [
+      "Array",
+      "Two Pointers",
+      "In-Place"
+    ],
+    "statement": "Move all 0s in the array to the end in place, keeping the relative order of the non-zero elements. The function returns nothing; the judge checks the modified array.",
+    "constraints": [
+      "0 ≤ n ≤ 10000; -2^31 ≤ nums[i] ≤ 2^31 - 1",
+      "Officially n ≥ 1; an empty array is kept locally as a robustness test."
+    ],
+    "complexity": {
+      "time": "O(n) (local training target)",
+      "space": "O(1) extra space; must modify in place",
+      "officialRequirement": "The official problem requires in-place operation without copying the array; the follow-up asks to minimize the number of operations.",
+      "notes": "n is the number of elements; the input array does not count toward extra space. Copying the array and writing it back fails the in-place requirement even when the output is correct, so review the code."
+    },
+    "acmIoSpec": "stdin: first line the array length n; then n integers. stdout: the n modified integers; an empty array prints an empty line."
+  },
   "complexity": {
     "time": "O(n)（本地訓練目標）",
     "space": "O(1) 額外空間，必須原地修改",

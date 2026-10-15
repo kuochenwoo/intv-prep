@@ -16,6 +16,25 @@ problem = {
         "notes": "n 为数组长度。先排序，固定最小的数后用双指针在其右侧找和为相反数的两数，并跳过重复值去重。O(n^3) 枚举在 n = 3000 时会超时。最大测试 n = 3000（官方上限），取完整值域内的随机数，约产生上万个三元组。",
         "sourceUrl": "https://leetcode.com/problems/3sum/",
     },
+    "en": {
+        "title": "3Sum",
+        "tags": [
+            "Array",
+            "Two Pointers",
+            "Sorting"
+        ],
+        "statement": "Given an integer array nums, find all triplets [nums[i], nums[j], nums[k]] that sum to 0, where i, j and k are pairwise distinct. The result must not contain duplicate triplets (duplicates are judged by the multiset of values). Neither the order of triplets nor the order within a triplet matters.",
+        "constraints": [
+            "3 ≤ nums.length ≤ 3000; -10^5 ≤ nums[i] ≤ 10^5"
+        ],
+        "complexity": {
+            "time": "O(n^2) (local training target)",
+            "space": "Sort + two pointers: O(log n) to O(n) for the sort's stack/buffer; output not counted",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the array length. Sort first, fix the smallest number, then use two pointers to its right to find two numbers summing to its negation, skipping repeated values to deduplicate. O(n^3) enumeration times out at n = 3000. The largest test has n = 3000 (the official limit) with random values over the full range, producing on the order of tens of thousands of triplets."
+        },
+        "acmIoSpec": "stdin: line 1 is n; line 2 has n integers. stdout: line 1 is the number of triplets m; then m lines, each with three integers. The order of triplets and the order within each triplet are arbitrary; if there is no solution, output only 0."
+    },
     "cpp": {
         "functionTemplate": "class Solution {\npublic:\n    vector<vector<int>> threeSum(vector<int>& nums) {\n        return {}; // Unique zero-sum triplets, any order.\n    }\n};",
         "acmIoSpec": "stdin：第一行 n；第二行 n 个整数。stdout：第一行三元组个数 m；随后 m 行，每行三个整数。三元组顺序与三元组内部顺序不限；没有解时只输出 0。",

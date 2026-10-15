@@ -9,6 +9,23 @@ problem = {
     "difficulty": "easy",
     "tags": ["数组", "哈希表", "分治", "计数", "排序"],
     "statement": "给定长度为 n 的整数数组 nums，返回其中的多数元素，即出现次数严格大于 ⌊n/2⌋ 的元素。数据保证多数元素一定存在。",
+    "en": {'title': 'Majority Element',
+     'tags': ['Array', 'Hash Table', 'Divide and Conquer', 'Counting', 'Sorting'],
+     'statement': 'Given an integer array nums of length n, return its majority element, i.e., the '
+                  'element that appears strictly more than ⌊n/2⌋ times. A majority element is '
+                  'guaranteed to exist.',
+     'constraints': ['1 ≤ n ≤ 5 × 10^4; -10^9 ≤ nums[i] ≤ 10^9', 'A majority element always exists'],
+     'complexity': {'time': 'O(n) (local training target)',
+                    'space': 'O(1) extra space (Boyer-Moore voting, excluding the input array)',
+                    'officialRequirement': 'Official follow-up asks for O(n) time and O(1) space; the '
+                                           'problem itself does not require it.',
+                    'notes': 'n is the array length. Voting: when the count is 0, switch the '
+                             'candidate; add one for a match and subtract one otherwise; the final '
+                             'candidate is the majority element. Sorting and taking the median is O(n '
+                             'log n) and hash counting uses O(n) extra space; both pass the local '
+                             'tests but do not meet the follow-up.'},
+     'acmIoSpec': 'stdin: line 1 is n; line 2 has n integers nums. stdout: one integer, the majority '
+                  'element.'},
     "constraints": ["1 ≤ n ≤ 5 × 10^4；-10^9 ≤ nums[i] ≤ 10^9", "多数元素一定存在"],
     "complexity": {
         "time": "O(n)（本地训练目标）",

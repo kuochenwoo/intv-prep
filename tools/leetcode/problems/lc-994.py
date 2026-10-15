@@ -8,6 +8,27 @@ problem = {
     "difficulty": "medium",
     "tags": ["广度优先搜索", "数组", "矩阵"],
     "statement": "在 m × n 网格 grid 中，0 表示空格，1 表示新鲜橘子，2 表示腐烂橘子。每过一分钟，与腐烂橘子上下左右相邻的新鲜橘子都会腐烂。求所有新鲜橘子都腐烂所需的最少分钟数；若不可能全部腐烂，返回 -1（没有新鲜橘子时返回 0）。",
+    "en": {
+        "title": "Rotting Oranges",
+        "tags": [
+            "Breadth-First Search",
+            "Array",
+            "Matrix"
+        ],
+        "statement": "In an m × n grid, 0 is an empty cell, 1 is a fresh orange and 2 is a rotten orange. Every minute, each fresh orange that is 4-directionally adjacent (up, down, left, right) to a rotten orange becomes rotten. Find the minimum number of minutes until all fresh oranges are rotten; if this is impossible, return -1 (return 0 if there are no fresh oranges).",
+        "constraints": [
+            "m == grid.length, n == grid[i].length",
+            "1 ≤ m, n ≤ 10",
+            "grid[i][j] is 0, 1 or 2"
+        ],
+        "complexity": {
+            "time": "O(m·n) (local training target)",
+            "space": "O(m·n) (BFS queue; the input grid is not counted)",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "m and n are the grid's row and column counts. Run a multi-source BFS starting from all rotten oranges at once; the number of levels is the number of minutes. If any fresh orange remains after BFS, return -1."
+        },
+        "acmIoSpec": "stdin: line 1 is the number of rows m; then m lines, each starting with that row's length n followed by n integers (0/1/2). stdout: one integer, the minimum number of minutes or -1."
+    },
     "constraints": [
         "m == grid.length，n == grid[i].length",
         "1 ≤ m, n ≤ 10",

@@ -8,6 +8,26 @@
     "双指针"
   ],
   "statement": "给定单链表的头节点 head，判断链表中是否存在环：若沿 next 指针不断前进会再次到达某个已经访问过的节点，则存在环，返回 true，否则返回 false。\n\n评测数据中的 pos 表示尾节点的 next 指向的节点下标（从 0 开始），pos = -1 表示无环。pos 只用于构造链表，不会作为参数传给函数。\n\n节点定义：struct ListNode { int val; ListNode* next; };",
+  "en": {
+    "title": "Linked List Cycle",
+    "tags": [
+      "Hash Table",
+      "Linked List",
+      "Two Pointers"
+    ],
+    "statement": "Given the head of a singly linked list, determine whether the list contains a cycle: if repeatedly following next pointers reaches a node already visited, there is a cycle and you return true; otherwise return false.\n\nIn the test data, pos is the 0-based index of the node that the tail's next points to, and pos = -1 means no cycle. pos is used only to build the list and is not passed to the function.\n\nNode definition: struct ListNode { int val; ListNode* next; };",
+    "constraints": [
+      "0 ≤ number of nodes ≤ 10000; -100000 ≤ node value ≤ 100000",
+      "pos is -1 or a valid index in the list"
+    ],
+    "complexity": {
+      "time": "O(n) (local training target)",
+      "space": "Fast/slow pointers: O(1) extra space; an O(n) hash set also passes",
+      "officialRequirement": "Official follow-up asks to use only O(1) (constant) extra memory.",
+      "notes": "n is the number of nodes. Floyd's cycle detection: the fast pointer moves two steps and the slow one step at a time; if there is a cycle they must meet inside it, and the fast pointer takes at most about 2n steps. The largest test is the official limit n = 10000."
+    },
+    "acmIoSpec": "stdin: line 1 is the node count n; line 2 has n integers, the list values; line 3 is pos (the index the tail links to, -1 for no cycle). stdout: true or false."
+  },
   "constraints": [
     "0 ≤ 节点数 ≤ 10000；-100000 ≤ 节点值 ≤ 100000",
     "pos 为 -1 或链表中的合法下标"

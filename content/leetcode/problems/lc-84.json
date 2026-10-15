@@ -8,6 +8,26 @@
     "单调栈"
   ],
   "statement": "给定 n 个非负整数 heights，表示柱状图中相邻排列、宽度均为 1 的柱子高度。求在该柱状图中能勾勒出的矩形的最大面积（矩形必须完全落在柱子内部）。",
+  "en": {
+    "title": "Largest Rectangle in Histogram",
+    "tags": [
+      "Stack",
+      "Array",
+      "Monotonic Stack"
+    ],
+    "statement": "Given n non-negative integers heights, representing the heights of adjacent bars of width 1 in a histogram, find the maximum area of a rectangle that can be outlined within the histogram (the rectangle must lie entirely inside the bars).",
+    "constraints": [
+      "1 ≤ heights.length ≤ 10^5",
+      "0 ≤ heights[i] ≤ 10^4"
+    ],
+    "complexity": {
+      "time": "O(n)",
+      "space": "O(n) extra space (monotonic stack or left/right boundary arrays)",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the number of bars. For each bar, find the positions of the first shorter bar on its left and on its right; the widest rectangle using that bar's height spans the distance between them. A monotonically increasing stack does this in one pass. The maximum area is 10^4 × 10^5 = 10^9, which still fits in int. The O(n²) approach enumerating left and right endpoints times out; divide and conquer degrades to O(n²) on sorted input. The largest local test has n = 10^5 (the official limit), with all heights 1 to keep the problem bank small; there is also a non-decreasing (staircase) test with n = 30000."
+    },
+    "acmIoSpec": "stdin: line 1 is n; line 2 has n integers heights. stdout: one integer, the maximum rectangle area."
+  },
   "constraints": [
     "1 ≤ heights.length ≤ 10^5",
     "0 ≤ heights[i] ≤ 10^4"

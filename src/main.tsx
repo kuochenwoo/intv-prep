@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import Editor, { loader } from "@monaco-editor/react";
@@ -26,6 +26,7 @@ import "./style.css";
 import logo from "./assets/logo.png";
 import InterviewApp from "./features/interview/InterviewApp";
 import { LangProvider, lookup, useI18n } from "./i18n";
+import { localizeError } from "./errors";
 // Bundle Monaco locally: editing works without a CDN or network connection.
 (self as unknown as { MonacoEnvironment: unknown }).MonacoEnvironment = {
   getWorker: () => new EditorWorker(),
@@ -55,7 +56,26 @@ type Problem = {
   };
   cpp: { functionTemplate: string; acmTemplate: string; acmIoSpec: string };
   examples: { input: string; output: string }[];
+  en?: {
+    title: string;
+    tags: string[];
+    statement: string;
+    constraints: string[];
+    complexity: Omit<Problem["complexity"], "sourceUrl">;
+    acmIoSpec: string;
+  };
 };
+// Every problem carries an English block; English mode shows it in place of the Chinese text.
+function localProblem(p: Problem, lang: string): Problem {
+  if (lang !== "en" || !p.en) return p;
+  const { acmIoSpec, complexity, ...text } = p.en;
+  return {
+    ...p,
+    ...text,
+    complexity: { ...complexity, sourceUrl: p.complexity.sourceUrl },
+    cpp: { ...p.cpp, acmIoSpec },
+  };
+}
 type Progress = {
   problemId: string;
   mode: Mode;
@@ -85,8 +105,8 @@ type Result = {
 const keyOf = (id: string, mode: Mode) => `${id}:${mode}`;
 const difficultyBadge = { easy: "green", medium: "orange", hard: "red" } as const;
 function CodingApp({ scheme }: { scheme: Scheme }) {
-  const { t } = useI18n();
-  const [problems, setProblems] = useState<Problem[]>([]),
+  const { t, lang } = useI18n();
+  const [allProblems, setProblems] = useState<Problem[]>([]),
     [selected, setSelected] = useState("lc-1"),
     [mode, setMode] = useState<Mode>("function");
   const [progress, setProgress] = useState<Record<string, Progress>>({}),
@@ -94,6 +114,12 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
   const [query, setQuery] = useState(""),
     [difficulty, setDifficulty] = useState("all"),
     [tag, setTag] = useState("all");
+  const problems = useMemo(
+    () => allProblems.map((p) => localProblem(p, lang)),
+    [allProblems, lang],
+  );
+  // Tag names differ per language, so a tag filter does not carry over.
+  useEffect(() => setTag("all"), [lang]);
   const [compiler, setCompiler] = useState(""),
     [compilerInfo, setCompilerInfo] = useState(""),
     [error, setError] = useState(""),
@@ -254,7 +280,7 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
         <div className="page-banner">
           <Banner
             status="error"
-            title={error}
+            title={localizeError(error, lang)}
             isDismissable
             onDismiss={() => setError("")}
           />

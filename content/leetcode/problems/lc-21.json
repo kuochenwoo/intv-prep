@@ -18,6 +18,25 @@
     "notes": "m、n 为两条链表长度，输入链表不计入额外空间。哑节点 + 尾指针，每次接上较小的表头。最大测试为官方上限 m = n = 50。",
     "sourceUrl": "https://leetcode.com/problems/merge-two-sorted-lists/"
   },
+  "en": {
+    "title": "Merge Two Sorted Lists",
+    "tags": [
+      "Recursion",
+      "Linked List"
+    ],
+    "statement": "Given two linked lists list1 and list2, each sorted in non-decreasing order, splice them into a single non-decreasing list and return its head. The new list should be formed by splicing together the nodes of the two input lists.\n\nNode definition: struct ListNode { int val; ListNode* next; };",
+    "constraints": [
+      "0 ≤ number of nodes in each list ≤ 50; -100 ≤ node value ≤ 100",
+      "Both list1 and list2 are sorted in non-decreasing order"
+    ],
+    "complexity": {
+      "time": "O(m + n) (local training target)",
+      "space": "Iterative: O(1) extra space; recursive: O(m + n) call stack",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "m and n are the lengths of the two lists; the input lists do not count toward extra space. Use a dummy node + tail pointer, attaching the smaller head each time. The largest test uses the official limit m = n = 50."
+    },
+    "acmIoSpec": "stdin: line 1 is m; line 2 has m integers list1; line 3 is n; line 4 has n integers list2 (the line is empty when the length is 0). stdout: one line with the values of the merged list, separated by spaces; output an empty line if the result is empty."
+  },
   "cpp": {
     "functionTemplate": "// ListNode is provided: int val; ListNode* next;\nclass Solution {\npublic:\n    ListNode* mergeTwoLists(ListNode* list1, ListNode* list2) {\n        return nullptr; // Head of the merged sorted list.\n    }\n};",
     "acmIoSpec": "stdin：第一行 m；第二行 m 个整数 list1；第三行 n；第四行 n 个整数 list2（长度为 0 时对应行为空）。stdout：一行，合并后链表的值，以空格分隔；结果为空时输出空行。",

@@ -18,6 +18,25 @@
     "notes": "n 为括号对数，结果数为卡特兰数 C(n)（n = 8 时为 1430）。回溯时保证左括号数 ≤ n 且右括号数 ≤ 左括号数即可只生成合法串。判题忽略结果之间的顺序。",
     "sourceUrl": "https://leetcode.com/problems/generate-parentheses/"
   },
+  "en": {
+    "title": "Generate Parentheses",
+    "tags": [
+      "String",
+      "Dynamic Programming",
+      "Backtracking"
+    ],
+    "statement": "Given the number of pairs n, generate all well-formed (validly matched) strings made of n pairs of parentheses, in any order.",
+    "constraints": [
+      "1 ≤ n ≤ 8"
+    ],
+    "complexity": {
+      "time": "O(4^n / √n) (local training target; i.e. the n-th Catalan number times the length 2n)",
+      "space": "O(n) extra space (backtracking recursion stack and current string, recursion stack included; output not counted)",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the number of pairs; the number of results is the Catalan number C(n) (1430 for n = 8). During backtracking, keeping the count of '(' ≤ n and the count of ')' ≤ the count of '(' generates only valid strings. The judge ignores the order of results."
+    },
+    "acmIoSpec": "stdin: one line, the integer n. stdout: line 1 is the number of results k; then k lines, each with one valid parentheses string (any order)."
+  },
   "cpp": {
     "functionTemplate": "class Solution {\npublic:\n    vector<string> generateParenthesis(int n) {\n        return {}; // All well-formed strings, in any order.\n    }\n};",
     "acmIoSpec": "stdin：一行整数 n。stdout：第一行结果个数 k；随后 k 行，每行一个合法括号串（顺序任意）。",

@@ -8,6 +8,25 @@
     "前缀和"
   ],
   "statement": "给定整数数组 nums 和整数 k，统计和恰好等于 k 的子数组个数。子数组是数组中连续、非空的一段。",
+  "en": {
+    "title": "Subarray Sum Equals K",
+    "tags": [
+      "Array",
+      "Hash Table",
+      "Prefix Sum"
+    ],
+    "statement": "Given an integer array nums and an integer k, count the number of subarrays whose sum is exactly k. A subarray is a contiguous, non-empty segment of the array.",
+    "constraints": [
+      "1 ≤ nums.length ≤ 20000; -1000 ≤ nums[i] ≤ 1000; -10^7 ≤ k ≤ 10^7"
+    ],
+    "complexity": {
+      "time": "O(n) average time (local training target)",
+      "space": "O(n) extra space (hash table counting prefix sums)",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the array length. The sum of subarray (i, j] is pre[j] - pre[i]; while iterating, look up how many times pre[j] - k has appeared in the hash table; hashing is O(1) on average. The array contains negative numbers, so a sliding window does not work. When all elements are 0 and k = 0, the answer reaches n(n+1)/2 ≈ 2×10^8, which still fits in a 32-bit integer."
+    },
+    "acmIoSpec": "stdin: line 1 has n and k; line 2 has n integers nums. stdout: one integer, the number of subarrays with sum k."
+  },
   "constraints": [
     "1 ≤ nums.length ≤ 20000；-1000 ≤ nums[i] ≤ 1000；-10^7 ≤ k ≤ 10^7"
   ],

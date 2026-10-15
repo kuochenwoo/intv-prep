@@ -132,7 +132,8 @@ button.problem {
 }
 button.problem:hover {
   border-color: var(--color-border-emphasized);
-  background: var(--color-tint-hover);
+  /* Astryx's tint-hover is solid black/white meant for overlays, so mix a light tint instead. */
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-background-card));
 }
 button.problem.active {
   border-color: var(--color-accent);

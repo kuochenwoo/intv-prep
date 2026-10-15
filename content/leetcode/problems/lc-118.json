@@ -7,6 +7,24 @@
     "动态规划"
   ],
   "statement": "给定非负整数 numRows，返回杨辉三角的前 numRows 行。第 i 行（从 0 开始）有 i+1 个数，首尾都是 1，其余每个数等于上一行中它左上方与正上方两个数之和。",
+  "en": {
+    "title": "Pascal's Triangle",
+    "tags": [
+      "Array",
+      "Dynamic Programming"
+    ],
+    "statement": "Given a non-negative integer numRows, return the first numRows rows of Pascal's triangle. Row i (0-indexed) has i+1 numbers; the first and last are 1, and every other number equals the sum of the two numbers above it in the previous row (upper-left and directly above).",
+    "constraints": [
+      "1 ≤ numRows ≤ 30"
+    ],
+    "complexity": {
+      "time": "O(numRows²) (local training target)",
+      "space": "O(1) extra space (excluding the O(numRows²) output)",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "numRows is the number of rows; the output has numRows(numRows+1)/2 numbers in total. The largest value in row 29 is C(29,14) = 77558760, which fits in int."
+    },
+    "acmIoSpec": "stdin: one line with the integer numRows. stdout: line 1 is the row count numRows; then each line is one row of Pascal's triangle, numbers separated by spaces."
+  },
   "constraints": [
     "1 ≤ numRows ≤ 30"
   ],

@@ -18,6 +18,25 @@
     "notes": "n 为数组长度。从右找第一个 nums[i] < nums[i+1] 的位置 i，再从右找第一个大于 nums[i] 的元素与之交换，最后翻转 i 之后的后缀；找不到 i 时整体翻转。判题只检查结果，无法验证是否原地或常数空间。",
     "sourceUrl": "https://leetcode.com/problems/next-permutation/"
   },
+  "en": {
+    "title": "Next Permutation",
+    "tags": [
+      "Array",
+      "Two Pointers",
+      "In-Place"
+    ],
+    "statement": "Rearrange the integer array nums in place into its next lexicographically greater permutation; if it is already the lexicographically largest permutation, rearrange it into the smallest one (ascending order). Only constant extra space is allowed. The core function returns nothing; the system checks the modified array.",
+    "constraints": [
+      "1 ≤ nums.length ≤ 100; 0 ≤ nums[i] ≤ 100 (duplicates possible)"
+    ],
+    "complexity": {
+      "time": "O(n) (local training target)",
+      "space": "O(1) extra space, modified in place",
+      "officialRequirement": "Official requirement: modify in place using only constant extra space.",
+      "notes": "n is the array length. From the right, find the first position i with nums[i] < nums[i+1]; then from the right, find the first element greater than nums[i] and swap them; finally reverse the suffix after i. If no such i exists, reverse the whole array. The judge only checks the result and cannot verify in-place operation or constant space."
+    },
+    "acmIoSpec": "stdin: line 1 is n; line 2 has n integers nums. stdout: one line with the n transformed integers, separated by spaces."
+  },
   "cpp": {
     "functionTemplate": "class Solution {\npublic:\n    void nextPermutation(vector<int>& nums) {\n        // Rearrange nums in place into the next lexicographic permutation.\n    }\n};",
     "acmIoSpec": "stdin：第一行 n；第二行 n 个整数 nums。stdout：一行，变换后的 n 个整数，以空格分隔。",

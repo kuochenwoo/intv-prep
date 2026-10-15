@@ -9,6 +9,28 @@ problem = {
     "difficulty": "medium",
     "tags": ["位运算", "数组", "双指针", "二分查找"],
     "statement": "数组 nums 含 n + 1 个整数，每个都在 [1, n] 范围内，其中恰有一个数值是重复的（可能重复两次或更多次）。在不修改数组、只使用常数额外空间的前提下找出这个重复的数。",
+    "en": {
+        "title": "Find the Duplicate Number",
+        "tags": [
+            "Bit Manipulation",
+            "Array",
+            "Two Pointers",
+            "Binary Search"
+        ],
+        "statement": "An array nums contains n + 1 integers, each in the range [1, n], and exactly one value is repeated (it may appear two or more times). Find this repeated number without modifying the array and using only constant extra space.",
+        "constraints": [
+            "1 ≤ n ≤ 10^5; nums.length = n + 1; 1 ≤ nums[i] ≤ n",
+            "Only one value appears two or more times; every other value appears at most once",
+            "Largest local test has n = 50000 (official limit 10^5, reduced to keep the problem bank small)"
+        ],
+        "complexity": {
+            "time": "O(n) (local training target, Floyd's cycle detection); binary search over the value range with counting is O(n log n)",
+            "space": "O(1) extra space (official requirement), without modifying nums",
+            "officialRequirement": "Officially requires not modifying the array and using only constant extra space; the follow-up asks to prove that a duplicate must exist and to give a linear-time solution.",
+            "notes": "n is the maximum array value; the array length is n + 1. Treat i → nums[i] as a linked list; the duplicate is the entry point of the cycle. The judge cannot detect whether the array was modified or extra space was used (sorting, marking by negation, and a hash set all produce correct output); check your own code. The largest local tests are a random n = 50000 and a long chain with n = 30000 (official 10^5; full size would make the problem file exceed about 600 KiB)."
+        },
+        "acmIoSpec": "stdin: line 1 is the array length n + 1; line 2 has n + 1 integers nums. stdout: one integer, the duplicate number."
+    },
     "constraints": [
         "1 ≤ n ≤ 10^5；nums.length = n + 1；1 ≤ nums[i] ≤ n",
         "只有一个数值出现两次或更多次，其余数值至多出现一次",

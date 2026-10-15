@@ -22,7 +22,7 @@ The user later changed the reference-answer feature (2026-10-15): the "AI 参考
 
 ## Language conventions
 
-Write project documentation, developer descriptions, and code comments in English. The UI is bilingual: every user-facing UI string lives in `src/i18n.tsx` with a Chinese and an English version, and the header button switches language. Problem statements, interview content and backend error messages remain in Chinese. Code comments inside starter templates follow the English-comment convention.
+Write project documentation, developer descriptions, and code comments in English. The UI is bilingual: every user-facing UI string lives in `src/i18n.tsx` with a Chinese and an English version, and the header button switches language. Content follows the UI language too: every problem JSON has an `en` block (title, tags, statement, constraints, complexity text, `acmIoSpec`), each topic in `content/deep-dive/topics.json` has an `en` block, the AI commands take `lang` and use the matching prompts in `src-tauri/src/llm.rs`, and backend errors stay Chinese in Rust but are translated for English mode by the table in `src/errors.ts` (add new errors there). Code comments inside starter templates follow the English-comment convention.
 
 ## UI
 

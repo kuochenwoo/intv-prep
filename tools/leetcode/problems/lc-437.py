@@ -85,6 +85,26 @@ problem = {
     "difficulty": "medium",
     "tags": ["树", "深度优先搜索", "二叉树", "前缀和"],
     "statement": "给定二叉树的根节点 root 和整数 targetSum，统计节点值之和等于 targetSum 的路径数目。路径必须自上而下（只能从父节点走向子节点），但不要求从根开始、也不要求在叶子结束；单个节点也算一条路径。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入中的树为 LeetCode 层序表示，null 表示空位。",
+    "en": {
+        "title": "Path Sum III",
+        "tags": [
+            "Tree",
+            "Depth-First Search",
+            "Binary Tree",
+            "Prefix Sum"
+        ],
+        "statement": "Given the root of a binary tree and an integer targetSum, count the number of paths whose node values sum to targetSum. A path must go downward (only from parent to child), but it need not start at the root or end at a leaf; a single node also counts as a path.\n\nNode definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. The tree in the input uses LeetCode's level-order representation, where null marks an empty slot.",
+        "constraints": [
+            "The number of nodes is in the range [0, 1000]; -10^9 ≤ Node.val ≤ 10^9; -1000 ≤ targetSum ≤ 1000"
+        ],
+        "complexity": {
+            "time": "O(n) (prefix sums + hash table, average)",
+            "space": "O(h) for the hash table and recursion stack, O(n) in the worst case.",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the number of nodes and h is the tree height. Path sums can exceed 32 bits (up to 1000 × 10^9), so accumulate with 64-bit integers. Brute-force enumeration downward from each node is O(n·h), which also passes at n = 1000. The largest local test is a 1000-node single chain with values alternating ±10^9; there are also an all-zero chain (answer 500500) and a random tree with large values."
+        },
+        "acmIoSpec": "stdin: line 1 is m (number of level-order tokens, 0 for an empty tree); line 2 has m tokens (integers or null), the tree's LeetCode level-order representation; line 3 is the integer targetSum. stdout: one integer, the number of paths."
+    },
     "constraints": ["节点数在 [0, 1000] 范围内；-10^9 ≤ Node.val ≤ 10^9；-1000 ≤ targetSum ≤ 1000"],
     "complexity": {
         "time": "O(n)（前缀和 + 哈希表，平均）",

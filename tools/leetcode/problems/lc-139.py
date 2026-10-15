@@ -9,6 +9,22 @@ problem = {
     "difficulty": "medium",
     "tags": ["字典树", "记忆化搜索", "数组", "哈希表", "字符串", "动态规划"],
     "statement": "给定字符串 s 和字符串列表 wordDict（字典）。判断 s 能否被切分成一个或多个字典中的单词依次拼接而成；字典中的单词可以重复使用。",
+    "en": {'title': 'Word Break',
+     'tags': ['Trie', 'Memoization', 'Array', 'Hash Table', 'String', 'Dynamic Programming'],
+     'statement': 'Given a string s and a list of strings wordDict (the dictionary), determine whether s can be '
+                  'split into a concatenation of one or more dictionary words in order; dictionary words may be '
+                  'reused.',
+     'constraints': ['1 ≤ s.length ≤ 300; 1 ≤ wordDict.length ≤ 1000; 1 ≤ wordDict[i].length ≤ 20',
+                     's and wordDict[i] consist only of lowercase English letters; all words in wordDict are '
+                     'distinct'],
+     'complexity': {'time': 'O(n · L²), or O(n · L) with a trie (local training target)',
+                    'space': 'O(n + total dictionary length) extra space',
+                    'officialRequirement': 'No official complexity requirement.',
+                    'notes': 'n is the length of s and L ≤ 20 is the longest word length. dp[i] means the prefix '
+                             's[0..i) can be split; only the last L split points need to be checked. '
+                             'Backtracking without memoization is exponential on inputs like "aaa…ab".'},
+     'acmIoSpec': 'stdin: line 1 is the string s; line 2 is the word count k; then k lines, one word each. '
+                  'stdout: true or false.'},
     "constraints": [
         "1 ≤ s.length ≤ 300；1 ≤ wordDict.length ≤ 1000；1 ≤ wordDict[i].length ≤ 20",
         "s 与 wordDict[i] 仅由小写英文字母组成；wordDict 中的单词互不相同",

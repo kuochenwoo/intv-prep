@@ -16,6 +16,24 @@ problem = {
         "notes": "n 为数组长度，答案必在 [1, n+1] 内。原地哈希：把每个值 v ∈ [1, n] 交换到下标 v-1 处，每次交换都让一个值归位，总交换次数 ≤ n；再找第一个 nums[i] ≠ i+1 的位置。使用哈希集合或标记数组为 O(n) 额外空间，排序为 O(n log n)，结果正确但不满足官方要求，本地测试无法区分，需自行检查。本地最大测试为 50000 个元素（官方上限 100000，为控制题库体积而缩小）。",
         "sourceUrl": "https://leetcode.com/problems/first-missing-positive/",
     },
+    "en": {
+        "title": "First Missing Positive",
+        "tags": [
+            "Array",
+            "Hash Table"
+        ],
+        "statement": "Given an unsorted integer array nums, return the smallest positive integer that does not appear in it. The solution must run in O(n) time and use only constant extra space (modifying the input array is allowed).",
+        "constraints": [
+            "1 ≤ nums.length ≤ 100000; -2^31 ≤ nums[i] ≤ 2^31 - 1"
+        ],
+        "complexity": {
+            "time": "O(n) (official requirement)",
+            "space": "O(1) extra space (official requirement; the input array is modified in place)",
+            "officialRequirement": "Official requirement: O(n) time complexity using only constant extra space.",
+            "notes": "n is the array length; the answer must lie in [1, n+1]. In-place hashing: swap each value v ∈ [1, n] to index v-1; each swap puts one value in its place, so there are at most n swaps in total; then find the first position with nums[i] ≠ i+1. A hash set or marker array uses O(n) extra space and sorting is O(n log n); these give correct results but do not meet the official requirement, and the local tests cannot tell the difference, so check this yourself. The largest local test has 50000 elements (the official limit is 100000, reduced to keep the problem bank small)."
+        },
+        "acmIoSpec": "stdin: line 1 is n; line 2 has n integers. stdout: one integer, the smallest missing positive integer."
+    },
     "cpp": {
         "functionTemplate": "class Solution {\npublic:\n    int firstMissingPositive(vector<int>& nums) {\n        return 1; // Smallest positive integer not in nums.\n    }\n};",
         "acmIoSpec": "stdin：第一行 n；第二行 n 个整数。stdout：一个整数，缺失的最小正整数。",

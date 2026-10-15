@@ -979,6 +979,25 @@
       "output": "[1, 2]"
     }
   ],
+  "en": {
+    "title": "Two Sum",
+    "tags": [
+      "Array",
+      "Hash Table"
+    ],
+    "statement": "Given an integer array and a target, return the indices of two different elements whose sum equals the target. At least one solution is guaranteed; any valid pair of indices is accepted, and indices start at 0.",
+    "constraints": [
+      "2 ≤ n ≤ 10000; -10^9 ≤ nums[i], target ≤ 10^9",
+      "The local checker accepts any valid answer; the official problem guarantees exactly one."
+    ],
+    "complexity": {
+      "time": "Average O(n) (local training target)",
+      "space": "O(n) extra space",
+      "officialRequirement": "The official follow-up asks for better than O(n²) time; it does not require a hash table.",
+      "notes": "n is the number of elements. An O(n log n) sorting approach also meets the official follow-up; practising the hash table is recommended here. Extreme hash collisions can degrade it."
+    },
+    "acmIoSpec": "stdin: first line n target; second line n integers. stdout: two different 0-based indices in any order; any valid answer is accepted."
+  },
   "complexity": {
     "time": "平均 O(n)（本地訓練目標）",
     "space": "O(n) 額外空間",

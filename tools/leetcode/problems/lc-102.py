@@ -85,6 +85,26 @@ problem = {
     "difficulty": "medium",
     "tags": ["树", "广度优先搜索", "二叉树"],
     "statement": "给定二叉树的根节点 root，按层从上到下、每层从左到右返回节点值，每一层的值组成一个数组。空树返回空数组。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入中的树为 LeetCode 层序表示，null 表示空位。",
+    "en": {'title': 'Binary Tree Level Order Traversal',
+     'tags': ['Tree', 'Breadth-First Search', 'Binary Tree'],
+     'statement': 'Given the root of a binary tree, return the node values level by level from top to bottom, '
+                  "left to right within each level, with each level's values forming one array. Return an empty "
+                  'array for an empty tree.\n'
+                  '\n'
+                  'Node definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. The input '
+                  'tree uses LeetCode level-order representation, with null marking empty positions.',
+     'constraints': ['The number of nodes is in the range [0, 2000]; -1000 ≤ Node.val ≤ 1000'],
+     'complexity': {'time': 'O(n)',
+                    'space': 'BFS queue O(w) (w is the maximum level width, about n/2 in the worst case); DFS by '
+                             'depth uses an O(h) recursion stack. Output not counted.',
+                    'officialRequirement': 'No official complexity requirement.',
+                    'notes': 'n is the number of nodes and h is the tree height. The largest local test is a '
+                             'random 2000-node tree, plus a 2000-node single chain (2000 levels) and a complete '
+                             'binary tree.'},
+     'acmIoSpec': 'stdin: line 1 is m (the number of level-order tokens, 0 for an empty tree); line 2 has m '
+                  "tokens (integers or null), the tree's LeetCode level-order representation. stdout: line 1 is "
+                  "the number of levels L; then L lines, each with that level's node values from left to right "
+                  '(space-separated, no count). For an empty tree output only 0.'},
     "constraints": ["节点数在 [0, 2000] 范围内；-1000 ≤ Node.val ≤ 1000"],
     "complexity": {
         "time": "O(n)",

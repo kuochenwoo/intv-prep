@@ -9,6 +9,26 @@
     "双指针"
   ],
   "statement": "给定单链表的头节点 head，判断链表的值序列正着读和反着读是否相同（即是否为回文），是则返回 true，否则返回 false。\n\n节点定义：struct ListNode { int val; ListNode* next; };",
+  "en": {
+    "title": "Palindrome Linked List",
+    "tags": [
+      "Stack",
+      "Recursion",
+      "Linked List",
+      "Two Pointers"
+    ],
+    "statement": "Given the head of a singly linked list, determine whether its sequence of values reads the same forward and backward (i.e., is a palindrome); return true if so, otherwise false.\n\nNode definition: struct ListNode { int val; ListNode* next; };",
+    "constraints": [
+      "1 ≤ number of nodes ≤ 100000; 0 ≤ node value ≤ 9"
+    ],
+    "complexity": {
+      "time": "O(n) (local training target)",
+      "space": "Finding the middle with fast/slow pointers and reversing the second half in place uses O(1) extra space; copying to an array or using a stack is O(n) and also passes the local tests",
+      "officialRequirement": "Official follow-up asks for O(n) time and O(1) extra space.",
+      "notes": "n is the number of nodes; the input list does not count toward extra space. The O(1) solution temporarily modifies the list and should reverse the second half back after comparing; the recursive solution's call stack is O(n) and risks stack overflow at n = 100000. The largest test uses the official limit n = 100000."
+    },
+    "acmIoSpec": "stdin: line 1 is the node count n; line 2 has n integers, the list values. stdout: true or false."
+  },
   "constraints": [
     "1 ≤ 节点数 ≤ 100000；0 ≤ 节点值 ≤ 9"
   ],

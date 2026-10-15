@@ -8,6 +8,28 @@
     "字符串"
   ],
   "statement": "给定一个经过编码的字符串 s，编码规则为 k[encoded_string]：方括号内的子串重复恰好 k 次（k 为正整数），编码可以嵌套。输入保证合法：括号成对、没有多余空格、原始数据中不含数字（数字只作为重复次数出现）。返回解码后的字符串。",
+  "en": {
+    "title": "Decode String",
+    "tags": [
+      "Stack",
+      "Recursion",
+      "String"
+    ],
+    "statement": "Given an encoded string s, where the encoding rule is k[encoded_string]: the substring inside the brackets is repeated exactly k times (k is a positive integer), and encodings may be nested. The input is guaranteed to be valid: brackets are balanced, there are no extra spaces, and the original data contains no digits (digits appear only as repeat counts). Return the decoded string.",
+    "constraints": [
+      "1 ≤ s.length ≤ 30",
+      "s consists of lowercase English letters, digits and square brackets '[]', and is guaranteed to be a valid encoding",
+      "All integers in s are in the range [1, 300]",
+      "The decoded result has length at most 10^5"
+    ],
+    "complexity": {
+      "time": "O(L) (L is the length of the decoded result; each output character is built a constant number of times; implementations that concatenate at each nesting level may incur extra copying proportional to nesting depth)",
+      "space": "O(L) (the result and partial strings on the stack); the recursive solution also uses an O(|s|) recursion stack",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "|s| is the encoded string length (≤ 30) and L is the output length (≤ 10^5). Use two stacks, one for repeat counts and one for the prefix built before entering the bracket; on ']', repeat the current string k times and append it to the prefix. The largest local test outputs exactly 10^5 characters."
+    },
+    "acmIoSpec": "stdin: one line with the encoded string s. stdout: one line, the decoded string."
+  },
   "constraints": [
     "1 ≤ s.length ≤ 30",
     "s 由小写英文字母、数字和方括号 '[]' 组成，且保证是合法编码",

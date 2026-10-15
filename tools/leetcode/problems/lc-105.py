@@ -85,6 +85,29 @@ problem = {
     "difficulty": "medium",
     "tags": ["树", "数组", "哈希表", "分治", "二叉树"],
     "statement": "给定同一棵二叉树的先序遍历 preorder 和中序遍历 inorder（树中节点值互不相同），重建这棵二叉树并返回根节点。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输出的树为 LeetCode 层序表示，null 表示空位。",
+    "en": {'title': 'Construct Binary Tree from Preorder and Inorder Traversal',
+     'tags': ['Tree', 'Array', 'Hash Table', 'Divide and Conquer', 'Binary Tree'],
+     'statement': 'Given the preorder traversal preorder and inorder traversal inorder of the same binary tree '
+                  '(all node values are distinct), reconstruct the tree and return its root.\n'
+                  '\n'
+                  'Node definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. The output '
+                  'tree uses LeetCode level-order representation, with null marking empty positions.',
+     'constraints': ['1 ≤ preorder.length ≤ 3000; inorder.length == preorder.length',
+                     '-3000 ≤ preorder[i], inorder[i] ≤ 3000; values are distinct',
+                     'Every value in inorder also appears in preorder; the input is guaranteed to be the '
+                     'preorder and inorder traversals of the same tree'],
+     'complexity': {'time': 'O(n) (a hash map locates the root within inorder; a linear search each time gives '
+                            'O(n^2))',
+                    'space': 'O(n) hash map + O(h) recursion stack; newly created nodes are output and not '
+                             'counted.',
+                    'officialRequirement': 'No official complexity requirement.',
+                    'notes': 'n is the number of nodes and h is the tree height. The largest local test is a '
+                             '3000-node left chain (recursion depth 3000, which also degrades per-step linear '
+                             'search to O(n^2)), plus a random 3000-node tree and a zigzag chain. The output is '
+                             'large, so the output limit is raised to 128 KiB.'},
+     'acmIoSpec': 'stdin: line 1 is n; line 2 has n integers preorder; line 3 is n; line 4 has n integers '
+                  "inorder. stdout: one line with the reconstructed tree's level-order tokens (integers or null, "
+                  'space-separated, trailing nulls omitted).'},
     "constraints": [
         "1 ≤ preorder.length ≤ 3000；inorder.length == preorder.length",
         "-3000 ≤ preorder[i], inorder[i] ≤ 3000；值互不相同",

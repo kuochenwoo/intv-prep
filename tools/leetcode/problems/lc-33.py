@@ -21,6 +21,27 @@ problem = {
         "notes": "n 为数组长度。二分时 [lo, mid] 与 [mid, hi] 至少一半有序，判断 target 是否落在有序的那一半；也可先二分找旋转点再在对应段二分。本地判题需 O(n) 读入，无法从耗时上区分二分与线性扫描。",
         "sourceUrl": "https://leetcode.com/problems/search-in-rotated-sorted-array/",
     },
+    "en": {
+        "title": "Search in Rotated Sorted Array",
+        "tags": [
+            "Array",
+            "Binary Search"
+        ],
+        "statement": "An ascending array of distinct elements has been rotated at some unknown index k (0 ≤ k < n), becoming [nums[k], …, nums[n-1], nums[0], …, nums[k-1]]. Given the rotated array nums and an integer target, return the index of target, or -1 if it is not present.",
+        "constraints": [
+            "1 ≤ nums.length ≤ 5000",
+            "-10^4 ≤ nums[i] ≤ 10^4, all elements are distinct",
+            "nums is an ascending array after rotation (possibly rotated 0 times)",
+            "-10^4 ≤ target ≤ 10^4"
+        ],
+        "complexity": {
+            "time": "O(log n)",
+            "space": "O(1) extra space",
+            "officialRequirement": "Official requirement: O(log n) time complexity.",
+            "notes": "n is the array length. During binary search, at least one of [lo, mid] and [mid, hi] is sorted; check whether target falls within the sorted half. Alternatively, binary search for the rotation point first, then binary search in the corresponding segment. The local judge needs O(n) input reading, so timing cannot distinguish binary search from a linear scan."
+        },
+        "acmIoSpec": "stdin: line 1 is n; line 2 has n integers nums; line 3 is target. stdout: one integer, the index of target or -1."
+    },
     "cpp": {
         "functionTemplate": "class Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n        return -1; // Index of target, or -1.\n    }\n};",
         "acmIoSpec": "stdin：第一行 n；第二行 n 个整数 nums；第三行 target。stdout：一个整数，target 的下标或 -1。",

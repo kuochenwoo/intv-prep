@@ -9,6 +9,30 @@
     "矩阵"
   ],
   "statement": "给定一个 m × n 的整数矩阵 matrix：每一行从左到右严格递增，每一列从上到下严格递增。再给一个整数 target，判断 target 是否出现在矩阵中，出现返回 true，否则返回 false。",
+  "en": {
+    "title": "Search a 2D Matrix II",
+    "tags": [
+      "Array",
+      "Binary Search",
+      "Divide and Conquer",
+      "Matrix"
+    ],
+    "statement": "Given an m × n integer matrix where each row is strictly increasing from left to right and each column is strictly increasing from top to bottom, and an integer target, determine whether target appears in the matrix: return true if it does, otherwise false.",
+    "constraints": [
+      "m == matrix.length, n == matrix[i].length",
+      "1 ≤ m, n ≤ 300",
+      "-10^9 ≤ matrix[i][j] ≤ 10^9",
+      "Each row is sorted in ascending order from left to right, and each column from top to bottom",
+      "-10^9 ≤ target ≤ 10^9"
+    ],
+    "complexity": {
+      "time": "O(m + n) (staircase search starting from the top-right or bottom-left corner); binary search per row is O(m log n)",
+      "space": "O(1) extra space",
+      "officialRequirement": "Officially only asks for an \"efficient\" algorithm, with no specific complexity requirement.",
+      "notes": "m and n are the numbers of rows and columns; the input matrix is not counted as extra space. Starting at the top-right: if the current value is greater than target, move one column left; if smaller, move one row down; each step eliminates a row or a column. The largest local test is 300 × 300 (official limit), with element values compressed into a small range to keep the problem bank small; reading the input is already O(m·n), so local tests cannot distinguish O(m + n) from scanning every element."
+    },
+    "acmIoSpec": "stdin: line 1 is the number of rows m; then m lines, each starting with the column count n followed by that row's n integers; the last line is target. stdout: true or false."
+  },
   "constraints": [
     "m == matrix.length，n == matrix[i].length",
     "1 ≤ m, n ≤ 300",

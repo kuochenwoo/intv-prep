@@ -8,6 +8,26 @@ problem = {
     "difficulty": "hard",
     "tags": ["数组", "双指针", "单调栈", "动态规划"],
     "statement": "给定 n 个非负整数表示宽度为 1 的柱子高度，计算下雨后这些柱子之间最多能积存多少单位的雨水。",
+    "en": {
+        "title": "Trapping Rain Water",
+        "tags": [
+            "Array",
+            "Two Pointers",
+            "Monotonic Stack",
+            "Dynamic Programming"
+        ],
+        "statement": "Given n non-negative integers representing the heights of bars of width 1, compute the maximum number of units of rainwater that can be trapped between the bars after it rains.",
+        "constraints": [
+            "1 ≤ n ≤ 20000; 0 ≤ height[i] ≤ 100000"
+        ],
+        "complexity": {
+            "time": "O(n) (local training target)",
+            "space": "O(1) extra space with two pointers; O(n) with prefix/suffix arrays or a monotonic stack is also fine",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the number of bars; the input array does not count toward extra space. The water above each position is min(highest on the left, highest on the right) - its own height; with two pointers, always move the shorter side."
+        },
+        "acmIoSpec": "stdin: first line n; second line n integers height. stdout: one integer, the total trapped water."
+    },
     "constraints": ["1 ≤ n ≤ 20000；0 ≤ height[i] ≤ 100000"],
     "complexity": {
         "time": "O(n)（本地训练目标）",

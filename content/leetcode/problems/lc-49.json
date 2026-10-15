@@ -9,6 +9,27 @@
     "排序"
   ],
   "statement": "给定一个字符串数组 strs，把其中互为字母异位词的字符串分到同一组（字母异位词指字母种类和每种字母出现次数完全相同、仅排列不同的字符串）。返回所有分组；组与组之间、组内字符串之间的顺序都不限。",
+  "en": {
+    "title": "Group Anagrams",
+    "tags": [
+      "Array",
+      "Hash Table",
+      "String",
+      "Sorting"
+    ],
+    "statement": "Given an array of strings strs, group together the strings that are anagrams of each other (anagrams are strings with exactly the same letters and the same count of each letter, differing only in arrangement). Return all groups; neither the order of the groups nor the order of strings within a group matters.",
+    "constraints": [
+      "1 ≤ strs.length ≤ 10000; 0 ≤ strs[i].length ≤ 100",
+      "strs[i] consists only of lowercase English letters"
+    ],
+    "complexity": {
+      "time": "O(n·k) (count key) or O(n·k·log k) (sorted key) (local training target)",
+      "space": "O(n·k), the hash map stores all strings; output counted separately",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the number of strings and k is the length of the longest string. Group by a hash key made from the sorted string or a 26-entry letter count; hash map costs are average case. The largest local test has 10000 strings of length ≤ 20 (the official per-string limit is 100; total characters were reduced to keep the problem bank small)."
+    },
+    "acmIoSpec": "stdin: first line n; then n lines, one string per line (a line may be empty). stdout: first line the number of groups g; then for each group, a line with its size k followed by k lines of strings. Group order and order within groups are arbitrary."
+  },
   "constraints": [
     "1 ≤ strs.length ≤ 10000；0 ≤ strs[i].length ≤ 100",
     "strs[i] 只包含小写英文字母"

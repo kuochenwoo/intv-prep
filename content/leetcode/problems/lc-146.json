@@ -9,6 +9,27 @@
     "双向链表"
   ],
   "statement": "设计一个容量为 capacity 的 LRU（最近最少使用）缓存类 LRUCache：get(key) 返回键对应的值，不存在返回 -1；put(key, value) 写入或更新键值，若插入后超出容量，淘汰最久未被访问的键。get 和 put 都算一次访问。",
+  "en": {
+    "title": "LRU Cache",
+    "tags": [
+      "Design",
+      "Hash Table",
+      "Linked List",
+      "Doubly-Linked List"
+    ],
+    "statement": "Design an LRU (least recently used) cache class LRUCache with capacity capacity: get(key) returns the value for key, or -1 if absent; put(key, value) inserts or updates the key; if the insertion makes the size exceed capacity, evict the key that has gone unaccessed the longest. Both get and put count as an access.",
+    "constraints": [
+      "1 ≤ capacity ≤ 3000; 0 ≤ key ≤ 10000; 0 ≤ value ≤ 100000",
+      "Total calls to get and put ≤ 200000"
+    ],
+    "complexity": {
+      "time": "O(1) average for both get and put (official requirement)",
+      "space": "O(capacity)",
+      "officialRequirement": "Official requirement: get and put must each run in O(1) average time.",
+      "notes": "A hash table locates nodes; a doubly linked list maintains access order. The largest local test has 20000 calls (official limit is 200000, reduced to keep the problem bank small); finite tests cannot prove O(1)."
+    },
+    "acmIoSpec": "stdin: line 1 is the operation count m; then m lines, each an operation name (LRUCache / put / get); then a line with m, followed by m argument lines, each giving the argument count k and then k integers. stdout: line 1 is m, then m lines, one result per operation: the constructor and put print null, get prints an integer."
+  },
   "constraints": [
     "1 ≤ capacity ≤ 3000；0 ≤ key ≤ 10000；0 ≤ value ≤ 100000",
     "get 与 put 总调用次数 ≤ 200000"

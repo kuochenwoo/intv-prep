@@ -8,6 +8,25 @@ problem = {
     "difficulty": "easy",
     "tags": ["记忆化搜索", "数学", "动态规划"],
     "statement": "楼梯共有 n 级台阶，每一步可以向上走 1 级或 2 级。从地面出发恰好走到第 n 级，一共有多少种不同的走法？",
+    "en": {
+        "title": "Climbing Stairs",
+        "tags": [
+            "Memoization",
+            "Math",
+            "Dynamic Programming"
+        ],
+        "statement": "A staircase has n steps, and each move climbs either 1 or 2 steps. Starting from the ground, how many distinct ways are there to land exactly on step n?",
+        "constraints": [
+            "1 ≤ n ≤ 45"
+        ],
+        "complexity": {
+            "time": "O(n) (local training target)",
+            "space": "O(1) extra space (rolling variables)",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the number of steps. f(n) = f(n-1) + f(n-2), i.e. the Fibonacci sequence; f(45) = 1836311903 still fits in a 32-bit signed integer. Fast matrix exponentiation achieves O(log n), but it is unnecessary for n ≤ 45."
+        },
+        "acmIoSpec": "stdin: one line with integer n. stdout: one integer, the total number of ways."
+    },
     "constraints": ["1 ≤ n ≤ 45"],
     "complexity": {
         "time": "O(n)（本地训练目标）",

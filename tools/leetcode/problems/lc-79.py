@@ -9,6 +9,30 @@ problem = {
     "difficulty": "medium",
     "tags": ["深度优先搜索", "数组", "字符串", "回溯", "矩阵"],
     "statement": "给定 m × n 字符网格 board 和字符串 word，判断 word 能否由网格中一条路径上的字母依次拼出：路径上相邻两格必须上下或左右相邻，同一格在一条路径中最多使用一次。能则返回 true，否则返回 false。",
+    "en": {'title': 'Word Search',
+     'tags': ['Depth-First Search', 'Array', 'String', 'Backtracking', 'Matrix'],
+     'statement': 'Given an m × n character grid board and a string word, decide whether word can be spelled out '
+                  'letter by letter along a path in the grid: consecutive cells on the path must be vertically '
+                  'or horizontally adjacent, and a cell may be used at most once in a single path. Return true '
+                  'if possible, otherwise false.',
+     'constraints': ['m == board.length, n == board[i].length',
+                     '1 ≤ m, n ≤ 6',
+                     '1 ≤ word.length ≤ 15',
+                     'board and word consist only of uppercase and lowercase English letters (case-sensitive)'],
+     'complexity': {'time': 'O(m·n·3^L) worst case (local training target; L is the length of word, and every '
+                            'step after the first has at most 3 directions)',
+                    'space': 'O(L) extra space (recursion stack, counted; visited cells are marked in place, '
+                             'input not counted)',
+                    'officialRequirement': 'No official complexity requirement; the follow-up asks whether '
+                                           'search pruning can make the solution faster on larger grids.',
+                    'notes': "m and n are the grid's row and column counts. Common pruning: compare letter "
+                             'counts first and return false immediately if the grid lacks enough of some letter; '
+                             "if word's last letter occurs less often in the grid, reverse word before "
+                             "searching. The local worst-case test is a 6 × 6 all-'A' grid with a long word "
+                             'ending in a letter absent from the grid, where unpruned backtracking must explore '
+                             'a huge number of paths.'},
+     'acmIoSpec': 'stdin: line 1 is m; then m lines, each a string of n letters giving one row of the grid; the '
+                  'last line is word. stdout: true or false.'},
     "constraints": [
         "m == board.length，n == board[i].length",
         "1 ≤ m, n ≤ 6",

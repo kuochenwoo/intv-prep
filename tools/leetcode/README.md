@@ -41,6 +41,7 @@ INTV_CONTENT_DIR=content/leetcode src-tauri/target/debug/examples/verify_problem
 - **Multiple valid answers**: use a checker (below), never an `exact` comparison against one arbitrary valid answer.
 - **C++**: Function mode is only the class; common headers are already included. ACM mode is a full program with explicit standard headers. Do not use `<bits/stdc++.h>` (missing on macOS clang). Prefer a different algorithm in the two files so they cross-check each other. `functionTemplate` uses the LeetCode signature, compiles as-is (dummy return), comments in English.
 - **acmIoSpec**: Chinese, and exactly the stdin the `io` spec produces plus the stdout the checker parses.
+- **en**: an English block shown when the UI is in English: `{"title", "tags", "statement", "constraints", "complexity": {"time", "space", "officialRequirement", "notes"}, "acmIoSpec"}`. Use the official LeetCode English title and tag names, one English tag per Chinese tag and one English constraint per Chinese one, and no Chinese characters. `cargo test` enforces this.
 
 ## The `io` spec
 

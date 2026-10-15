@@ -8,6 +8,24 @@ problem = {
     "difficulty": "hard",
     "tags": ["数组", "回溯"],
     "statement": "在 n × n 棋盘上放置 n 个皇后，使任意两个皇后都不在同一行、同一列或同一条斜线上。返回所有不同的放置方案；每个方案用 n 个长度为 n 的字符串表示棋盘，'Q' 表示皇后，'.' 表示空位。方案之间的顺序任意。",
+    "en": {
+        "title": "N-Queens",
+        "tags": [
+            "Array",
+            "Backtracking"
+        ],
+        "statement": "Place n queens on an n × n chessboard so that no two queens share a row, column, or diagonal. Return all distinct placements; each placement is represented as n strings of length n describing the board, with 'Q' for a queen and '.' for an empty square. Placements may be returned in any order.",
+        "constraints": [
+            "1 ≤ n ≤ 9"
+        ],
+        "complexity": {
+            "time": "Backtracking on the order of O(n!) (local training target; O(1) conflict checks using flags for columns and both diagonals)",
+            "space": "O(n) extra space (flag arrays and recursion stack, recursion stack counted; output boards not counted)",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the board side length. Place queens row by row, pruning with three sets of flags for col, row+col and row-col; for n = 9 there are 352 solutions. The judge only ignores the order between placements; the row order within a placement is fixed."
+        },
+        "acmIoSpec": "stdin: one line with integer n. stdout: first line the number of placements P; then each placement in turn: a line with n, followed by n lines, each a string of length n made of 'Q' and '.' (placements in any order)."
+    },
     "constraints": ["1 ≤ n ≤ 9"],
     "complexity": {
         "time": "O(n!) 量级的回溯（本地训练目标；用列与两条对角线的标记做 O(1) 冲突判断）",

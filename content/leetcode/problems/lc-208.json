@@ -9,6 +9,28 @@
     "字符串"
   ],
   "statement": "实现前缀树类 Trie：Trie() 初始化空树；insert(word) 插入字符串 word；search(word) 判断 word 是否曾被插入（完整匹配），返回 true/false；startsWith(prefix) 判断是否存在某个已插入的字符串以 prefix 为前缀，返回 true/false。",
+  "en": {
+    "title": "Implement Trie (Prefix Tree)",
+    "tags": [
+      "Design",
+      "Trie",
+      "Hash Table",
+      "String"
+    ],
+    "statement": "Implement a prefix tree class Trie: Trie() initializes an empty trie; insert(word) inserts the string word; search(word) returns true/false for whether word has been inserted (exact match); startsWith(prefix) returns true/false for whether some inserted string has prefix as a prefix.",
+    "constraints": [
+      "1 ≤ word.length, prefix.length ≤ 2000",
+      "word and prefix consist only of lowercase English letters",
+      "Total calls to insert, search and startsWith ≤ 3 × 10^4"
+    ],
+    "complexity": {
+      "time": "O(L) per insert / search / startsWith (local training target)",
+      "space": "O(S·Σ): S is the total length of all inserted strings, Σ = 26 (array children); storing children in a hash table gives O(S)",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "L is the length of the string in the current operation. The largest local test has about 10000 calls with short strings, plus one test with long strings of length 2000 (official limits are 3 × 10^4 calls and length 2000, reduced to keep the problem bank small)."
+    },
+    "acmIoSpec": "stdin: line 1 is the operation count m; then m lines, each an operation name (Trie / insert / search / startsWith); then a line with m, and for each operation a line with the argument count k (0 for the constructor, 1 otherwise) followed by k lines of argument strings. stdout: line 1 is m, then m lines, one result per operation: the constructor and insert print null; search and startsWith print true or false."
+  },
   "constraints": [
     "1 ≤ word.length, prefix.length ≤ 2000",
     "word 与 prefix 仅由小写英文字母组成",

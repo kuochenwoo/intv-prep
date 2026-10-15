@@ -8,6 +8,27 @@ problem = {
     "difficulty": "hard",
     "tags": ["队列", "数组", "滑动窗口", "单调队列", "堆（优先队列）"],
     "statement": "给定整数数组 nums 和窗口大小 k。一个长度为 k 的窗口从数组最左端每次向右滑动一位，直到最右端。按顺序返回每个窗口内的最大值（共 n - k + 1 个）。",
+    "en": {
+        "title": "Sliding Window Maximum",
+        "tags": [
+            "Queue",
+            "Array",
+            "Sliding Window",
+            "Monotonic Queue",
+            "Heap (Priority Queue)"
+        ],
+        "statement": "Given an integer array nums and a window size k, a window of length k starts at the left end of the array and slides right one position at a time until it reaches the right end. Return the maximum of each window in order (n - k + 1 values in total).",
+        "constraints": [
+            "1 ≤ nums.length ≤ 100000; -10^4 ≤ nums[i] ≤ 10^4; 1 ≤ k ≤ nums.length"
+        ],
+        "complexity": {
+            "time": "O(n) (local training target)",
+            "space": "O(k) extra space (monotonic queue); output not counted",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the array length. A monotonically decreasing deque stores indices; each index is pushed and popped at most once. A heap-based O(n log n) approach also passes. Scanning each window, O(n·k), times out on the largest test. The max-size test has n = 100000 and k = 80000 (n is the official limit), but values are 0–9 to keep the problem bank small; there are also full-value-range decreasing/increasing tests of size 10000."
+        },
+        "acmIoSpec": "stdin: line 1 has n and k; line 2 has n integers nums. stdout: one line with n - k + 1 integers, the maximum of each window in order."
+    },
     "constraints": ["1 ≤ nums.length ≤ 100000；-10^4 ≤ nums[i] ≤ 10^4；1 ≤ k ≤ nums.length"],
     "complexity": {
         "time": "O(n)（本地训练目标）",

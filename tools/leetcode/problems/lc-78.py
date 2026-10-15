@@ -8,6 +8,27 @@ problem = {
     "difficulty": "medium",
     "tags": ["位运算", "数组", "回溯"],
     "statement": "给定一个元素互不相同的整数数组 nums，返回它的所有子集（幂集），包括空集。结果中不能有重复子集；子集之间的顺序和每个子集内部元素的顺序都可以任意。",
+    "en": {
+        "title": "Subsets",
+        "tags": [
+            "Bit Manipulation",
+            "Array",
+            "Backtracking"
+        ],
+        "statement": "Given an integer array nums of distinct elements, return all of its subsets (the power set), including the empty set. The result must not contain duplicate subsets; the order of subsets and the order of elements within each subset are both arbitrary.",
+        "constraints": [
+            "1 ≤ nums.length ≤ 10",
+            "-10 ≤ nums[i] ≤ 10",
+            "All elements of nums are distinct"
+        ],
+        "complexity": {
+            "time": "O(n · 2^n) (local training target)",
+            "space": "O(n) extra space (backtracking recursion stack and current path, recursion stack counted; output not counted)",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the array length. There are 2^n subsets with average length n/2; either bitmask enumeration or backtracking works. The judge ignores both the order between subsets and the order within each subset. The empty set is printed as an empty line."
+        },
+        "acmIoSpec": "stdin: first line n; second line n distinct integers nums. stdout: first line the number of subsets; then one subset per line, elements separated by spaces, with the empty set printed as an empty line (order between and within subsets is arbitrary)."
+    },
     "constraints": [
         "1 ≤ nums.length ≤ 10",
         "-10 ≤ nums[i] ≤ 10",

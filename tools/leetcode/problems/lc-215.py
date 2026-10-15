@@ -8,6 +8,29 @@ problem = {
     "difficulty": "medium",
     "tags": ["数组", "分治", "快速选择", "排序", "堆（优先队列）"],
     "statement": "给定整数数组 nums 和整数 k，返回数组排序后从大到小数第 k 个元素（按位置计，重复值分别计数，而不是第 k 个不同的值）。题目希望你不通过排序整个数组来求解。",
+    "en": {'title': 'Kth Largest Element in an Array',
+     'tags': ['Array', 'Divide and Conquer', 'Quickselect', 'Sorting', 'Heap (Priority Queue)'],
+     'statement': 'Given an integer array nums and an integer k, return the k-th element counting from '
+                  'the largest in sorted order (counted by position, so duplicates count separately; '
+                  'it is not the k-th distinct value). The problem asks you to solve it without '
+                  'sorting the whole array.',
+     'constraints': ['1 ≤ k ≤ nums.length ≤ 100000; -10000 ≤ nums[i] ≤ 10000'],
+     'complexity': {'time': 'Expected O(n) (local training target, randomized quickselect)',
+                    'space': 'O(1) extra space (in-place quickselect, ignoring the constant needed for '
+                             'recursion/iteration)',
+                    'officialRequirement': 'The official statement asks whether you can solve it '
+                                           'without sorting; the leetcode.cn Chinese statement '
+                                           'explicitly requires an O(n)-time algorithm.',
+                    'notes': 'n is the array length. Quickselect is expected O(n) and worst case '
+                             'O(n²); it needs a randomized pivot and three-way partitioning to handle '
+                             'many duplicates. A min-heap of size k is O(n log k); with only 20001 '
+                             'possible values, counting achieves O(n + value range). Sorting in O(n '
+                             'log n) also passes the local tests but does not match the intent. Local '
+                             'tests include n = 100000 with many duplicates (values -5 to 5), plus '
+                             'sorted input (n = 15000) and all-equal input (n = 30000), both reduced '
+                             'to keep the problem bank small.'},
+     'acmIoSpec': 'stdin: line 1 is n; line 2 has n integers nums; line 3 is the integer k. stdout: '
+                  'one integer, the k-th largest element.'},
     "constraints": ["1 ≤ k ≤ nums.length ≤ 100000；-10000 ≤ nums[i] ≤ 10000"],
     "complexity": {
         "time": "期望 O(n)（本地训练目标，随机化快速选择）",

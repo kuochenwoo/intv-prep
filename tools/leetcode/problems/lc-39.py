@@ -21,6 +21,27 @@ problem = {
         "notes": "n 为 candidates 长度。按非递减顺序选数（下一层从当前下标开始）避免重复组合；排序后当前数超过剩余目标即可停止本层。判题同时忽略组合之间及组合内部的顺序。",
         "sourceUrl": "https://leetcode.com/problems/combination-sum/",
     },
+    "en": {
+        "title": "Combination Sum",
+        "tags": [
+            "Array",
+            "Backtracking"
+        ],
+        "statement": "Given an array candidates of distinct positive integers and a target value target, find all distinct combinations of candidates whose sum is target; each number may be chosen any number of times. Two combinations are the same if every number appears the same number of times in both. The order of combinations and the order within each combination are arbitrary.",
+        "constraints": [
+            "1 ≤ candidates.length ≤ 30",
+            "2 ≤ candidates[i] ≤ 40, all distinct",
+            "1 ≤ target ≤ 40",
+            "The number of distinct combinations is guaranteed to be less than 150"
+        ],
+        "complexity": {
+            "time": "Exponential, depending on the number of solutions (local training target: backtracking + pruning after sorting; the search tree size is about O(S), where S is the total length of all feasible paths)",
+            "space": "O(target / min(candidates)) extra space (recursion stack and current combination, recursion stack included; output not counted)",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the length of candidates. Choose numbers in non-decreasing order (the next level starts from the current index) to avoid duplicate combinations; after sorting, the current level can stop once the current number exceeds the remaining target. The judge ignores both the order of combinations and the order within each combination."
+        },
+        "acmIoSpec": "stdin: line 1 is n; line 2 has n distinct integers candidates; line 3 is target. stdout: line 1 is the number of combinations; then one combination per line, elements separated by spaces (order of combinations and within each combination is arbitrary)."
+    },
     "cpp": {
         "functionTemplate": "class Solution {\npublic:\n    vector<vector<int>> combinationSum(vector<int>& candidates, int target) {\n        return {}; // Unique combinations summing to target, in any order.\n    }\n};",
         "acmIoSpec": "stdin：第一行 n；第二行 n 个互不相同的整数 candidates；第三行 target。stdout：第一行组合个数；随后每行一个组合，元素用空格分隔（组合之间及内部顺序任意）。",

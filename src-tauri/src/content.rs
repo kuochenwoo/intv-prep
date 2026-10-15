@@ -16,10 +16,31 @@ pub struct Problem {
     pub examples: Value,
     pub cpp: Cpp,
     pub io: Io,
+    /// English text shown when the UI language is English.
+    #[serde(default)]
+    pub en: Option<English>,
     // Hidden tests stay in the backend; the problem list sent to the UI omits them.
     // The cached library drops them too and `problem()` re-parses on demand.
     #[serde(default, skip_serializing)]
     pub tests: Vec<Test>,
+}
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct English {
+    pub title: String,
+    pub tags: Vec<String>,
+    pub statement: String,
+    pub constraints: Vec<String>,
+    pub complexity: EnglishComplexity,
+    pub acm_io_spec: String,
+}
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct EnglishComplexity {
+    pub time: String,
+    pub space: String,
+    pub official_requirement: String,
+    pub notes: String,
 }
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

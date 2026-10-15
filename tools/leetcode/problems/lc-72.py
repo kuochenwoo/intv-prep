@@ -9,6 +9,24 @@ problem = {
     "difficulty": "medium",
     "tags": ["字符串", "动态规划"],
     "statement": "给定两个单词 word1 和 word2，每次操作可以在 word1 中插入一个字符、删除一个字符或替换一个字符。求把 word1 变成 word2 所需的最少操作次数。",
+    "en": {
+        "title": "Edit Distance",
+        "tags": [
+            "String",
+            "Dynamic Programming"
+        ],
+        "statement": "Given two words word1 and word2, each operation may insert a character into word1, delete a character from it, or replace a character in it. Find the minimum number of operations required to turn word1 into word2.",
+        "constraints": [
+            "0 ≤ word1.length, word2.length ≤ 500; both strings contain only lowercase English letters"
+        ],
+        "complexity": {
+            "time": "O(m · n) (local training target)",
+            "space": "O(m · n) for 2D DP; a rolling array reduces it to O(min(m, n)) extra space",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "m and n are the lengths of the two strings. dp[i][j] is the minimum number of operations to turn the first i characters of word1 into the first j characters of word2; if either string is empty, the answer is the length of the other (an empty string is given as an empty line)."
+        },
+        "acmIoSpec": "stdin: first line string word1; second line string word2 (either line may be empty). stdout: one integer, the minimum number of operations."
+    },
     "constraints": ["0 ≤ word1.length, word2.length ≤ 500；两串仅含小写英文字母"],
     "complexity": {
         "time": "O(m · n)（本地训练目标）",

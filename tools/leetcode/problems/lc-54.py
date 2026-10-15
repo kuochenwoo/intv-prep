@@ -8,6 +8,27 @@ problem = {
     "difficulty": "medium",
     "tags": ["数组", "矩阵", "模拟"],
     "statement": "给定一个 m 行 n 列的整数矩阵 matrix，从左上角出发，按顺时针螺旋顺序（向右、向下、向左、向上循环，逐层向内）依次访问所有元素，返回访问得到的序列。",
+    "en": {
+        "title": "Spiral Matrix",
+        "tags": [
+            "Array",
+            "Matrix",
+            "Simulation"
+        ],
+        "statement": "Given an m-row by n-column integer matrix, start from the top-left corner and visit all elements in clockwise spiral order (cycling right, down, left, up, moving inward layer by layer); return the sequence of visited elements.",
+        "constraints": [
+            "m == matrix.length, n == matrix[i].length",
+            "1 ≤ m, n ≤ 10",
+            "-100 ≤ matrix[i][j] ≤ 100"
+        ],
+        "complexity": {
+            "time": "O(m·n)",
+            "space": "O(1) extra space (excluding the returned array); simulation with a visited marker is O(m·n)",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "m and n are the row and column counts. Maintain four boundaries (top, bottom, left, right) and shrink the corresponding one after traversing each side; take care not to revisit elements when only a single row or column remains."
+        },
+        "acmIoSpec": "stdin: first line the row count m; then m lines, each starting with the column count n followed by that row's n integers. stdout: one line with the m·n integers in spiral order, space-separated."
+    },
     "constraints": [
         "m == matrix.length，n == matrix[i].length",
         "1 ≤ m, n ≤ 10",

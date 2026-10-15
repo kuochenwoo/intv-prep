@@ -9,6 +9,26 @@
     "二叉树"
   ],
   "statement": "给定二叉树的根节点 root，返回它的最大深度，即从根节点到最远叶子节点的路径上的节点个数。空树深度为 0。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入中的树为 LeetCode 层序表示，null 表示空位。",
+  "en": {
+    "title": "Maximum Depth of Binary Tree",
+    "tags": [
+      "Tree",
+      "Depth-First Search",
+      "Breadth-First Search",
+      "Binary Tree"
+    ],
+    "statement": "Given the root of a binary tree, return its maximum depth, i.e. the number of nodes on the path from the root to the farthest leaf. An empty tree has depth 0.\n\nNode definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. The input tree uses LeetCode level-order representation, with null marking empty positions.",
+    "constraints": [
+      "The number of nodes is in the range [0, 10^4]; -100 ≤ Node.val ≤ 100"
+    ],
+    "complexity": {
+      "time": "O(n)",
+      "space": "Recursive DFS: O(h) recursion stack; BFS: O(w) queue (w is the maximum level width). Both O(n) in the worst case.",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the number of nodes and h is the tree height. The largest local tests are a 10^4-node single chain (recursion depth 10^4, fine with the default stack) and a random 10^4-node tree."
+    },
+    "acmIoSpec": "stdin: line 1 is m (the number of level-order tokens, 0 for an empty tree); line 2 has m tokens (integers or null), the tree's LeetCode level-order representation. stdout: one integer, the maximum depth."
+  },
   "constraints": [
     "节点数在 [0, 10^4] 范围内；-100 ≤ Node.val ≤ 100"
   ],

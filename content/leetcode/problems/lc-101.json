@@ -9,6 +9,26 @@
     "二叉树"
   ],
   "statement": "给定二叉树的根节点 root，判断它是否关于根节点轴对称：即左子树与右子树互为镜像（结构镜像且对应位置节点值相等）。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入中的树为 LeetCode 层序表示，null 表示空位。",
+  "en": {
+    "title": "Symmetric Tree",
+    "tags": [
+      "Tree",
+      "Depth-First Search",
+      "Breadth-First Search",
+      "Binary Tree"
+    ],
+    "statement": "Given the root of a binary tree, determine whether it is symmetric around its root: that is, the left and right subtrees are mirror images of each other (mirrored structure with equal values at corresponding positions).\n\nNode definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. The input tree uses LeetCode level-order representation, with null marking empty positions.",
+    "constraints": [
+      "The number of nodes is in the range [1, 1000]; -100 ≤ Node.val ≤ 100"
+    ],
+    "complexity": {
+      "time": "O(n)",
+      "space": "Recursive: O(h) recursion stack; iterative queue: O(w). Worst case O(n).",
+      "officialRequirement": "No official complexity requirement; the follow-up asks for both a recursive and an iterative implementation.",
+      "notes": "n is the number of nodes, h the tree height, and w the maximum level width. A symmetric tree must have an odd number of nodes, so the largest 1000-node test is necessarily asymmetric; there are also a symmetric 999-node V-shaped double chain and random symmetric trees."
+    },
+    "acmIoSpec": "stdin: line 1 is m (the number of level-order tokens); line 2 has m tokens (integers or null), the tree's LeetCode level-order representation. stdout: true or false."
+  },
   "constraints": [
     "节点数在 [1, 1000] 范围内；-100 ≤ Node.val ≤ 100"
   ],

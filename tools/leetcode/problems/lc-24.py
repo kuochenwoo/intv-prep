@@ -16,6 +16,25 @@ problem = {
         "notes": "n 为节点数，输入链表不计入额外空间。哑节点 + 每次重连三根指针。最大测试为官方上限 n = 100。",
         "sourceUrl": "https://leetcode.com/problems/swap-nodes-in-pairs/",
     },
+    "en": {
+        "title": "Swap Nodes in Pairs",
+        "tags": [
+            "Recursion",
+            "Linked List"
+        ],
+        "statement": "Given a linked list, swap every two adjacent nodes (swap the 1st and 2nd, the 3rd and 4th, and so on; if the number of nodes is odd, the last one stays in place) and return the head of the swapped list. Only the pointers between nodes may be changed; node values must not be modified.\n\nNode definition: struct ListNode { int val; ListNode* next; };",
+        "constraints": [
+            "0 ≤ number of nodes ≤ 100; 0 ≤ node value ≤ 100",
+            "Only nodes may be swapped; node values must not be modified (the local judge compares only the value sequence and cannot check this, so follow it on your own)"
+        ],
+        "complexity": {
+            "time": "O(n) (local training target)",
+            "space": "Iterative: O(1) extra space; recursive: O(n) call stack",
+            "officialRequirement": "No official complexity requirement (the problem requires swapping nodes only, without modifying node values).",
+            "notes": "n is the number of nodes; the input list does not count toward extra space. Use a dummy node and rewire three pointers per swap. The largest test uses the official limit n = 100."
+        },
+        "acmIoSpec": "stdin: line 1 is the number of nodes n; line 2 has n integers, the list values. stdout: one line with the values of the swapped list, separated by spaces; output an empty line for an empty list."
+    },
     "cpp": {
         "functionTemplate": "// ListNode is provided: int val; ListNode* next;\nclass Solution {\npublic:\n    ListNode* swapPairs(ListNode* head) {\n        return head; // Swap every two adjacent nodes.\n    }\n};",
         "acmIoSpec": "stdin：第一行节点数 n；第二行 n 个整数表示链表值。stdout：一行，交换后链表的值，以空格分隔；空链表输出空行。",

@@ -9,6 +9,26 @@
     "二叉树"
   ],
   "statement": "给定二叉树的根节点 root，判断它是否为有效的二叉搜索树：任一节点左子树中的所有值都严格小于该节点值，右子树中的所有值都严格大于该节点值，且左右子树本身也都是二叉搜索树。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入中的树为 LeetCode 层序表示，null 表示空位。",
+  "en": {
+    "title": "Validate Binary Search Tree",
+    "tags": [
+      "Tree",
+      "Depth-First Search",
+      "Binary Search Tree",
+      "Binary Tree"
+    ],
+    "statement": "Given the root of a binary tree, determine whether it is a valid binary search tree: for every node, all values in its left subtree are strictly less than the node's value, all values in its right subtree are strictly greater, and both subtrees are themselves binary search trees.\n\nNode definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. The input tree uses LeetCode level-order representation, with null marking empty positions.",
+    "constraints": [
+      "The number of nodes is in the range [1, 10^4]; -2^31 ≤ Node.val ≤ 2^31 - 1"
+    ],
+    "complexity": {
+      "time": "O(n)",
+      "space": "O(h) recursion stack or explicit stack, worst case O(n).",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the number of nodes and h is the tree height. Note that equal values are invalid, and node values can reach the int limits (bounds are best represented with long long or pointers). Comparing only parent and child is wrong: local tests include a counterexample where a grandchild violates an ancestor's constraint. The largest tests are a 10^4-node single chain, plus a random 10^4-node BST and a version of it broken deep inside."
+    },
+    "acmIoSpec": "stdin: line 1 is m (the number of level-order tokens); line 2 has m tokens (integers or null), the tree's LeetCode level-order representation. stdout: true or false."
+  },
   "constraints": [
     "节点数在 [1, 10^4] 范围内；-2^31 ≤ Node.val ≤ 2^31 - 1"
   ],

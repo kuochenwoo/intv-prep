@@ -8,6 +8,26 @@ problem = {
     "difficulty": "medium",
     "tags": ["数组", "回溯"],
     "statement": "给定一个元素互不相同的整数数组 nums，返回它的所有全排列。结果中各排列的先后顺序任意，但每个排列内部的元素顺序即为该排列本身。",
+    "en": {
+        "title": "Permutations",
+        "tags": [
+            "Array",
+            "Backtracking"
+        ],
+        "statement": "Given an array nums of distinct integers, return all of its permutations. The permutations may appear in any order in the result, but the element order inside each permutation is the permutation itself.",
+        "constraints": [
+            "1 ≤ nums.length ≤ 6",
+            "-10 ≤ nums[i] ≤ 10",
+            "All integers in nums are distinct"
+        ],
+        "complexity": {
+            "time": "O(n · n!) (local training target)",
+            "space": "O(n) extra space (recursion stack and visited flags, recursion stack counted; the n! output permutations are not counted)",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the array length. There are n! permutations, each of length n, so the output alone requires Θ(n · n!). The judge ignores the order between permutations."
+        },
+        "acmIoSpec": "stdin: first line n; second line n distinct integers nums. stdout: first line the number of permutations; then one permutation per line, elements separated by spaces (permutations in any order)."
+    },
     "constraints": [
         "1 ≤ nums.length ≤ 6",
         "-10 ≤ nums[i] ≤ 10",

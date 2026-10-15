@@ -8,6 +8,27 @@
     "矩阵"
   ],
   "statement": "给定一个 n × n 的整数矩阵 matrix 表示一幅图像，把它顺时针旋转 90 度。必须直接修改传入的矩阵，不能另外分配一个矩阵来完成旋转；函数无返回值。",
+  "en": {
+    "title": "Rotate Image",
+    "tags": [
+      "Array",
+      "Math",
+      "Matrix"
+    ],
+    "statement": "Given an n × n integer matrix representing an image, rotate it 90 degrees clockwise. You must modify the given matrix directly and may not allocate another matrix to perform the rotation; the function returns nothing.",
+    "constraints": [
+      "n == matrix.length == matrix[i].length",
+      "1 ≤ n ≤ 20",
+      "-1000 ≤ matrix[i][j] ≤ 1000"
+    ],
+    "complexity": {
+      "time": "O(n²)",
+      "space": "O(1) extra space",
+      "officialRequirement": "Official problem requires rotating in place without using another matrix (i.e. O(1) extra space).",
+      "notes": "n is the side length; the input matrix does not count toward extra space. Approach 1: transpose along the main diagonal, then reverse each row. Approach 2: rotate layer by layer, cycling groups of four elements. The local judge only compares the resulting matrix and cannot detect whether an extra matrix was used."
+    },
+    "acmIoSpec": "stdin: first line n; then n lines, each starting with n followed by that row's n integers. stdout: first line n, then n lines, each containing the n integers of that row after rotation (space-separated, no length prefix)."
+  },
   "constraints": [
     "n == matrix.length == matrix[i].length",
     "1 ≤ n ≤ 20",

@@ -9,6 +9,36 @@ pub struct Topic {
     pub focus: Vec<String>,
     pub scenario_constraints: Vec<String>,
     pub level: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub en: Option<TopicEnglish>,
+}
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TopicEnglish {
+    pub title: String,
+    pub focus: Vec<String>,
+    pub scenario_constraints: Vec<String>,
+}
+/// Language of the interview: the questions, follow-ups, answers and feedback.
+#[derive(Clone, Copy, Default, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Lang {
+    #[default]
+    Zh,
+    En,
+}
+impl Topic {
+    /// The topic as the model sees it, in the interview language.
+    pub fn localized(&self, lang: Lang) -> Topic {
+        let mut t = self.clone();
+        if let (Lang::En, Some(en)) = (lang, t.en.take()) {
+            t.title = en.title;
+            t.focus = en.focus;
+            t.scenario_constraints = en.scenario_constraints;
+        }
+        t.en = None;
+        t
+    }
 }
 pub fn topics() -> Vec<Topic> {
     serde_json::from_str(include_str!("../../content/deep-dive/topics.json"))

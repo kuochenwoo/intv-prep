@@ -8,6 +8,26 @@ problem = {
     "difficulty": "medium",
     "tags": ["贪心", "数组", "动态规划"],
     "statement": "给定非负整数数组 nums，从下标 0 出发，站在下标 i 时一次可以向右跳 1 到 nums[i] 步（不越过数组末尾）。题目保证一定能到达最后一个下标，求到达所需的最少跳跃次数。",
+    "en": {
+        "title": "Jump Game II",
+        "tags": [
+            "Greedy",
+            "Array",
+            "Dynamic Programming"
+        ],
+        "statement": "Given an array of non-negative integers nums, start at index 0; standing at index i you may jump right by 1 to nums[i] steps in one move (without going past the end of the array). It is guaranteed that the last index is reachable; return the minimum number of jumps needed to reach it.",
+        "constraints": [
+            "1 ≤ nums.length ≤ 10000; 0 ≤ nums[i] ≤ 1000",
+            "It is guaranteed that nums[n-1] is reachable"
+        ],
+        "complexity": {
+            "time": "O(n) (local training target)",
+            "space": "O(1) extra space",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the array length. Greedy layered by jump count (implicit BFS): track the right boundary of the current layer and the farthest index reachable by the next layer. An O(n·max(nums)) DP takes about 10⁷ operations within these limits and also passes."
+        },
+        "acmIoSpec": "stdin: first line n; second line n integers nums. stdout: one integer, the minimum number of jumps."
+    },
     "constraints": ["1 ≤ nums.length ≤ 10000；0 ≤ nums[i] ≤ 1000", "保证可以到达 nums[n-1]"],
     "complexity": {
         "time": "O(n)（本地训练目标）",

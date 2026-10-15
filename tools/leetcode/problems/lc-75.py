@@ -8,6 +8,26 @@ problem = {
     "difficulty": "medium",
     "tags": ["数组", "双指针", "排序", "原地修改"],
     "statement": "数组 nums 中的 0、1、2 分别代表红、白、蓝三种颜色。请原地重排数组，使相同颜色相邻并按红、白、蓝（0、1、2）的顺序排列，不得调用库函数排序。核心函数不返回值，系统检查修改后的数组。",
+    "en": {
+        "title": "Sort Colors",
+        "tags": [
+            "Array",
+            "Two Pointers",
+            "Sorting",
+            "In-Place"
+        ],
+        "statement": "In the array nums, 0, 1 and 2 represent the colors red, white and blue. Rearrange the array in place so that elements of the same color are adjacent and ordered red, white, blue (0, 1, 2), without calling a library sort function. The core function returns nothing; the system checks the modified array.",
+        "constraints": [
+            "1 ≤ n ≤ 300; nums[i] is 0, 1 or 2"
+        ],
+        "complexity": {
+            "time": "O(n), one pass (local training target)",
+            "space": "O(1) extra space, modified in place",
+            "officialRequirement": "Official problem requires sorting in place without a library sort function; the follow-up asks for a single pass using constant extra space.",
+            "notes": "n is the array length. Dutch national flag with three pointers: everything before low is 0, everything after high is 2, and mid scans the unprocessed region. A two-pass count-and-rewrite is also O(n) / O(1) but does not satisfy the one-pass follow-up; the judge only checks the result and cannot verify whether sort was called or how many passes were made."
+        },
+        "acmIoSpec": "stdin: first line n; second line n integers nums (values 0, 1, 2). stdout: one line with the n sorted integers, space-separated."
+    },
     "constraints": ["1 ≤ n ≤ 300；nums[i] 为 0、1 或 2"],
     "complexity": {
         "time": "O(n)，一趟扫描（本地训练目标）",

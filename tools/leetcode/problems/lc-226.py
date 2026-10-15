@@ -85,6 +85,26 @@ problem = {
     "difficulty": "easy",
     "tags": ["树", "深度优先搜索", "广度优先搜索", "二叉树"],
     "statement": "给定二叉树的根节点 root，将每个节点的左右子树互换（即得到原树的镜像），返回翻转后的根节点。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入输出中的树均为 LeetCode 层序表示，null 表示空位。",
+    "en": {'title': 'Invert Binary Tree',
+     'tags': ['Tree', 'Depth-First Search', 'Breadth-First Search', 'Binary Tree'],
+     'statement': 'Given the root of a binary tree, swap the left and right subtrees of every node '
+                  '(producing the mirror image of the original tree) and return the root of the '
+                  'inverted tree.\n'
+                  '\n'
+                  'Node definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. '
+                  "Trees in both input and output use LeetCode's level-order representation, with null "
+                  'marking empty positions.',
+     'constraints': ['The number of nodes is in [0, 100]; -100 ≤ Node.val ≤ 100'],
+     'complexity': {'time': 'O(n)',
+                    'space': 'Recursion uses an O(h) stack; BFS uses an O(w) queue. Worst case O(n). '
+                             'Modified in place; no new nodes are created.',
+                    'officialRequirement': 'No official complexity requirement.',
+                    'notes': 'n is the number of nodes, h the tree height, w the maximum level width. '
+                             'Local tests include a random tree with 100 nodes and a single chain.'},
+     'acmIoSpec': 'stdin: line 1 is m (the number of level-order tokens, 0 for an empty tree); line 2 '
+                  "has m tokens (integers or null), the tree's LeetCode level-order representation. "
+                  "stdout: one line with the inverted tree's level-order tokens (space-separated, "
+                  'trailing nulls omitted; an empty tree prints an empty line).'},
     "constraints": ["节点数在 [0, 100] 范围内；-100 ≤ Node.val ≤ 100"],
     "complexity": {
         "time": "O(n)",

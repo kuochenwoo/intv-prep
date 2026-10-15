@@ -7,6 +7,25 @@
     "数组"
   ],
   "statement": "给定非空整数数组 nums，其中恰有一个元素只出现一次，其余每个元素都恰好出现两次，找出那个只出现一次的元素。要求线性时间且只使用常数额外空间。",
+  "en": {
+    "title": "Single Number",
+    "tags": [
+      "Bit Manipulation",
+      "Array"
+    ],
+    "statement": "Given a non-empty integer array nums in which exactly one element appears once and every other element appears exactly twice, find the element that appears once. Use linear time and only constant extra space.",
+    "constraints": [
+      "1 ≤ nums.length ≤ 3 × 10^4; -3 × 10^4 ≤ nums[i] ≤ 3 × 10^4",
+      "Every element appears exactly twice except for one element that appears once"
+    ],
+    "complexity": {
+      "time": "O(n) (official requirement)",
+      "space": "O(1) extra space (official requirement, excluding the input array)",
+      "officialRequirement": "The official statement requires linear time complexity and only constant extra space.",
+      "notes": "n is the array length. XOR all elements: paired elements cancel out, leaving the answer. Hash counting or sorting also produce correct output, but violate the constant-space or linear-time requirement respectively; time limits and memory measurements cannot prove complexity, so check your code yourself."
+    },
+    "acmIoSpec": "stdin: line 1 is n; line 2 has n integers nums. stdout: one integer, the element that appears once."
+  },
   "constraints": [
     "1 ≤ nums.length ≤ 3 × 10^4；-3 × 10^4 ≤ nums[i] ≤ 3 × 10^4",
     "除一个元素出现一次外，其余元素均恰好出现两次"

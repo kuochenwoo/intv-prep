@@ -69,6 +69,24 @@
       "output": "3"
     }
   ],
+  "en": {
+    "title": "Longest Substring Without Repeating Characters",
+    "tags": [
+      "String",
+      "Sliding Window"
+    ],
+    "statement": "Given an ASCII string, return the length of the longest contiguous substring without repeating characters. An empty string returns 0.",
+    "constraints": [
+      "0 ≤ string length ≤ 100000; characters are printable ASCII (including space)"
+    ],
+    "complexity": {
+      "time": "O(n) (local training target)",
+      "space": "O(min(n, |Σ|)); O(1) for a fixed ASCII alphabet",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the string length and Σ the alphabet. The length limit follows the official problem; characters use the printable ASCII subset. A sliding window avoids rescanning."
+    },
+    "acmIoSpec": "stdin: one whole line, which may be empty or contain spaces. stdout: one integer."
+  },
   "complexity": {
     "time": "O(n)（本地訓練目標）",
     "space": "O(min(n, |Σ|))；固定 ASCII 字元集時 O(1)",

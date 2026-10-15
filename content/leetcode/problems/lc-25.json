@@ -18,6 +18,25 @@
     "notes": "n 为节点数，输入链表不计入额外空间。先确认剩余至少 k 个节点，再原地反转该组并接回前后两段。最大测试为官方上限 n = 5000（含 k = 1、k = 2、k = n 及不整除的情况）。",
     "sourceUrl": "https://leetcode.com/problems/reverse-nodes-in-k-group/"
   },
+  "en": {
+    "title": "Reverse Nodes in k-Group",
+    "tags": [
+      "Recursion",
+      "Linked List"
+    ],
+    "statement": "Given the head of a linked list and a positive integer k, split the list from the head into groups of k nodes and reverse the order of nodes within each group; the remaining nodes at the end that do not form a full group of k keep their original order. Return the head of the resulting list. Only pointers may be changed; node values must not be modified.\n\nNode definition: struct ListNode { int val; ListNode* next; };",
+    "constraints": [
+      "The number of nodes is n; 1 ≤ k ≤ n ≤ 5000; 0 ≤ node value ≤ 1000",
+      "Only node pointers may be changed; node values must not be modified (the local judge compares only the value sequence and cannot check this, so follow it on your own)"
+    ],
+    "complexity": {
+      "time": "O(n) (local training target)",
+      "space": "Iterative: O(1) extra space; recursive: O(n/k) call stack",
+      "officialRequirement": "Official follow-up asks for using only O(1) extra memory.",
+      "notes": "n is the number of nodes; the input list does not count toward extra space. First confirm that at least k nodes remain, then reverse that group in place and reconnect it to the parts before and after. The largest test uses the official limit n = 5000 (including k = 1, k = 2, k = n, and cases where k does not divide n)."
+    },
+    "acmIoSpec": "stdin: line 1 is the number of nodes n; line 2 has n integers, the list values; line 3 is k. stdout: one line with the values of the resulting list, separated by spaces."
+  },
   "cpp": {
     "functionTemplate": "// ListNode is provided: int val; ListNode* next;\nclass Solution {\npublic:\n    ListNode* reverseKGroup(ListNode* head, int k) {\n        return head; // Reverse each full group of k nodes.\n    }\n};",
     "acmIoSpec": "stdin：第一行节点数 n；第二行 n 个整数表示链表值；第三行 k。stdout：一行，处理后链表的值，以空格分隔。",

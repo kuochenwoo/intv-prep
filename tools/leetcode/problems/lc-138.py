@@ -20,6 +20,35 @@ problem = {
         "评测以同样的格式输出你返回的链表；若返回的链表含有原链表的节点、random 指向新链表之外，或原链表被修改，判为错误。\n\n"
         "节点定义（已提供）：class Node { public: int val; Node* next; Node* random; Node(int _val); };"
     ),
+    "en": {'title': 'Copy List with Random Pointer',
+     'tags': ['Hash Table', 'Linked List'],
+     'statement': 'You are given a linked list of length n in which each node has, besides next, a random '
+                  'pointer that may point to any node in the list or be null. Construct a deep copy of the list: '
+                  'the new list consists of n brand-new nodes whose values correspond one-to-one with the '
+                  "original nodes, and the new nodes' next and random pointers point only to nodes of the new "
+                  'list, so that the new list has exactly the same structure as the original. Return the head of '
+                  'the new list; the original list must be unchanged when you return.\n'
+                  '\n'
+                  'Data is represented as a 2D array: row i is [val, randomIndex], where randomIndex is the '
+                  '0-based index of the node random points to, or -1 for null. The judge prints your returned '
+                  'list in the same format; it is judged wrong if the returned list contains original nodes, a '
+                  'random pointer points outside the new list, or the original list was modified.\n'
+                  '\n'
+                  'Node definition (provided): class Node { public: int val; Node* next; Node* random; Node(int '
+                  '_val); };',
+     'constraints': ['0 ≤ n ≤ 1000; -10000 ≤ Node.val ≤ 10000',
+                     'Node.random is null or points to some node in the list'],
+     'complexity': {'time': 'O(n) (local training target)',
+                    'space': 'Interleaving method: O(1) extra space (excluding the new output list); an O(n) '
+                             'hash map approach also passes',
+                    'officialRequirement': 'No official complexity requirement.',
+                    'notes': 'n is the number of nodes; the returned new list itself is not counted as extra '
+                             "space. Interleaving: insert each node's copy right after it, set each copy's "
+                             'random via orig->random->next, then split the two lists and restore the original. '
+                             'The largest test is the official limit n = 1000.'},
+     'acmIoSpec': 'stdin: line 1 is the node count n; then n lines, each "2 val randomIndex" (2 is the number of '
+                  'integers that follow on the line; randomIndex -1 means null). stdout: line 1 is n; then n '
+                  'lines, each "val randomIndex" describing the copied list.'},
     "constraints": [
         "0 ≤ n ≤ 1000；-10000 ≤ Node.val ≤ 10000",
         "Node.random 为空或指向链表中的某个节点",

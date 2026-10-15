@@ -7,6 +7,24 @@
     "动态规划"
   ],
   "statement": "给定只含正整数的非空数组 nums，判断能否把它分成两个子集，使两个子集的元素和相等。",
+  "en": {
+    "title": "Partition Equal Subset Sum",
+    "tags": [
+      "Array",
+      "Dynamic Programming"
+    ],
+    "statement": "Given a non-empty array nums containing only positive integers, determine whether it can be partitioned into two subsets whose element sums are equal.",
+    "constraints": [
+      "1 ≤ nums.length ≤ 200; 1 ≤ nums[i] ≤ 100"
+    ],
+    "complexity": {
+      "time": "O(n · S) (local training target), where S is half of the total sum",
+      "space": "O(S) extra space (1D 0/1 knapsack)",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the array length, S = sum(nums) / 2 ≤ 10000. If the total is odd, the answer is false; otherwise use 0/1 knapsack to check whether S is reachable. The 1D array must be updated in reverse order; bitset shifting also works."
+    },
+    "acmIoSpec": "stdin: line 1 is n; line 2 has n positive integers nums. stdout: true or false."
+  },
   "constraints": [
     "1 ≤ nums.length ≤ 200；1 ≤ nums[i] ≤ 100"
   ],

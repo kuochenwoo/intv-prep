@@ -7,6 +7,24 @@
     "动态规划"
   ],
   "statement": "数组 prices 给出某支股票每天的价格。你只能选择某一天买入一次，并在之后的某一天卖出一次。求能获得的最大利润；如果无法获利，返回 0。",
+  "en": {
+    "title": "Best Time to Buy and Sell Stock",
+    "tags": [
+      "Array",
+      "Dynamic Programming"
+    ],
+    "statement": "The array prices gives a stock's price on each day. You may buy once on some day and sell once on a later day. Find the maximum profit you can achieve; if no profit is possible, return 0.",
+    "constraints": [
+      "1 ≤ prices.length ≤ 100000; 0 ≤ prices[i] ≤ 10000"
+    ],
+    "complexity": {
+      "time": "O(n) (local training target)",
+      "space": "O(1) extra space",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the number of days. In one pass, track the lowest price so far and update the answer with the current price minus it; the O(n²) approach enumerating all buy/sell day pairs times out at n = 100000."
+    },
+    "acmIoSpec": "stdin: line 1 is n; line 2 has n integers prices. stdout: one integer, the maximum profit."
+  },
   "constraints": [
     "1 ≤ prices.length ≤ 100000；0 ≤ prices[i] ≤ 10000"
   ],

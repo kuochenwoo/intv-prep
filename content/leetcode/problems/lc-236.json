@@ -8,6 +8,26 @@
     "二叉树"
   ],
   "statement": "给定二叉树的根节点 root 以及树中两个不同的节点 p 和 q，返回它们的最近公共祖先：同时以 p、q 为后代的节点中深度最大的那个（一个节点也视为自己的后代）。返回的必须是原树中的节点。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入中的树为 LeetCode 层序表示，null 表示空位；树中节点值互不相同，p、q 在输入中以节点值给出，判题程序会找到对应节点再调用你的函数，并输出返回节点的值。",
+  "en": {
+    "title": "Lowest Common Ancestor of a Binary Tree",
+    "tags": [
+      "Tree",
+      "Depth-First Search",
+      "Binary Tree"
+    ],
+    "statement": "Given the root of a binary tree and two distinct nodes p and q in it, return their lowest common ancestor: the deepest node that has both p and q as descendants (a node counts as its own descendant). The returned node must be a node of the original tree.\n\nNode definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. The input tree uses LeetCode's level-order representation, with null marking empty positions; node values are all distinct, p and q are given in the input by their node values, and the judge finds the corresponding nodes before calling your function, then prints the value of the node you return.",
+    "constraints": [
+      "The number of nodes is in [2, 10^5]; -10^9 ≤ Node.val ≤ 10^9; all node values are distinct",
+      "p ≠ q, and both p and q are in the tree"
+    ],
+    "complexity": {
+      "time": "O(n)",
+      "space": "O(h) recursion stack, worst case O(n); the parent-pointer + ancestor-set approach is O(n).",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the number of nodes, h the tree height. The official limit is n = 10^5, but the level-order representation of 10^5 large-valued nodes would make the problem bank file exceed 1 MiB, so the local worst-case tests are reduced to 20001 nodes (a zigzag chain of 19999 nodes with two leaves p and q branching off its bottom, recursion depth about 2·10^4, which the default stack can handle) and a random tree of 10000 large-valued nodes."
+    },
+    "acmIoSpec": "stdin: line 1 is m (the number of level-order tokens); line 2 has m tokens (integers or null), the tree's LeetCode level-order representation; line 3 is the integer node value of p; line 4 is the integer node value of q. stdout: one integer, the node value of the lowest common ancestor."
+  },
   "constraints": [
     "节点数在 [2, 10^5] 范围内；-10^9 ≤ Node.val ≤ 10^9；所有节点值互不相同",
     "p ≠ q，且 p、q 均在树中"

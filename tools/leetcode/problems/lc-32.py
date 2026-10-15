@@ -16,6 +16,25 @@ problem = {
         "notes": "n 为字符串长度。栈中保存“最后一个未匹配右括号”的下标作为基准；或从左到右、从右到左各扫一遍，统计左右括号数相等时的长度。空串答案为 0。",
         "sourceUrl": "https://leetcode.com/problems/longest-valid-parentheses/",
     },
+    "en": {
+        "title": "Longest Valid Parentheses",
+        "tags": [
+            "Stack",
+            "String",
+            "Dynamic Programming"
+        ],
+        "statement": "Given a string s consisting only of '(' and ')', find the length of its longest contiguous substring in which the parentheses are correctly matched.",
+        "constraints": [
+            "0 ≤ s.length ≤ 3 × 10^4; s[i] is '(' or ')'"
+        ],
+        "complexity": {
+            "time": "O(n) (local training target)",
+            "space": "O(n) extra space (stack or DP array); the two-pass left/right counting method achieves O(1)",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the string length. Keep the index of the \"last unmatched closing parenthesis\" on the stack as the base; or scan once left to right and once right to left, recording the length whenever the counts of '(' and ')' are equal. The answer for an empty string is 0."
+        },
+        "acmIoSpec": "stdin: one line, the string s (may be an empty line). stdout: one integer, the length of the longest valid parentheses substring."
+    },
     "cpp": {
         "functionTemplate": "class Solution {\npublic:\n    int longestValidParentheses(string s) {\n        return 0; // Length of the longest well-formed substring.\n    }\n};",
         "acmIoSpec": "stdin：一行字符串 s（可能为空行）。stdout：一个整数，最长有效括号子串的长度。",

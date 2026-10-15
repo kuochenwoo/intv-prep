@@ -8,6 +8,26 @@
     "滑动窗口"
   ],
   "statement": "给定字符串 s 和 t，返回 s 中最短的连续子串，使 t 中的每个字符（包括重复字符，按出现次数计）都包含在该子串中。如果不存在这样的子串，返回空字符串 \"\"。测试数据保证答案唯一。",
+  "en": {
+    "title": "Minimum Window Substring",
+    "tags": [
+      "Hash Table",
+      "String",
+      "Sliding Window"
+    ],
+    "statement": "Given strings s and t, return the shortest contiguous substring of s that contains every character of t (including duplicates, counted by multiplicity). If no such substring exists, return the empty string \"\". The test data guarantees the answer is unique.",
+    "constraints": [
+      "1 ≤ s.length, t.length ≤ 100000",
+      "s and t consist of uppercase and lowercase English letters"
+    ],
+    "complexity": {
+      "time": "O(m + n) (official follow-up)",
+      "space": "O(|Σ|) extra space (character counts, |Σ| = 52)",
+      "officialRequirement": "Official follow-up asks for an algorithm that runs in O(m + n) time.",
+      "notes": "m = s.length, n = t.length. Sliding window: expand the right end until t is covered, then shrink the left end as far as possible, tracking how many characters are still missing; each index enters and leaves the window at most once. Comparing all 52 counts on every coverage check is O(52·m), which also passes but is not optimal."
+    },
+    "acmIoSpec": "stdin: first line string s; second line string t. stdout: one line, the minimum window substring; print an empty line if none exists."
+  },
   "constraints": [
     "1 ≤ s.length, t.length ≤ 100000",
     "s 和 t 由大小写英文字母组成"

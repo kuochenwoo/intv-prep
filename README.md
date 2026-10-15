@@ -8,7 +8,7 @@ A local desktop app for software-engineering interview practice, built with Taur
 - **Technical Deep Dive:** an AI interviewer (Claude or DeepSeek) generates a scenario question, asks follow-ups on your answers, and gives five-dimension feedback at the end. Answers stream in as they are written. An optional AI reference answer shows one concise model answer for the current question.
 - **Interface:** Chinese or English, switched with the button in the header. Light and dark modes. Built with Meta's [Astryx](https://github.com/facebook/astryx) design system.
 
-Problem statements, interview topics and AI output are in Chinese in both UI languages.
+Problem statements, interview topics, AI questions and answers, and error messages follow the selected language.
 
 ## Requirements
 

@@ -10,6 +10,7 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
 import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { lookup, useI18n } from "../../i18n";
+import { localizeError } from "../../errors";
 import { readablePartialJson } from "./stream";
 import "./interview.css";
 type Config = { provider: string; model: string; timeoutSeconds: number };
@@ -20,7 +21,12 @@ type Topic = {
   title: string;
   focus: string[];
   scenarioConstraints: string[];
+  en?: { title: string; focus: string[]; scenarioConstraints: string[] };
 };
+const hasChinese = (text: string) => /[\u4e00-\u9fff]/.test(text);
+// Topics come with English text; English mode shows it and the AI answers in English.
+const localTopic = (x: Topic, lang: string): Topic =>
+  lang === "en" && x.en ? { ...x, ...x.en } : x;
 type Question = {
   id: string;
   seedId: string;
@@ -226,8 +232,14 @@ export default function InterviewApp() {
       setLive("");
     }
   }
-  const topic = data?.topics.find((x) => x.id === topicId),
-    cached = data?.questions.filter((q) => q.seedId === topicId) ?? [];
+  const found = data?.topics.find((x) => x.id === topicId),
+    topic = found && localTopic(found, lang),
+    // Cached questions are reused only in the language they were written in.
+    cached =
+      data?.questions.filter(
+        (q) =>
+          q.seedId === topicId && hasChinese(q.question) === (lang === "zh"),
+      ) ?? [];
   const preview = cached.find((q) => q.id === questionId) ?? cached[0];
   const pending =
     session?.status === "awaiting_reply" ||
@@ -270,6 +282,7 @@ export default function InterviewApp() {
                           await invoke<Session>("submit_interview_reference", {
                             sessionId: session.id,
                             turnIndex: k,
+                            lang,
                           }),
                         ),
                       true,
@@ -430,7 +443,7 @@ export default function InterviewApp() {
         <div className="page-banner">
           <Banner
             status="error"
-            title={error}
+            title={localizeError(error, lang)}
             isDismissable
             onDismiss={() => setError("")}
           />
@@ -516,7 +529,7 @@ export default function InterviewApp() {
               }}
             >
               <small>{x.category}</small>
-              <strong>{x.title}</strong>
+              <strong>{localTopic(x, lang).title}</strong>
             </button>
           ))}
           <h3>{t("history")}</h3>
@@ -580,7 +593,7 @@ export default function InterviewApp() {
                       perform(async () => {
                         const q = await invoke<Question>(
                           "generate_interview_question",
-                          { topicId },
+                          { topicId, lang },
                         );
                         setQuestionId(q.id);
                         show(
@@ -711,7 +724,7 @@ export default function InterviewApp() {
                 {session.lastError && (
                   <Banner
                     status="error"
-                    title={t("savedLocally", { e: session.lastError })}
+                    title={t("savedLocally", { e: localizeError(session.lastError, lang) })}
                   />
                 )}
                 {pending && (
@@ -731,6 +744,7 @@ export default function InterviewApp() {
                             show(
                               await invoke<Session>("retry_interview", {
                                 sessionId: session.id,
+                                lang,
                               }),
                             ),
                           true,
@@ -779,7 +793,7 @@ export default function InterviewApp() {
                               show(
                                 await invoke<Session>(
                                   "submit_interview_answer",
-                                  { sessionId: session.id, answer: draft },
+                                  { sessionId: session.id, answer: draft, lang },
                                 ),
                               ),
                             true,
@@ -798,6 +812,7 @@ export default function InterviewApp() {
                                   {
                                     sessionId: session.id,
                                     turnIndex: session.turns.length,
+                                    lang,
                                   },
                                 ),
                               ),
@@ -815,6 +830,7 @@ export default function InterviewApp() {
                               show(
                                 await invoke<Session>("finish_interview", {
                                   sessionId: session.id,
+                                  lang,
                                 }),
                               ),
                             true,

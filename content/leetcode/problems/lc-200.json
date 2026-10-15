@@ -10,6 +10,29 @@
     "矩阵"
   ],
   "statement": "给定一个由字符 '1'（陆地）和 '0'（水）组成的 m × n 二维网格 grid，统计其中岛屿的个数。岛屿由上下左右相邻的陆地连接而成，网格四周都被水包围。",
+  "en": {
+    "title": "Number of Islands",
+    "tags": [
+      "Depth-First Search",
+      "Breadth-First Search",
+      "Union Find",
+      "Array",
+      "Matrix"
+    ],
+    "statement": "Given an m × n 2D grid of characters '1' (land) and '0' (water), count the number of islands. An island is formed by land cells connected horizontally or vertically, and the grid is surrounded by water on all four sides.",
+    "constraints": [
+      "m == grid.length, n == grid[i].length",
+      "1 ≤ m, n ≤ 300",
+      "grid[i][j] is '0' or '1'"
+    ],
+    "complexity": {
+      "time": "O(m·n) (local training target)",
+      "space": "O(m·n) worst case: DFS recursion stack or BFS queue (recursion stack counted); union-find is also O(m·n); the input grid is not counted",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "m and n are the grid's row and column counts. Scan cell by cell; on each unvisited land cell, increment the count and sink the whole island with DFS/BFS/union-find, so each cell is visited a constant number of times. When the grid is all land, recursive DFS depth can reach m·n."
+    },
+    "acmIoSpec": "stdin: line 1 is m; then m lines, each a string of 0/1 of length n representing one grid row. stdout: one integer, the number of islands."
+  },
   "constraints": [
     "m == grid.length，n == grid[i].length",
     "1 ≤ m, n ≤ 300",

@@ -8,6 +8,25 @@ problem = {
     "difficulty": "medium",
     "tags": ["广度优先搜索", "数学", "动态规划"],
     "statement": "给定正整数 n，把它表示成若干个完全平方数（1, 4, 9, 16, …，可重复使用）之和，求所需完全平方数的最少个数。",
+    "en": {
+        "title": "Perfect Squares",
+        "tags": [
+            "Breadth-First Search",
+            "Math",
+            "Dynamic Programming"
+        ],
+        "statement": "Given a positive integer n, express it as a sum of perfect squares (1, 4, 9, 16, …, each may be used repeatedly) and find the minimum number of perfect squares needed.",
+        "constraints": [
+            "1 ≤ n ≤ 10000"
+        ],
+        "complexity": {
+            "time": "O(n√n) (local training target, dynamic programming)",
+            "space": "O(n) extra space",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the input integer. dp[i] = 1 + min(dp[i - j²]). Using Lagrange's four-square theorem and Legendre's three-square theorem gives O(√n): the answer can only be 1–4, and it is 4 when n has the form 4^a(8b+7)."
+        },
+        "acmIoSpec": "stdin: one line with integer n. stdout: one integer, the minimum count."
+    },
     "constraints": ["1 ≤ n ≤ 10000"],
     "complexity": {
         "time": "O(n√n)（本地训练目标，动态规划）",

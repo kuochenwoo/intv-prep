@@ -8,6 +8,27 @@ problem = {
     "difficulty": "medium",
     "tags": ["数组", "数学", "双指针"],
     "statement": "给定整数数组 nums 和非负整数 k，把数组元素整体向右轮转 k 个位置（最右边的元素移到最左边，重复 k 次）。要求原地修改 nums，核心函数不返回值，系统检查修改后的数组。",
+    "en": {'title': 'Rotate Array',
+     'tags': ['Array', 'Math', 'Two Pointers'],
+     'statement': 'Given an integer array nums and a non-negative integer k, rotate the array to the '
+                  'right by k positions (move the rightmost element to the leftmost position, repeated '
+                  'k times). Modify nums in place; the core function returns nothing, and the system '
+                  'checks the modified array.',
+     'constraints': ['1 ≤ nums.length ≤ 100000; -2^31 ≤ nums[i] ≤ 2^31 - 1; 0 ≤ k ≤ 100000'],
+     'complexity': {'time': 'O(n) (local training target)',
+                    'space': 'O(1) extra space (three reversals or cyclic replacement)',
+                    'officialRequirement': 'Official follow-up: come up with as many solutions as you '
+                                           'can (at least three), and try to do it in place with O(1) '
+                                           'extra space.',
+                    'notes': 'n is the array length; k may exceed n, so take k mod n first. Three '
+                             'reversals: reverse the whole array, then reverse the first k and the '
+                             'last n-k elements separately. Copying into a new array (O(n) extra '
+                             'space) is correct but does not meet the follow-up; shifting right one '
+                             'step at a time, O(n·k), times out on large tests. The largest local test '
+                             'has 50000 elements (official limit is 100000, reduced to keep the '
+                             'problem bank small, since both input and output are stored in it).'},
+     'acmIoSpec': 'stdin: line 1 has n and k; line 2 has n integers nums. stdout: one line with the n '
+                  'integers after rotation.'},
     "constraints": ["1 ≤ nums.length ≤ 100000；-2^31 ≤ nums[i] ≤ 2^31 - 1；0 ≤ k ≤ 100000"],
     "complexity": {
         "time": "O(n)（本地训练目标）",

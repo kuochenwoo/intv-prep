@@ -8,6 +8,25 @@
     "动态规划"
   ],
   "statement": "给定整数数组 nums，求其中最长的严格递增子序列的长度。子序列由原数组删去若干（可以为零个）元素、且不改变剩余元素相对顺序得到，不要求连续。",
+  "en": {
+    "title": "Longest Increasing Subsequence",
+    "tags": [
+      "Array",
+      "Binary Search",
+      "Dynamic Programming"
+    ],
+    "statement": "Given an integer array nums, find the length of its longest strictly increasing subsequence. A subsequence is obtained by deleting some (possibly zero) elements from the original array without changing the relative order of the remaining elements; it need not be contiguous.",
+    "constraints": [
+      "1 ≤ nums.length ≤ 2500; -10^4 ≤ nums[i] ≤ 10^4"
+    ],
+    "complexity": {
+      "time": "O(n log n) (local training target, greedy + binary search); O(n^2) dynamic programming also passes at the local data size",
+      "space": "O(n) extra space (excluding the input array)",
+      "officialRequirement": "Official follow-up asks for an O(n log n) time algorithm; the problem itself does not require it.",
+      "notes": "n is the array length. tails[k] records the smallest ending value of an increasing subsequence of length k+1; for each element, binary search and replace. The largest test is the official limit n = 2500, where O(n^2) still passes, so the time limit cannot distinguish the two complexities."
+    },
+    "acmIoSpec": "stdin: line 1 is n; line 2 has n integers nums. stdout: one integer, the length of the longest strictly increasing subsequence."
+  },
   "constraints": [
     "1 ≤ nums.length ≤ 2500；-10^4 ≤ nums[i] ≤ 10^4"
   ],

@@ -8,6 +8,27 @@ problem = {
     "difficulty": "medium",
     "tags": ["数组", "二分查找", "矩阵"],
     "statement": "给定一个 m × n 的整数矩阵 matrix：每一行按非严格递增排列，且每一行的第一个数都大于上一行的最后一个数。给定整数 target，判断它是否在矩阵中，在则返回 true，否则返回 false。",
+    "en": {
+        "title": "Search a 2D Matrix",
+        "tags": [
+            "Array",
+            "Binary Search",
+            "Matrix"
+        ],
+        "statement": "Given an m × n integer matrix in which each row is sorted in non-decreasing order and the first number of each row is greater than the last number of the previous row, and an integer target, determine whether target is in the matrix: return true if it is, otherwise false.",
+        "constraints": [
+            "m == matrix.length, n == matrix[i].length",
+            "1 ≤ m, n ≤ 100",
+            "-10^4 ≤ matrix[i][j], target ≤ 10^4"
+        ],
+        "complexity": {
+            "time": "O(log(m·n))",
+            "space": "O(1) extra space",
+            "officialRequirement": "Official problem requires O(log(m·n)) time complexity.",
+            "notes": "m and n are the row and column counts; the input matrix does not count toward extra space. Flattened row by row, the matrix is a sorted array where index k maps to matrix[k / n][k % n], so binary search directly; alternatively, binary search the row and then the column. The local judge needs O(m·n) to read input, so it cannot distinguish binary search from a linear scan by running time."
+        },
+        "acmIoSpec": "stdin: first line the row count m; then m lines, each starting with the column count n followed by that row's n integers; the last line is target. stdout: true or false."
+    },
     "constraints": [
         "m == matrix.length，n == matrix[i].length",
         "1 ≤ m, n ≤ 100",

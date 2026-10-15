@@ -16,6 +16,25 @@ problem = {
         "notes": "n 为数组长度，输入数组不计入额外空间。双指针从两端出发，每次移动较矮的一侧：较矮一侧作为短板时，向内的任何搭配都不可能更大。O(n^2) 枚举在最大测试上会超时。",
         "sourceUrl": "https://leetcode.com/problems/container-with-most-water/",
     },
+    "en": {
+        "title": "Container With Most Water",
+        "tags": [
+            "Greedy",
+            "Array",
+            "Two Pointers"
+        ],
+        "statement": "Given a non-negative integer array height of length n, the i-th vertical line has endpoints (i, 0) and (i, height[i]). Any two lines together with the x-axis form a container (which may not be tilted); its capacity is the distance between the lines times the height of the shorter line. Return the maximum amount of water a container can hold.",
+        "constraints": [
+            "2 ≤ n ≤ 100000; 0 ≤ height[i] ≤ 10000"
+        ],
+        "complexity": {
+            "time": "O(n) (local training target)",
+            "space": "O(1) extra space",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the array length; the input array does not count toward extra space. Two pointers start at both ends and the shorter side moves each time: when the shorter side is the limiting wall, no pairing further inward with it can be larger. O(n^2) enumeration times out on the largest test."
+        },
+        "acmIoSpec": "stdin: line 1 is n; line 2 has n integers height. stdout: one integer, the maximum amount of water."
+    },
     "cpp": {
         "functionTemplate": "class Solution {\npublic:\n    int maxArea(vector<int>& height) {\n        return 0; // Largest container area.\n    }\n};",
         "acmIoSpec": "stdin：第一行 n；第二行 n 个整数 height。stdout：一个整数，最大水量。",

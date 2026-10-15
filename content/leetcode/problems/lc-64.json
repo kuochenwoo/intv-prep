@@ -8,6 +8,25 @@
     "矩阵"
   ],
   "statement": "给定 m × n 的非负整数网格 grid，从左上角走到右下角，每步只能向右或向下，求路径上所有数字之和的最小值。",
+  "en": {
+    "title": "Minimum Path Sum",
+    "tags": [
+      "Array",
+      "Dynamic Programming",
+      "Matrix"
+    ],
+    "statement": "Given an m × n grid of non-negative integers, walk from the top-left corner to the bottom-right corner moving only right or down at each step, and find the minimum possible sum of all numbers along the path.",
+    "constraints": [
+      "1 ≤ m, n ≤ 200; 0 ≤ grid[i][j] ≤ 200"
+    ],
+    "complexity": {
+      "time": "O(m · n) (local training target)",
+      "space": "O(n) extra space (rolling array); accumulating in place on grid achieves O(1)",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "m and n are the numbers of rows and columns of the grid; the input grid does not count toward extra space. dp[i][j] = grid[i][j] + min(above, left)."
+    },
+    "acmIoSpec": "stdin: first line the row count m; then m lines, each starting with the column count n followed by n integers. stdout: one integer, the minimum path sum."
+  },
   "constraints": [
     "1 ≤ m, n ≤ 200；0 ≤ grid[i][j] ≤ 200"
   ],

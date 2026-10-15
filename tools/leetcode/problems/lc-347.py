@@ -9,6 +9,31 @@ problem = {
     "difficulty": "medium",
     "tags": ["数组", "哈希表", "分治", "桶排序", "计数", "快速选择", "排序", "堆（优先队列）"],
     "statement": "给定整数数组 nums 和整数 k，返回出现次数最多的 k 个元素，顺序任意。题目保证答案唯一（第 k 多与第 k+1 多的出现次数不同）。",
+    "en": {
+        "title": "Top K Frequent Elements",
+        "tags": [
+            "Array",
+            "Hash Table",
+            "Divide and Conquer",
+            "Bucket Sort",
+            "Counting",
+            "Quickselect",
+            "Sorting",
+            "Heap (Priority Queue)"
+        ],
+        "statement": "Given an integer array nums and an integer k, return the k most frequent elements in any order. The answer is guaranteed to be unique (the k-th and (k+1)-th highest frequencies differ).",
+        "constraints": [
+            "1 ≤ nums.length ≤ 100000; -10000 ≤ nums[i] ≤ 10000",
+            "k is in the range [1, number of distinct elements in the array]; the answer is guaranteed to be unique"
+        ],
+        "complexity": {
+            "time": "O(n) (local training target, counting + bucketing by frequency)",
+            "space": "O(n) extra space",
+            "officialRequirement": "Official follow-up asks for time complexity better than O(n log n).",
+            "notes": "n is the array length and u is the number of distinct elements. Hash counting is O(n); then bucket sort by frequency in O(n), or a size-k min-heap in O(u log k), or quickselect in expected O(u). Output order is arbitrary and compared as an unordered set."
+        },
+        "acmIoSpec": "stdin: line 1 is n; line 2 has n integers nums; line 3 is the integer k. stdout: one line with k integers in any order, separated by spaces."
+    },
     "constraints": [
         "1 ≤ nums.length ≤ 100000；-10000 ≤ nums[i] ≤ 10000",
         "k 在 [1, 数组中不同元素的个数] 范围内；保证答案唯一",

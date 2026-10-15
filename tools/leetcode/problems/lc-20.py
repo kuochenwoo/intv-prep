@@ -19,6 +19,25 @@ problem = {
         "notes": "n 为字符串长度。遇到左括号入栈，遇到右括号检查栈顶是否为匹配的左括号；最后栈必须为空。长度为奇数可直接判定无效。",
         "sourceUrl": "https://leetcode.com/problems/valid-parentheses/",
     },
+    "en": {
+        "title": "Valid Parentheses",
+        "tags": [
+            "Stack",
+            "String"
+        ],
+        "statement": "Given a string s consisting only of '(' ')' '[' ']' '{' '}', determine whether it is valid: every opening bracket must be closed by a closing bracket of the same type, brackets must be closed in the correct order (the most recently opened is closed first), and every closing bracket must have a matching opening bracket.",
+        "constraints": [
+            "1 ≤ s.length ≤ 10^4",
+            "s contains only the characters '()[]{}'"
+        ],
+        "complexity": {
+            "time": "O(n)",
+            "space": "O(n) extra space (stack)",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the string length. Push opening brackets onto the stack; on a closing bracket, check that the top of the stack is the matching opening bracket; at the end the stack must be empty. An odd length is immediately invalid."
+        },
+        "acmIoSpec": "stdin: one line, the string s. stdout: true or false."
+    },
     "cpp": {
         "functionTemplate": "class Solution {\npublic:\n    bool isValid(string s) {\n        return false; // Whether the brackets are balanced.\n    }\n};",
         "acmIoSpec": "stdin：一行字符串 s。stdout：true 或 false。",

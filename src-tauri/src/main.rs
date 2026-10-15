@@ -117,6 +117,7 @@ fn provider(
     app: &AppHandle,
     c: &rusqlite::Connection,
     session_id: Option<&str>,
+    lang: interview::Lang,
 ) -> Result<llm::InterviewProvider, String> {
     let mut config = credentials::settings(c)?;
     if let Some(id) = session_id {
@@ -129,15 +130,15 @@ fn provider(
     // Only one interview request runs at a time, so one event name is enough.
     // Throttled: the UI only needs a few repaints per second of the growing text.
     Ok(
-        llm::InterviewProvider::new(&config, credentials::read_key(&config.provider)?)?.on_text(
-            move |text| {
+        llm::InterviewProvider::new(&config, credentials::read_key(&config.provider)?)?
+            .lang(lang)
+            .on_text(move |text| {
                 let mut last = last.lock().unwrap_or_else(|e| e.into_inner());
                 if text.is_empty() || last.elapsed() >= std::time::Duration::from_millis(80) {
                     *last = std::time::Instant::now();
                     let _ = app.emit("llm-stream", text);
                 }
-            },
-        ),
+            }),
     )
 }
 #[tauri::command(async)]
@@ -176,6 +177,7 @@ fn delete_llm_key(state: State<AppState>, provider: String) -> Result<(), String
 #[tauri::command(async)]
 async fn generate_interview_question(
     app: AppHandle,
+    lang: Option<interview::Lang>,
     state: State<'_, AppState>,
     topic_id: String,
 ) -> Result<interview::QuestionView, String> {
@@ -187,7 +189,8 @@ async fn generate_interview_question(
             .map_err(|_| "已有面试请求正在运行")?;
         let c = state.own_connection()?;
         let config = credentials::settings(&c)?;
-        let q = provider(&app, &c, None)?.generate_question(&interview::topic(&topic_id)?)?;
+        let q = provider(&app, &c, None, lang.unwrap_or_default())?
+            .generate_question(&interview::topic(&topic_id)?)?;
         interview_store::cache_question(&c, &topic_id, &config, &q)
     })
     .await
@@ -222,6 +225,7 @@ fn save_interview_draft(
 #[tauri::command(async)]
 async fn submit_interview_answer(
     app: AppHandle,
+    lang: Option<interview::Lang>,
     state: State<'_, AppState>,
     session_id: String,
     answer: String,
@@ -233,7 +237,7 @@ async fn submit_interview_answer(
             .try_lock()
             .map_err(|_| "已有面试请求正在运行")?;
         let c = state.own_connection()?;
-        let api = provider(&app, &c, Some(&session_id))?;
+        let api = provider(&app, &c, Some(&session_id), lang.unwrap_or_default())?;
         interview_store::begin_answer(&c, &session_id, &answer)?;
         interview_store::retry_pending(&c, &session_id, &api)
     })
@@ -242,6 +246,7 @@ async fn submit_interview_answer(
 #[tauri::command(async)]
 async fn finish_interview(
     app: AppHandle,
+    lang: Option<interview::Lang>,
     state: State<'_, AppState>,
     session_id: String,
 ) -> Result<interview::SessionView, String> {
@@ -252,7 +257,7 @@ async fn finish_interview(
             .try_lock()
             .map_err(|_| "已有面试请求正在运行")?;
         let c = state.own_connection()?;
-        let api = provider(&app, &c, Some(&session_id))?;
+        let api = provider(&app, &c, Some(&session_id), lang.unwrap_or_default())?;
         interview_store::begin_feedback(&c, &session_id)?;
         interview_store::retry_pending(&c, &session_id, &api)
     })
@@ -261,6 +266,7 @@ async fn finish_interview(
 #[tauri::command(async)]
 async fn retry_interview(
     app: AppHandle,
+    lang: Option<interview::Lang>,
     state: State<'_, AppState>,
     session_id: String,
 ) -> Result<interview::SessionView, String> {
@@ -271,13 +277,18 @@ async fn retry_interview(
             .try_lock()
             .map_err(|_| "已有面试请求正在运行")?;
         let c = state.own_connection()?;
-        interview_store::retry_pending(&c, &session_id, &provider(&app, &c, Some(&session_id))?)
+        interview_store::retry_pending(
+            &c,
+            &session_id,
+            &provider(&app, &c, Some(&session_id), lang.unwrap_or_default())?,
+        )
     })
     .await
 }
 #[tauri::command(async)]
 async fn submit_interview_reference(
     app: AppHandle,
+    lang: Option<interview::Lang>,
     state: State<'_, AppState>,
     session_id: String,
     turn_index: usize,
@@ -293,7 +304,7 @@ async fn submit_interview_reference(
             &c,
             &session_id,
             turn_index,
-            &provider(&app, &c, Some(&session_id))?,
+            &provider(&app, &c, Some(&session_id), lang.unwrap_or_default())?,
         )
     })
     .await
@@ -303,6 +314,7 @@ async fn submit_interview_reference(
 #[tauri::command(async)]
 async fn show_interview_reference(
     app: AppHandle,
+    lang: Option<interview::Lang>,
     state: State<'_, AppState>,
     session_id: String,
     turn_index: usize,
@@ -318,7 +330,7 @@ async fn show_interview_reference(
             &c,
             &session_id,
             turn_index,
-            &provider(&app, &c, Some(&session_id))?,
+            &provider(&app, &c, Some(&session_id), lang.unwrap_or_default())?,
         )?;
         interview_store::session(&c, &session_id)
     })

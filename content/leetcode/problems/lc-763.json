@@ -9,6 +9,26 @@
     "字符串"
   ],
   "statement": "给定由小写字母组成的字符串 s，把它切成尽可能多的连续片段，使得每个字母只出现在其中一个片段里。片段按顺序拼接后必须仍是 s。按从左到右的顺序返回每个片段的长度。",
+  "en": {
+    "title": "Partition Labels",
+    "tags": [
+      "Greedy",
+      "Hash Table",
+      "Two Pointers",
+      "String"
+    ],
+    "statement": "Given a string s of lowercase letters, cut it into as many contiguous parts as possible so that each letter appears in only one part. Concatenating the parts in order must give back s. Return the length of each part in order from left to right.",
+    "constraints": [
+      "1 ≤ s.length ≤ 500; s consists only of lowercase English letters"
+    ],
+    "complexity": {
+      "time": "O(n) (local training target)",
+      "space": "O(Σ) extra space, Σ = 26 (output not counted)",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the string length. First record the last occurrence of each letter; while scanning, track the farthest index the current part must extend to, and cut when that index is reached."
+    },
+    "acmIoSpec": "stdin: one line with string s. stdout: one line with the part lengths in order, separated by spaces."
+  },
   "constraints": [
     "1 ≤ s.length ≤ 500；s 仅由小写英文字母组成"
   ],

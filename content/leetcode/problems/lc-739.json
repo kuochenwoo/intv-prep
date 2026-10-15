@@ -8,6 +8,26 @@
     "单调栈"
   ],
   "statement": "给定整数数组 temperatures 表示每天的气温，返回数组 answer：answer[i] 是从第 i 天起，至少还要再等几天才会出现严格更高的气温；如果之后都不会更高，answer[i] = 0。",
+  "en": {
+    "title": "Daily Temperatures",
+    "tags": [
+      "Stack",
+      "Array",
+      "Monotonic Stack"
+    ],
+    "statement": "Given an integer array temperatures representing the daily temperatures, return an array answer where answer[i] is the minimum number of days after day i you must wait to get a strictly higher temperature; if no later day is warmer, answer[i] = 0.",
+    "constraints": [
+      "1 ≤ temperatures.length ≤ 10^5",
+      "30 ≤ temperatures[i] ≤ 100"
+    ],
+    "complexity": {
+      "time": "O(n)",
+      "space": "O(n) extra space (monotonic stack, excluding the returned array)",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the number of days. Maintain a stack of indices whose temperatures are non-increasing; when a new temperature is higher, pop repeatedly and fill in the waiting days. Alternatively, scan right to left and jump using already computed answers. The O(n²) approach of scanning forward from each day times out when many temperatures are equal. The official limit is n = 10^5, but both input and output must be stored in the problem bank, so the largest local test is reduced to n = 50000 (all equal, all answers 0, specifically targeting the forward-scan approach)."
+    },
+    "acmIoSpec": "stdin: line 1 is n; line 2 has n integers temperatures. stdout: one line with n integers answer, separated by spaces."
+  },
   "constraints": [
     "1 ≤ temperatures.length ≤ 10^5",
     "30 ≤ temperatures[i] ≤ 100"

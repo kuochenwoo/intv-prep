@@ -8,6 +8,26 @@
     "滑动窗口"
   ],
   "statement": "给定两个字符串 s 和 p，找出 s 中所有是 p 的字母异位词（字母种类与每种字母的出现次数都和 p 相同）的子串，返回这些子串的起始下标（0-based），顺序不限。",
+  "en": {
+    "title": "Find All Anagrams in a String",
+    "tags": [
+      "Hash Table",
+      "String",
+      "Sliding Window"
+    ],
+    "statement": "Given two strings s and p, find all substrings of s that are anagrams of p (the same set of letters with the same count of each letter as p), and return their starting indices (0-based) in any order.",
+    "constraints": [
+      "1 ≤ s.length, p.length ≤ 30000",
+      "s and p consist only of lowercase English letters"
+    ],
+    "complexity": {
+      "time": "O(n + m) (local training target; alphabet size treated as constant 26)",
+      "space": "O(1) extra space (26 counters); output not counted",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n = s.length, m = p.length. Maintain letter counts for a sliding window of length m, and track how many letters have counts that differ from p's. Sorting and comparing each window is O(n·m log m) and times out on tests with large m."
+    },
+    "acmIoSpec": "stdin: line 1 is string s; line 2 is string p. stdout: one line with all starting indices separated by spaces, in any order; print an empty line if there are none."
+  },
   "constraints": [
     "1 ≤ s.length, p.length ≤ 30000",
     "s 和 p 只包含小写英文字母"

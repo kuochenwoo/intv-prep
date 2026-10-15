@@ -8,6 +8,25 @@ problem = {
     "difficulty": "medium",
     "tags": ["数组", "前缀和"],
     "statement": "给定整数数组 nums，返回数组 answer，其中 answer[i] 等于 nums 中除 nums[i] 之外所有元素的乘积。不允许使用除法，且要在 O(n) 时间内完成。题目保证任意前缀或后缀的乘积都在 32 位有符号整数范围内。",
+    "en": {
+        "title": "Product of Array Except Self",
+        "tags": [
+            "Array",
+            "Prefix Sum"
+        ],
+        "statement": "Given an integer array nums, return an array answer where answer[i] equals the product of all elements of nums other than nums[i]. Division is not allowed, and the solution must run in O(n) time. The product of any prefix or suffix is guaranteed to fit in a 32-bit signed integer.",
+        "constraints": [
+            "2 ≤ nums.length ≤ 100000; -30 ≤ nums[i] ≤ 30",
+            "The product of any prefix or suffix fits in a 32-bit signed integer"
+        ],
+        "complexity": {
+            "time": "O(n) (official requirement)",
+            "space": "O(1) extra space (output array not counted, official follow-up); O(n) with separate prefix/suffix arrays",
+            "officialRequirement": "Officially requires O(n) time without using division; the follow-up asks for O(1) extra space (the output array does not count as extra space).",
+            "notes": "n is the array length. answer[i] = prefix product on the left × suffix product on the right; first write prefix products into the output array, then multiply in a running suffix product from right to left. Using division cannot be detected locally; check your own code. The largest local test has 50000 elements (official limit 100000, reduced to keep the problem bank small)."
+        },
+        "acmIoSpec": "stdin: line 1 is n; line 2 has n integers nums. stdout: one line with n integers answer."
+    },
     "constraints": [
         "2 ≤ nums.length ≤ 100000；-30 ≤ nums[i] ≤ 30",
         "任意前缀或后缀的乘积都在 32 位有符号整数范围内",

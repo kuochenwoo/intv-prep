@@ -20,6 +20,27 @@ problem = {
         "notes": "n 为 digits 长度；每个数字最多对应 4 个字母，组合数至多 4^n，每个长度 n。判题忽略组合之间的顺序。",
         "sourceUrl": "https://leetcode.com/problems/letter-combinations-of-a-phone-number/",
     },
+    "en": {
+        "title": "Letter Combinations of a Phone Number",
+        "tags": [
+            "Hash Table",
+            "String",
+            "Backtracking"
+        ],
+        "statement": "Given a string digits containing only the digits 2-9, return all letter combinations it can represent using the phone keypad mapping (2: abc, 3: def, 4: ghi, 5: jkl, 6: mno, 7: pqrs, 8: tuv, 9: wxyz), in any order. The digit 1 maps to no letters. If digits is empty, return an empty list.",
+        "constraints": [
+            "1 ≤ digits.length ≤ 4 (current official constraint; an older version of the problem allowed length 0)",
+            "digits[i] is a digit in the range ['2', '9']",
+            "Locally there is an extra test with an empty digits string, which should return an empty list"
+        ],
+        "complexity": {
+            "time": "O(n · 4^n) (local training target)",
+            "space": "O(n) extra space (backtracking recursion stack and current path, recursion stack included; output not counted)",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the length of digits; each digit maps to at most 4 letters, so there are at most 4^n combinations, each of length n. The judge ignores the order of the combinations."
+        },
+        "acmIoSpec": "stdin: one line, the string digits (may be an empty line). stdout: line 1 is the number of combinations k; then k lines, each with one letter combination (any order)."
+    },
     "cpp": {
         "functionTemplate": "class Solution {\npublic:\n    vector<string> letterCombinations(string digits) {\n        return {}; // All letter combinations, in any order.\n    }\n};",
         "acmIoSpec": "stdin：一行字符串 digits（可能为空行）。stdout：第一行组合个数 k；随后 k 行，每行一个字母组合（顺序任意）。",

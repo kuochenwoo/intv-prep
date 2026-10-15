@@ -8,6 +8,27 @@
     "矩阵"
   ],
   "statement": "给定一个 m × n 的整数矩阵 matrix，如果某个元素为 0，就把它所在的整行和整列全部改为 0。要求直接在原矩阵上修改（原地算法），函数无返回值。",
+  "en": {
+    "title": "Set Matrix Zeroes",
+    "tags": [
+      "Array",
+      "Hash Table",
+      "Matrix"
+    ],
+    "statement": "Given an m × n integer matrix, if an element is 0, set its entire row and entire column to 0. You must modify the original matrix directly (in place); the function returns nothing.",
+    "constraints": [
+      "m == matrix.length, n == matrix[0].length",
+      "1 ≤ m, n ≤ 200",
+      "-2^31 ≤ matrix[i][j] ≤ 2^31 - 1"
+    ],
+    "complexity": {
+      "time": "O(m·n)",
+      "space": "O(1) extra space (using the first row and column as markers); O(m + n) row/column marker arrays also pass the local tests",
+      "officialRequirement": "Official problem requires in-place modification; the follow-up notes that O(m·n) extra space is bad and O(m + n) can still be improved, and expects O(1) constant extra space.",
+      "notes": "m and n are the row and column counts; the input matrix does not count toward extra space. First record whether the first row/first column themselves contain 0, then use them to mark the remaining rows and columns. The largest local test is 200 × 200 (the official limit) with element values reduced to a small range to keep the problem bank small; there are also small tests containing INT_MIN/INT_MAX."
+    },
+    "acmIoSpec": "stdin: first line the row count m; then m lines, each starting with the column count n followed by that row's n integers. stdout: first line m, then m lines, each containing that row's n integers after modification (space-separated, no length prefix)."
+  },
   "constraints": [
     "m == matrix.length，n == matrix[0].length",
     "1 ≤ m, n ≤ 200",

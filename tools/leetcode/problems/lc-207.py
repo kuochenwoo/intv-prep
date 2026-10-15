@@ -8,6 +8,24 @@ problem = {
     "difficulty": "medium",
     "tags": ["深度优先搜索", "广度优先搜索", "图", "拓扑排序"],
     "statement": "共有 numCourses 门课程，编号 0 到 numCourses - 1。prerequisites[i] = [a, b] 表示学习课程 a 之前必须先修完课程 b。判断是否能够修完全部课程，能则返回 true，否则返回 false。",
+    "en": {'title': 'Course Schedule',
+     'tags': ['Depth-First Search', 'Breadth-First Search', 'Graph', 'Topological Sort'],
+     'statement': 'There are numCourses courses, numbered 0 to numCourses - 1. prerequisites[i] = [a, '
+                  'b] means course b must be completed before taking course a. Determine whether all '
+                  'courses can be completed; return true if so, otherwise false.',
+     'constraints': ['1 ≤ numCourses ≤ 2000',
+                     '0 ≤ prerequisites.length ≤ 5000',
+                     'prerequisites[i].length == 2; 0 ≤ a, b < numCourses',
+                     'All prerequisite pairs [a, b] are distinct'],
+     'complexity': {'time': 'O(V + E) (local training target)',
+                    'space': 'O(V + E) (adjacency list, in-degree array/queue, or DFS states and '
+                             'recursion stack)',
+                    'officialRequirement': 'No official complexity requirement.',
+                    'notes': 'V = numCourses, E = prerequisites.length. Equivalent to checking whether '
+                             "a directed graph is acyclic: Kahn's topological sort pops all V "
+                             'vertices, or a three-color DFS finds no back edge.'},
+     'acmIoSpec': 'stdin: line 1 is numCourses; line 2 is the number of prerequisite pairs p; then p '
+                  'lines, each of the form 2 a b (2 is the row length). stdout: true or false.'},
     "constraints": [
         "1 ≤ numCourses ≤ 2000",
         "0 ≤ prerequisites.length ≤ 5000",

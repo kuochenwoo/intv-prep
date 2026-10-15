@@ -872,6 +872,23 @@
       "output": "[]"
     }
   ],
+  "en": {
+    "title": "Reverse Linked List",
+    "tags": [
+      "Linked List"
+    ],
+    "statement": "Given the head of a singly linked list, reverse the list in place and return the new head. An empty list returns nullptr.",
+    "constraints": [
+      "0 ≤ number of nodes ≤ 5000; -5000 ≤ node value ≤ 5000"
+    ],
+    "complexity": {
+      "time": "O(n) (local training target)",
+      "space": "O(1) iteratively; the O(n) call stack of a recursive solution is also allowed",
+      "officialRequirement": "The official follow-up asks you to practise both iterative and recursive versions; it does not require O(1) space for every solution.",
+      "notes": "n is the number of nodes; the input list does not count toward extra space. Practise in-place pointer reversal; a recursive solution's call stack counts toward space."
+    },
+    "acmIoSpec": "stdin: first line the node count n; then n integers, the list values. stdout: the n reversed values separated by spaces. An empty list prints an empty line."
+  },
   "complexity": {
     "time": "O(n)（本地訓練目標）",
     "space": "迭代 O(1)；遞迴 O(n) 呼叫堆疊亦允許",

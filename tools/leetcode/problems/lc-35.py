@@ -20,6 +20,26 @@ problem = {
         "notes": "n 为数组长度。答案就是第一个 ≥ target 的位置（lower_bound）。本地判题需 O(n) 读入，无法从耗时上区分二分与线性扫描。",
         "sourceUrl": "https://leetcode.com/problems/search-insert-position/",
     },
+    "en": {
+        "title": "Search Insert Position",
+        "tags": [
+            "Array",
+            "Binary Search"
+        ],
+        "statement": "Given a strictly ascending integer array nums of distinct elements and an integer target, return the index of target if it is in the array; otherwise return the index where it would be after being inserted in order (i.e. the position of the first element greater than target, or n if there is none).",
+        "constraints": [
+            "1 ≤ nums.length ≤ 10^4",
+            "-10^4 ≤ nums[i] ≤ 10^4, nums elements are distinct and ascending",
+            "-10^4 ≤ target ≤ 10^4"
+        ],
+        "complexity": {
+            "time": "O(log n)",
+            "space": "O(1) extra space",
+            "officialRequirement": "Official requirement: O(log n) time complexity.",
+            "notes": "n is the array length. The answer is simply the first position ≥ target (lower_bound). The local judge needs O(n) input reading, so timing cannot distinguish binary search from a linear scan."
+        },
+        "acmIoSpec": "stdin: line 1 is n; line 2 has n integers nums; line 3 is target. stdout: one integer, the index or insertion position."
+    },
     "cpp": {
         "functionTemplate": "class Solution {\npublic:\n    int searchInsert(vector<int>& nums, int target) {\n        return 0; // Index of target or its insertion point.\n    }\n};",
         "acmIoSpec": "stdin：第一行 n；第二行 n 个整数 nums；第三行 target。stdout：一个整数，下标或插入位置。",

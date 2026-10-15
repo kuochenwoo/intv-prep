@@ -9,6 +9,26 @@
     "二叉树"
   ],
   "statement": "给定一棵二叉搜索树的根节点 root 和整数 k，返回树中第 k 小的节点值（k 从 1 开始计数）。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入中的树为 LeetCode 层序表示，null 表示空位。",
+  "en": {
+    "title": "Kth Smallest Element in a BST",
+    "tags": [
+      "Tree",
+      "Depth-First Search",
+      "Binary Search Tree",
+      "Binary Tree"
+    ],
+    "statement": "Given the root of a binary search tree and an integer k, return the k-th smallest node value in the tree (k is 1-indexed).\n\nNode definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. The input tree uses LeetCode's level-order representation, with null marking empty positions.",
+    "constraints": [
+      "The number of nodes is n; 1 ≤ k ≤ n ≤ 10^4; 0 ≤ Node.val ≤ 10^4"
+    ],
+    "complexity": {
+      "time": "O(h + k) (stop the in-order traversal at the k-th node), worst case O(n)",
+      "space": "O(h) explicit or recursion stack, worst case O(n).",
+      "officialRequirement": "No official complexity requirement; the follow-up asks how to optimize if the BST is modified often (insert/delete) and the k-th smallest is queried frequently (e.g., maintain subtree sizes in each node so a single query is O(h)).",
+      "notes": "n is the number of nodes, h the tree height. The largest local test is a left-only chain of 10^4 nodes with k = n (the whole chain must be walked); there are also a right-only chain with k = n and a random BST with 10^4 nodes."
+    },
+    "acmIoSpec": "stdin: line 1 is m (the number of level-order tokens); line 2 has m tokens (integers or null), the BST's LeetCode level-order representation; line 3 is the integer k. stdout: one integer, the k-th smallest value."
+  },
   "constraints": [
     "节点数为 n；1 ≤ k ≤ n ≤ 10^4；0 ≤ Node.val ≤ 10^4"
   ],

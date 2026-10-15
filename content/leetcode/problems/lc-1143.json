@@ -7,6 +7,24 @@
     "动态规划"
   ],
   "statement": "给定两个字符串 text1 和 text2，返回它们最长公共子序列的长度；不存在公共子序列时返回 0。子序列由原串删去若干字符且保持剩余字符相对顺序得到，不要求连续。",
+  "en": {
+    "title": "Longest Common Subsequence",
+    "tags": [
+      "String",
+      "Dynamic Programming"
+    ],
+    "statement": "Given two strings text1 and text2, return the length of their longest common subsequence; return 0 if there is no common subsequence. A subsequence is obtained by deleting some characters from the original string while keeping the relative order of the remaining characters; it need not be contiguous.",
+    "constraints": [
+      "1 ≤ text1.length, text2.length ≤ 1000; both strings consist only of lowercase English letters"
+    ],
+    "complexity": {
+      "time": "O(m · n) (local training target)",
+      "space": "O(m · n) for the 2D DP; a rolling array reduces it to O(min(m, n)) extra space",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "m and n are the lengths of the two strings. dp[i][j] is the LCS length of the first i characters of text1 and the first j characters of text2: if the last characters match, take dp[i-1][j-1] + 1; otherwise take max(dp[i-1][j], dp[i][j-1])."
+    },
+    "acmIoSpec": "stdin: line 1 is string text1; line 2 is string text2. stdout: one integer, the length of the longest common subsequence."
+  },
   "constraints": [
     "1 ≤ text1.length, text2.length ≤ 1000；两串仅含小写英文字母"
   ],

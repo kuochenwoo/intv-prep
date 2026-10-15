@@ -9,6 +9,26 @@
     "二叉树"
   ],
   "statement": "二叉树中的一条路径是由若干节点组成的序列，相邻节点之间有边相连，且每个节点至多出现一次；路径至少包含一个节点，不必经过根。路径和为路径上所有节点值之和。给定二叉树的根节点 root，返回所有路径中的最大路径和。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入中的树为 LeetCode 层序表示，null 表示空位。",
+  "en": {
+    "title": "Binary Tree Maximum Path Sum",
+    "tags": [
+      "Tree",
+      "Depth-First Search",
+      "Dynamic Programming",
+      "Binary Tree"
+    ],
+    "statement": "A path in a binary tree is a sequence of nodes where adjacent nodes are connected by an edge and each node appears at most once; a path contains at least one node and need not pass through the root. The path sum is the sum of the node values on the path. Given the root of a binary tree, return the maximum path sum over all paths.\n\nNode definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. The input tree uses LeetCode level-order representation, with null marking empty positions.",
+    "constraints": [
+      "The number of nodes is in the range [1, 3·10^4]; -1000 ≤ Node.val ≤ 1000"
+    ],
+    "complexity": {
+      "time": "O(n)",
+      "space": "O(h) recursion stack (or explicit stack for iterative postorder), worst case O(n).",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the number of nodes and h is the tree height. In a postorder traversal compute each node's best downward single-branch contribution max(0, left, right) + val, and update the answer with val + max(0,left) + max(0,right). The answer's absolute value is at most 3·10^7, so int suffices. The largest local test is a 3·10^4-node single chain (recursion depth 3·10^4, fine with the default stack), plus an all-negative tree and a random 10^4-node tree."
+    },
+    "acmIoSpec": "stdin: line 1 is m (the number of level-order tokens); line 2 has m tokens (integers or null), the tree's LeetCode level-order representation. stdout: one integer, the maximum path sum."
+  },
   "constraints": [
     "节点数在 [1, 3·10^4] 范围内；-1000 ≤ Node.val ≤ 1000"
   ],

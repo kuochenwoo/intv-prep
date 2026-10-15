@@ -8,6 +8,23 @@ problem = {
     "difficulty": "medium",
     "tags": ["并查集", "数组", "哈希表"],
     "statement": "给定一个未排序的整数数组 nums，找出其中数值连续（相邻两数相差 1）的最长序列的长度。序列元素不要求在原数组中相邻，重复值只算一次。空数组返回 0。",
+    "en": {'title': 'Longest Consecutive Sequence',
+     'tags': ['Union Find', 'Array', 'Hash Table'],
+     'statement': 'Given an unsorted integer array nums, find the length of the longest sequence of consecutive '
+                  'values (adjacent numbers differ by 1). The elements need not be adjacent in the original '
+                  'array, and duplicate values count only once. Return 0 for an empty array.',
+     'constraints': ['0 ≤ nums.length ≤ 100000; -10^9 ≤ nums[i] ≤ 10^9'],
+     'complexity': {'time': 'O(n) average time (official requirement)',
+                    'space': 'O(n) extra space (hash set)',
+                    'officialRequirement': 'Official requirement: design an algorithm that runs in O(n) time.',
+                    'notes': 'n is the array length. Put all numbers in a hash set and count forward only from '
+                             'starting points where x-1 is not in the set, so each number is visited a constant '
+                             'number of times; hashing is O(1) on average. Sorting is O(n log n): it gives '
+                             'correct results but does not meet the official requirement, and local tests cannot '
+                             'tell the difference. The largest local test has 30000 elements (the official limit '
+                             'is 100000, reduced to keep the problem bank small).'},
+     'acmIoSpec': 'stdin: line 1 is n; line 2 has n integers (an empty line when n is 0). stdout: one integer, '
+                  'the length of the longest consecutive sequence.'},
     "constraints": ["0 ≤ nums.length ≤ 100000；-10^9 ≤ nums[i] ≤ 10^9"],
     "complexity": {
         "time": "O(n) 平均时间（官方要求）",

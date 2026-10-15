@@ -8,6 +8,25 @@ problem = {
     "difficulty": "medium",
     "tags": ["字符串", "动态规划", "回溯"],
     "statement": "给定字符串 s，把它切分成若干个非空子串，使每个子串都是回文串，返回所有可能的切分方案。每个方案按子串在 s 中的位置从左到右列出；方案之间的顺序任意。",
+    "en": {'title': 'Palindrome Partitioning',
+     'tags': ['String', 'Dynamic Programming', 'Backtracking'],
+     'statement': 'Given a string s, split it into non-empty substrings such that every substring is a '
+                  'palindrome, and return all possible partitions. Each partition lists its substrings from left '
+                  'to right by their position in s; partitions may be in any order.',
+     'constraints': ['1 ≤ s.length ≤ 16', 's consists only of lowercase English letters'],
+     'complexity': {'time': 'O(n · 2^n) (local training target)',
+                    'space': 'O(n^2) extra space (palindrome precomputation table) + O(n) recursion stack '
+                             '(counted); output not counted',
+                    'officialRequirement': 'No official complexity requirement.',
+                    'notes': 'n is the length of s. The n - 1 cut points give 2^(n-1) ways to cut, all valid '
+                             'when every letter is the same; precomputing isPal[i][j] with DP allows O(1) '
+                             'palindrome checks. The local all-same-letter test has n = 13 (4096 partitions); '
+                             'the official limit n = 16 (32768 partitions) produces about 1 MiB of output and '
+                             'was reduced to keep the problem bank small, and there is also a random-string test '
+                             'with n = 16. The checker ignores only the order of partitions.'},
+     'acmIoSpec': 'stdin: one line with the string s. stdout: line 1 is the number of partitions P; then each '
+                  'partition in turn: one line with its substring count k, then k lines with one substring each '
+                  '(left to right as in s; partitions in any order).'},
     "constraints": [
         "1 ≤ s.length ≤ 16",
         "s 仅由小写英文字母组成",

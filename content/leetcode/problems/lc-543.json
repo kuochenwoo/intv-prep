@@ -8,6 +8,25 @@
     "二叉树"
   ],
   "statement": "给定二叉树的根节点 root，返回树的直径：任意两个节点之间最长路径所含的边数。这条路径不一定经过根节点。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入中的树为 LeetCode 层序表示，null 表示空位。",
+  "en": {
+    "title": "Diameter of Binary Tree",
+    "tags": [
+      "Tree",
+      "Depth-First Search",
+      "Binary Tree"
+    ],
+    "statement": "Given the root of a binary tree, return the diameter of the tree: the number of edges on the longest path between any two nodes. This path does not necessarily pass through the root.\n\nNode definition: struct TreeNode { int val; TreeNode *left; TreeNode *right; }. The tree in the input uses LeetCode's level-order representation, where null marks an empty slot.",
+    "constraints": [
+      "The number of nodes is in the range [1, 10^4]; -100 ≤ Node.val ≤ 100"
+    ],
+    "complexity": {
+      "time": "O(n)",
+      "space": "O(h) recursion stack (or an explicit stack for iterative post-order), O(n) in the worst case.",
+      "officialRequirement": "No official complexity requirement.",
+      "notes": "n is the number of nodes and h is the tree height. A single post-order traversal finds the maximum, over all nodes, of the sum of left and right subtree heights. The largest local test is a single chain of 10^4 nodes (recursion depth 10^4, which the default stack can handle); there are also a V-shaped double chain, a tree whose diameter does not pass through the root, and a random tree of 10^4 nodes."
+    },
+    "acmIoSpec": "stdin: line 1 is m (number of level-order tokens); line 2 has m tokens (integers or null), the tree's LeetCode level-order representation. stdout: one integer, the diameter (number of edges)."
+  },
   "constraints": [
     "节点数在 [1, 10^4] 范围内；-100 ≤ Node.val ≤ 100"
   ],

@@ -8,6 +8,25 @@ problem = {
     "difficulty": "medium",
     "tags": ["贪心", "数组", "动态规划"],
     "statement": "给定非负整数数组 nums，你从下标 0 出发，nums[i] 表示站在下标 i 时一次最多能向右跳的距离（可以跳 0 到 nums[i] 步中任意步）。判断能否到达最后一个下标。",
+    "en": {
+        "title": "Jump Game",
+        "tags": [
+            "Greedy",
+            "Array",
+            "Dynamic Programming"
+        ],
+        "statement": "Given an array of non-negative integers nums, you start at index 0; nums[i] is the maximum distance you can jump right from index i in one move (you may jump any number of steps from 0 to nums[i]). Determine whether you can reach the last index.",
+        "constraints": [
+            "1 ≤ nums.length ≤ 10000; 0 ≤ nums[i] ≤ 100000"
+        ],
+        "complexity": {
+            "time": "O(n) (local training target)",
+            "space": "O(1) extra space",
+            "officialRequirement": "No official complexity requirement.",
+            "notes": "n is the array length. Greedily maintain the farthest reachable index; a DP that enumerates every landing spot from each position is O(n·max(nums)) in the worst case."
+        },
+        "acmIoSpec": "stdin: first line n; second line n integers nums. stdout: true or false."
+    },
     "constraints": ["1 ≤ nums.length ≤ 10000；0 ≤ nums[i] ≤ 100000"],
     "complexity": {
         "time": "O(n)（本地训练目标）",

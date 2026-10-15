@@ -9,40 +9,119 @@
       "击穿与热点",
       "缓存/数据库一致性"
     ],
-    "scenarioConstraints": ["100k 读 QPS", "p99 < 50ms", "多实例部署"],
-    "level": "mid-to-senior"
+    "scenarioConstraints": [
+      "100k 读 QPS",
+      "p99 < 50ms",
+      "多实例部署"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Cache Selection and Consistency",
+      "focus": [
+        "Redis vs local cache",
+        "Cache-aside vs write-through",
+        "Cache breakdown and hot keys",
+        "Cache/database consistency"
+      ],
+      "scenarioConstraints": [
+        "100k read QPS",
+        "p99 < 50ms",
+        "Multi-instance deployment"
+      ]
+    }
   },
   {
     "id": "hot-key-protection",
     "category": "Caching",
     "title": "热点与缓存故障",
-    "focus": ["热 key 识别", "请求合并", "缓存失效", "降级与限流"],
+    "focus": [
+      "热 key 识别",
+      "请求合并",
+      "缓存失效",
+      "降级与限流"
+    ],
     "scenarioConstraints": [
       "热点占 60% 流量",
       "峰值 10 倍",
       "缓存集群可能不可用"
     ],
-    "level": "mid-to-senior"
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Hot Keys and Cache Failures",
+      "focus": [
+        "Hot-key detection",
+        "Request coalescing",
+        "Cache invalidation",
+        "Degradation and rate limiting"
+      ],
+      "scenarioConstraints": [
+        "Hot keys carry 60% of traffic",
+        "10x peak traffic",
+        "Cache cluster may be unavailable"
+      ]
+    }
   },
   {
     "id": "idempotency-retries",
     "category": "Correctness",
     "title": "幂等、超时与重试",
-    "focus": ["幂等键生命周期", "重复执行", "指数退避与抖动", "未知结果恢复"],
-    "scenarioConstraints": ["支付回调可能重复", "网络超时", "不允许重复扣款"],
-    "level": "mid-to-senior"
+    "focus": [
+      "幂等键生命周期",
+      "重复执行",
+      "指数退避与抖动",
+      "未知结果恢复"
+    ],
+    "scenarioConstraints": [
+      "支付回调可能重复",
+      "网络超时",
+      "不允许重复扣款"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Idempotency, Timeouts and Retries",
+      "focus": [
+        "Idempotency key lifecycle",
+        "Duplicate execution",
+        "Exponential backoff with jitter",
+        "Recovering from unknown outcomes"
+      ],
+      "scenarioConstraints": [
+        "Payment callbacks may repeat",
+        "Network timeouts",
+        "No double charging allowed"
+      ]
+    }
   },
   {
     "id": "message-delivery",
     "category": "Messaging",
     "title": "消息可靠投递与消费",
-    "focus": ["至少一次 vs 至多一次", "去重与顺序", "事务发件箱", "积压与重放"],
+    "focus": [
+      "至少一次 vs 至多一次",
+      "去重与顺序",
+      "事务发件箱",
+      "积压与重放"
+    ],
     "scenarioConstraints": [
       "10k 消息/秒",
       "消费端可能崩溃",
       "业务状态与消息必须可对账"
     ],
-    "level": "mid-to-senior"
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Reliable Message Delivery and Consumption",
+      "focus": [
+        "At-least-once vs at-most-once",
+        "Deduplication and ordering",
+        "Transactional outbox",
+        "Backlog and replay"
+      ],
+      "scenarioConstraints": [
+        "10k messages/second",
+        "Consumers may crash",
+        "Business state and messages must reconcile"
+      ]
+    }
   },
   {
     "id": "queue-selection",
@@ -59,54 +138,175 @@
       "5 个消费组",
       "下游峰值处理能力有限"
     ],
-    "level": "mid-to-senior"
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Queue Selection and Backpressure",
+      "focus": [
+        "Kafka vs RabbitMQ",
+        "Partition concurrency and ordering",
+        "Retry queues",
+        "Producer/consumer rate mismatch"
+      ],
+      "scenarioConstraints": [
+        "Events retained for 7 days",
+        "5 consumer groups",
+        "Downstream peak capacity is limited"
+      ]
+    }
   },
   {
     "id": "rate-limiting",
     "category": "Concurrency",
     "title": "限流、熔断与降级",
-    "focus": ["令牌桶 vs 漏桶", "分布式配额", "公平性", "失效时放行还是拒绝"],
-    "scenarioConstraints": ["多租户 API", "每租户额度", "依赖服务 p99 抖动"],
-    "level": "mid-to-senior"
+    "focus": [
+      "令牌桶 vs 漏桶",
+      "分布式配额",
+      "公平性",
+      "失效时放行还是拒绝"
+    ],
+    "scenarioConstraints": [
+      "多租户 API",
+      "每租户额度",
+      "依赖服务 p99 抖动"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Rate Limiting, Circuit Breaking and Degradation",
+      "focus": [
+        "Token bucket vs leaky bucket",
+        "Distributed quotas",
+        "Fairness",
+        "Fail open vs fail closed"
+      ],
+      "scenarioConstraints": [
+        "Multi-tenant API",
+        "Per-tenant quotas",
+        "Dependency p99 jitter"
+      ]
+    }
   },
   {
     "id": "database-concurrency",
     "category": "Consistency",
     "title": "事务隔离与并发正确性",
-    "focus": ["乐观锁 vs 悲观锁", "隔离级别", "写偏差", "库存超卖"],
-    "scenarioConstraints": ["库存不可为负", "高并发扣减", "热点 SKU"],
-    "level": "mid-to-senior"
+    "focus": [
+      "乐观锁 vs 悲观锁",
+      "隔离级别",
+      "写偏差",
+      "库存超卖"
+    ],
+    "scenarioConstraints": [
+      "库存不可为负",
+      "高并发扣减",
+      "热点 SKU"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Transaction Isolation and Concurrency Correctness",
+      "focus": [
+        "Optimistic vs pessimistic locking",
+        "Isolation levels",
+        "Write skew",
+        "Inventory overselling"
+      ],
+      "scenarioConstraints": [
+        "Inventory must never go negative",
+        "High-concurrency decrements",
+        "Hot SKUs"
+      ]
+    }
   },
   {
     "id": "replication-failover",
     "category": "Availability",
     "title": "副本、故障转移与一致性",
-    "focus": ["同步 vs 异步复制", "读己之写", "脑裂与 fencing", "RPO/RTO"],
-    "scenarioConstraints": ["跨可用区部署", "读多写少", "主节点可能网络分区"],
-    "level": "mid-to-senior"
+    "focus": [
+      "同步 vs 异步复制",
+      "读己之写",
+      "脑裂与 fencing",
+      "RPO/RTO"
+    ],
+    "scenarioConstraints": [
+      "跨可用区部署",
+      "读多写少",
+      "主节点可能网络分区"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Replication, Failover and Consistency",
+      "focus": [
+        "Synchronous vs asynchronous replication",
+        "Read-your-writes",
+        "Split brain and fencing",
+        "RPO/RTO"
+      ],
+      "scenarioConstraints": [
+        "Multi-AZ deployment",
+        "Read-heavy, write-light",
+        "Primary may be network-partitioned"
+      ]
+    }
   },
   {
     "id": "sharding-growth",
     "category": "Scalability",
     "title": "分片、扩容与热点迁移",
-    "focus": ["分片键选择", "一致性哈希 vs 范围", "在线迁移", "跨分片查询"],
+    "focus": [
+      "分片键选择",
+      "一致性哈希 vs 范围",
+      "在线迁移",
+      "跨分片查询"
+    ],
     "scenarioConstraints": [
       "数据增长 10 倍",
       "写热点不均匀",
       "迁移期间持续服务"
     ],
-    "level": "mid-to-senior"
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Sharding, Scaling Out and Hot-Spot Migration",
+      "focus": [
+        "Shard key selection",
+        "Consistent hashing vs range",
+        "Online migration",
+        "Cross-shard queries"
+      ],
+      "scenarioConstraints": [
+        "10x data growth",
+        "Uneven write hot spots",
+        "Service stays up during migration"
+      ]
+    }
   },
   {
     "id": "rpc-tail-latency",
     "category": "Performance",
     "title": "RPC 与尾延迟优化",
-    "focus": ["超时预算", "连接池与排队", "重试放大", "批处理 vs 并发扇出"],
+    "focus": [
+      "超时预算",
+      "连接池与排队",
+      "重试放大",
+      "批处理 vs 并发扇出"
+    ],
     "scenarioConstraints": [
       "聚合 12 个下游",
       "端到端 p99 < 200ms",
       "流量有突发"
     ],
-    "level": "mid-to-senior"
+    "level": "mid-to-senior",
+    "en": {
+      "title": "RPC and Tail Latency Optimization",
+      "focus": [
+        "Timeout budgets",
+        "Connection pools and queuing",
+        "Retry amplification",
+        "Batching vs concurrent fan-out"
+      ],
+      "scenarioConstraints": [
+        "Aggregates 12 downstream services",
+        "End-to-end p99 < 200ms",
+        "Bursty traffic"
+      ]
+    }
   }
 ]

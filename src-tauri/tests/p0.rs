@@ -375,6 +375,28 @@ fn every_problem_has_sourced_complexity_policy_and_maximum_size_test() {
         assert!(!p.complexity.space.is_empty(), "{}", p.id);
         assert!(!p.complexity.official_requirement.is_empty(), "{}", p.id);
         assert!(!p.complexity.notes.is_empty(), "{}", p.id);
+        let en =
+            p.en.as_ref()
+                .unwrap_or_else(|| panic!("{} needs an en block", p.id));
+        assert_eq!(en.tags.len(), p.tags.len(), "{}", p.id);
+        assert_eq!(en.constraints.len(), p.constraints.len(), "{}", p.id);
+        let english = [
+            &en.title,
+            &en.statement,
+            &en.acm_io_spec,
+            &en.complexity.time,
+            &en.complexity.space,
+            &en.complexity.official_requirement,
+            &en.complexity.notes,
+        ];
+        for text in english.into_iter().chain(&en.tags).chain(&en.constraints) {
+            assert!(!text.trim().is_empty(), "{}", p.id);
+            assert!(
+                !text.chars().any(|c| ('\u{4e00}'..='\u{9fff}').contains(&c)),
+                "{}: {text}",
+                p.id
+            );
+        }
         assert!(
             p.complexity
                 .source_url
