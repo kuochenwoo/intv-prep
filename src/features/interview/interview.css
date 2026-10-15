@@ -48,6 +48,27 @@
   color: #a2b6cf;
   border-bottom: 1px solid #2b374a;
 }
+.live-response {
+  padding: 12px 24px;
+  border-bottom: 1px solid #2b374a;
+  background: #141c28;
+  max-height: 38vh;
+  overflow-y: auto;
+  font-size: 13px;
+}
+.live-response > strong {
+  color: #75a9f6;
+}
+.live-response section span {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #a2b6cf;
+}
+.live-response section p {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+}
 .interview-main {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);

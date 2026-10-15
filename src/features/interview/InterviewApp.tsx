@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke, isTauri } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { readablePartialJson } from "./stream";
 import "./interview.css";
 type Config = { provider: string; model: string; timeoutSeconds: number };
 type Settings = { config: Config; keyStatus: string; credentialSource: string };
@@ -102,7 +104,8 @@ export default function InterviewApp() {
   const [busy, setBusy] = useState(false),
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
-    [connection, setConnection] = useState("API 尚未验证");
+    [connection, setConnection] = useState("API 尚未验证"),
+    [live, setLive] = useState("");
   const [online, setOnline] = useState(navigator.onLine),
     [confirm, setConfirm] = useState<"key" | "history" | "session" | null>(
       null,
@@ -120,6 +123,14 @@ export default function InterviewApp() {
     setConfig(result.settings.config);
     return result;
   }
+  useEffect(() => {
+    if (!isTauri()) return;
+    // The backend streams the model's partial JSON while a request runs.
+    const stop = listen<string>("llm-stream", (e) => setLive(e.payload));
+    return () => {
+      void stop.then((unlisten) => unlisten());
+    };
+  }, []);
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
     window.addEventListener("online", update);
@@ -171,6 +182,7 @@ export default function InterviewApp() {
   async function perform(task: () => Promise<void>, network = false) {
     setBusy(true);
     setError("");
+    setLive("");
     if (network)
       setConnection(`正在请求 ${session?.provider ?? config.provider}…`);
     try {
@@ -194,6 +206,7 @@ export default function InterviewApp() {
       }
     } finally {
       setBusy(false);
+      setLive("");
     }
   }
   const topic = data?.topics.find((t) => t.id === topicId),
@@ -316,6 +329,17 @@ export default function InterviewApp() {
         {online ? "系统报告网络可用" : "系统报告离线"} · {connection}
         {busy ? " · 处理中，请等待请求超时或完成" : ""}
       </div>
+      {busy && live && (
+        <div className="live-response" aria-live="polite">
+          <strong>AI 正在生成…</strong>
+          {readablePartialJson(live).map((s, i) => (
+            <section key={i}>
+              <span>{s.label}</span>
+              <p>{s.text}</p>
+            </section>
+          ))}
+        </div>
+      )}
       {error && (
         <div role="alert" className="error">
           {error}
