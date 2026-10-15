@@ -1,0 +1,57 @@
+{
+  "id": "lc-206",
+  "title": "反转链表",
+  "difficulty": "easy",
+  "tags": ["链表"],
+  "statement": "给定单向链表的头节点，原地反转链表并返回新的头节点。空链表返回 nullptr。",
+  "constraints": ["0 ≤ 节点数 ≤ 10000；节点值的绝对值 ≤ 1000000"],
+  "tests": [
+    {
+      "id": "t1",
+      "logicalInput": [1, 2, 3, 4, 5],
+      "expected": [5, 4, 3, 2, 1],
+      "isSample": true
+    },
+    {
+      "id": "t2",
+      "logicalInput": [],
+      "expected": [],
+      "isSample": true
+    },
+    {
+      "id": "t3",
+      "logicalInput": [1],
+      "expected": [1],
+      "isSample": false
+    },
+    {
+      "id": "t4",
+      "logicalInput": [2, 2, -1],
+      "expected": [-1, 2, 2],
+      "isSample": false
+    },
+    {
+      "id": "t5",
+      "logicalInput": [0, -2, 8],
+      "expected": [8, -2, 0],
+      "isSample": false
+    }
+  ],
+  "cpp": {
+    "functionTemplate": "// ListNode 已由系统定义：int val; ListNode* next;\nclass Solution {\npublic:\n    ListNode* reverseList(ListNode* head) {\n        return head; // 实现指针反转\n    }\n};",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // 按题目协议读取 stdin 并输出答案\n    return 0;\n}\n",
+    "functionHarnessId": "reverse_list",
+    "acmIoSpec": "stdin：第一行节点数 n；随后 n 个整数表示链表值。stdout：反转后的 n 个值，以空白分隔。空链表输出空行。",
+    "comparatorId": "integer_sequence"
+  },
+  "examples": [
+    {
+      "input": "[1, 2, 3, 4, 5]",
+      "output": "[5, 4, 3, 2, 1]"
+    },
+    {
+      "input": "[]",
+      "output": "[]"
+    }
+  ]
+}
