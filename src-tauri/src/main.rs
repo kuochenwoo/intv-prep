@@ -2,15 +2,27 @@
 use interview::LlmProvider;
 use std::{
     path::PathBuf,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, MutexGuard},
 };
 use swe_interview_prep::{code_runner, content, credentials, db, interview, interview_store, llm};
 use tauri::{Manager, State};
 #[derive(Clone)]
 struct AppState {
     path: PathBuf,
+    // One migrated connection shared by short commands. Long-running AI tasks open
+    // their own cheap connection so a slow API call never blocks drafts or settings.
+    db: Arc<Mutex<rusqlite::Connection>>,
     judge: Arc<Mutex<()>>,
     interview: Arc<Mutex<()>>,
+}
+impl AppState {
+    fn db(&self) -> MutexGuard<'_, rusqlite::Connection> {
+        // A panic mid-command does not corrupt SQLite; keep using the connection.
+        self.db.lock().unwrap_or_else(|e| e.into_inner())
+    }
+    fn own_connection(&self) -> Result<rusqlite::Connection, String> {
+        db::connect(&self.path)
+    }
 }
 #[tauri::command]
 fn list_problems() -> &'static [content::Problem] {
@@ -39,7 +51,7 @@ fn open_problem_source(problem_id: String) -> Result<(), String> {
 }
 #[tauri::command]
 fn load_progress(state: State<AppState>) -> Result<Vec<db::Progress>, String> {
-    db::load(&db::open(&state.path)?)
+    db::load(&state.db())
 }
 #[tauri::command]
 fn save_draft(
@@ -48,16 +60,16 @@ fn save_draft(
     mode: String,
     code: String,
 ) -> Result<(), String> {
-    db::save(&db::open(&state.path)?, &problem_id, &mode, &code)
+    db::save(&state.db(), &problem_id, &mode, &code)
 }
 #[tauri::command]
 fn get_compiler(state: State<AppState>) -> Result<String, String> {
-    db::compiler(&db::open(&state.path)?)
+    db::compiler(&state.db())
 }
 #[tauri::command(async)]
 fn set_compiler(state: State<AppState>, path: String) -> Result<String, String> {
     let detected = code_runner::detect_compiler(&path)?;
-    db::set_compiler(&db::open(&state.path)?, &detected)?;
+    db::set_compiler(&state.db(), &detected)?;
     Ok(detected)
 }
 #[tauri::command(async)]
@@ -69,18 +81,22 @@ fn run_judge(
     samples: bool,
 ) -> Result<code_runner::JudgeResult, String> {
     let _guard = state.judge.try_lock().map_err(|_| "已有判题任务正在运行")?;
-    let c = db::open(&state.path)?;
-    db::save(&c, &problem_id, &mode, &code)?;
+    // Hold the shared connection only around the writes, not while compiling and running.
+    let compiler = {
+        let c = state.db();
+        db::save(&c, &problem_id, &mode, &code)?;
+        db::compiler(&c)?
+    };
     let result = code_runner::judge(
-        content::find(&problem_id)?,
+        &content::problem(&problem_id)?,
         &mode,
         &code,
         samples,
-        &db::compiler(&c)?,
+        &compiler,
     )?;
     if !samples {
         db::record(
-            &c,
+            &state.db(),
             &problem_id,
             &mode,
             &serde_json::to_string(&result).map_err(|e| e.to_string())?,
@@ -111,7 +127,7 @@ fn provider(
 }
 #[tauri::command(async)]
 fn interview_overview(state: State<AppState>) -> Result<serde_json::Value, String> {
-    let c = db::open(&state.path)?;
+    let c = state.db();
     Ok(
         serde_json::json!({"topics":interview::topics(),"questions":interview_store::questions(&c)?,"sessions":interview_store::sessions(&c)?,"settings":credentials::view(&c)?}),
     )
@@ -130,7 +146,7 @@ fn save_llm_settings(
     if let Some(key) = api_key.filter(|s| !s.trim().is_empty()) {
         credentials::save_key(&config.provider, &key)?;
     }
-    let c = db::open(&state.path)?;
+    let c = state.db();
     credentials::save_settings(&c, &config)?;
     credentials::view(&c)
 }
@@ -153,7 +169,7 @@ async fn generate_interview_question(
             .interview
             .try_lock()
             .map_err(|_| "已有面试请求正在运行")?;
-        let c = db::open(&state.path)?;
+        let c = state.own_connection()?;
         let config = credentials::settings(&c)?;
         let q = provider(&c, None)?.generate_question(&interview::topic(&topic_id)?)?;
         interview_store::cache_question(&c, &topic_id, &config, &q)
@@ -169,7 +185,7 @@ fn start_interview(
         .interview
         .try_lock()
         .map_err(|_| "请等待当前面试请求完成")?;
-    let c = db::open(&state.path)?;
+    let c = state.db();
     interview_store::start(&c, &question_id, &credentials::settings(&c)?)
 }
 #[tauri::command]
@@ -177,7 +193,7 @@ fn get_interview_session(
     state: State<AppState>,
     session_id: String,
 ) -> Result<interview::SessionView, String> {
-    interview_store::session(&db::open(&state.path)?, &session_id)
+    interview_store::session(&state.db(), &session_id)
 }
 #[tauri::command]
 fn save_interview_draft(
@@ -185,7 +201,7 @@ fn save_interview_draft(
     session_id: String,
     draft: String,
 ) -> Result<(), String> {
-    interview_store::save_draft(&db::open(&state.path)?, &session_id, &draft)
+    interview_store::save_draft(&state.db(), &session_id, &draft)
 }
 #[tauri::command(async)]
 async fn submit_interview_answer(
@@ -199,7 +215,7 @@ async fn submit_interview_answer(
             .interview
             .try_lock()
             .map_err(|_| "已有面试请求正在运行")?;
-        let c = db::open(&state.path)?;
+        let c = state.own_connection()?;
         let api = provider(&c, Some(&session_id))?;
         interview_store::begin_answer(&c, &session_id, &answer)?;
         interview_store::retry_pending(&c, &session_id, &api)
@@ -217,7 +233,7 @@ async fn finish_interview(
             .interview
             .try_lock()
             .map_err(|_| "已有面试请求正在运行")?;
-        let c = db::open(&state.path)?;
+        let c = state.own_connection()?;
         let api = provider(&c, Some(&session_id))?;
         interview_store::begin_feedback(&c, &session_id)?;
         interview_store::retry_pending(&c, &session_id, &api)
@@ -235,7 +251,7 @@ async fn retry_interview(
             .interview
             .try_lock()
             .map_err(|_| "已有面试请求正在运行")?;
-        let c = db::open(&state.path)?;
+        let c = state.own_connection()?;
         interview_store::retry_pending(&c, &session_id, &provider(&c, Some(&session_id))?)
     })
     .await
@@ -252,7 +268,7 @@ async fn submit_interview_reference(
             .interview
             .try_lock()
             .map_err(|_| "已有面试请求正在运行")?;
-        let c = db::open(&state.path)?;
+        let c = state.own_connection()?;
         interview_store::submit_reference(
             &c,
             &session_id,
@@ -268,7 +284,7 @@ fn delete_interview_session(state: State<AppState>, session_id: String) -> Resul
         .interview
         .try_lock()
         .map_err(|_| "请等待当前面试请求完成")?;
-    interview_store::delete_session(&db::open(&state.path)?, &session_id)
+    interview_store::delete_session(&state.db(), &session_id)
 }
 #[tauri::command]
 fn clear_interview_history(state: State<AppState>) -> Result<(), String> {
@@ -276,15 +292,16 @@ fn clear_interview_history(state: State<AppState>) -> Result<(), String> {
         .interview
         .try_lock()
         .map_err(|_| "请等待当前面试请求完成")?;
-    interview_store::clear_history(&db::open(&state.path)?)
+    interview_store::clear_history(&state.db())
 }
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let path = app.path().app_data_dir()?.join("prep.sqlite3");
-            db::open(&path).map_err(std::io::Error::other)?;
+            let connection = db::open(&path).map_err(std::io::Error::other)?;
             app.manage(AppState {
                 path,
+                db: Arc::new(Mutex::new(connection)),
                 judge: Arc::new(Mutex::new(())),
                 interview: Arc::new(Mutex::new(())),
             });

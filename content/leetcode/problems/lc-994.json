@@ -1,0 +1,71 @@
+{
+  "id": "lc-994",
+  "title": "腐烂的橘子",
+  "difficulty": "medium",
+  "tags": [
+    "广度优先搜索",
+    "数组",
+    "矩阵"
+  ],
+  "statement": "在 m × n 网格 grid 中，0 表示空格，1 表示新鲜橘子，2 表示腐烂橘子。每过一分钟，与腐烂橘子上下左右相邻的新鲜橘子都会腐烂。求所有新鲜橘子都腐烂所需的最少分钟数；若不可能全部腐烂，返回 -1（没有新鲜橘子时返回 0）。",
+  "constraints": [
+    "m == grid.length，n == grid[i].length",
+    "1 ≤ m, n ≤ 10",
+    "grid[i][j] 为 0、1 或 2"
+  ],
+  "complexity": {
+    "time": "O(m·n)（本地训练目标）",
+    "space": "O(m·n)（BFS 队列；输入网格不计入）",
+    "officialRequirement": "官方未强制复杂度要求。",
+    "notes": "m、n 为网格行列数。把所有腐烂橘子同时作为起点做多源 BFS，层数即分钟数；BFS 结束后仍有新鲜橘子则返回 -1。",
+    "sourceUrl": "https://leetcode.com/problems/rotting-oranges/"
+  },
+  "cpp": {
+    "functionTemplate": "class Solution {\npublic:\n    int orangesRotting(vector<vector<int>>& grid) {\n        return -1; // Minutes until no fresh orange remains, or -1.\n    }\n};",
+    "acmIoSpec": "stdin：第一行行数 m；随后 m 行，每行先写该行长度 n，再写 n 个整数（0/1/2）。stdout：一个整数，所需最少分钟数或 -1。",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n"
+  },
+  "io": {
+    "method": "orangesRotting",
+    "params": [
+      {
+        "name": "grid",
+        "type": "int[][]"
+      }
+    ],
+    "returns": "int"
+  },
+  "limits": {
+    "timeLimitMs": 1000,
+    "memoryLimitMb": 128,
+    "outputLimitKb": 64
+  },
+  "examples": [
+    {
+      "input": "[[2, 1, 1], [1, 1, 0], [0, 1, 1]]",
+      "output": "4"
+    },
+    {
+      "input": "[[2, 1, 1], [0, 1, 1], [1, 0, 1]]",
+      "output": "-1"
+    },
+    {
+      "input": "[[0, 2]]",
+      "output": "0"
+    }
+  ],
+  "tests": [
+    {"id": "t1", "logicalInput": [[2, 1, 1], [1, 1, 0], [0, 1, 1]], "expected": 4, "isSample": true},
+    {"id": "t2", "logicalInput": [[2, 1, 1], [0, 1, 1], [1, 0, 1]], "expected": -1, "isSample": true},
+    {"id": "t3", "logicalInput": [[0, 2]], "expected": 0, "isSample": true},
+    {"id": "single-empty", "logicalInput": [[0]], "expected": 0, "isSample": false},
+    {"id": "single-fresh", "logicalInput": [[1]], "expected": -1, "isSample": false},
+    {"id": "single-rotten", "logicalInput": [[2]], "expected": 0, "isSample": false},
+    {"id": "fresh-no-rotten", "logicalInput": [[1, 1], [1, 1]], "expected": -1, "isSample": false},
+    {"id": "two-sources", "logicalInput": [[2, 1, 1, 1, 1, 1, 2]], "expected": 3, "isSample": false},
+    {"id": "random-6x7", "logicalInput": [[2, 1, 1, 2, 2, 1, 1], [0, 1, 2, 1, 0, 2, 1], [1, 1, 0, 0, 1, 1, 1], [1, 0, 1, 1, 2, 1, 1], [0, 1, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 1, 1]], "expected": 5, "isSample": false},
+    {"id": "random-unreachable", "logicalInput": [[1, 0, 2, 0, 2, 0, 0, 1, 1, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 0], [0, 1, 1, 0, 1, 1, 0, 1, 1, 0], [1, 0, 1, 0, 1, 0, 1, 1, 1, 1], [0, 1, 0, 2, 0, 0, 0, 0, 1, 0], [0, 0, 1, 1, 0, 2, 1, 1, 1, 1], [0, 0, 0, 1, 1, 0, 0, 0, 0, 1], [2, 1, 1, 0, 0, 1, 0, 0, 1, 1], [1, 1, 1, 2, 1, 1, 1, 2, 2, 0], [0, 0, 1, 0, 1, 2, 1, 0, 1, 1]], "expected": -1, "isSample": false},
+    {"id": "max-size-10x10", "logicalInput": [[2, 1, 1, 1, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]], "expected": 54, "isSample": false},
+    {"id": "max-size-10x10-dense", "logicalInput": [[2, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], "expected": 18, "isSample": false}
+  ]
+}

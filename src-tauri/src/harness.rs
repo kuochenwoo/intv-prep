@@ -21,6 +21,14 @@ pub struct Io {
     pub stdin: Vec<String>,
     #[serde(default = "default_checker")]
     pub checker: String,
+    /// Custom Function-mode main() file in content/leetcode/harnesses/, for
+    /// problems whose call shape the generator cannot express (design classes,
+    /// cycles, shared nodes). `params` still describe stdin; `returns` the output.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub harness: Option<String>,
+    /// C++ declarations inserted before the user's code in Function mode.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prelude: Option<String>,
 }
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -35,7 +43,15 @@ fn default_output() -> String {
 fn default_checker() -> String {
     "exact".into()
 }
-pub const CHECKERS: &[&str] = &["exact", "unordered", "unordered_nested", "valid_pair"];
+pub const CHECKERS: &[&str] = &[
+    "exact",
+    "unordered",
+    "unordered_nested",
+    "valid_pair",
+    "longest_palindrome",
+    "balanced_bst",
+    "tokens",
+];
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Ty {
@@ -172,6 +188,29 @@ impl Io {
         {
             return Err("valid_pair needs an int[] result and `nums`/`target` params".into());
         }
+        let needs = |ty: Ty, param: &str, param_ty: Ty| {
+            self.output_type() == ty
+                && self
+                    .index(param)
+                    .is_some_and(|i| Ty::parse(&self.params[i].ty).ok() == Some(param_ty))
+        };
+        if self.checker == "longest_palindrome" && !needs(Ty::Str, "s", Ty::Str) {
+            return Err("longest_palindrome needs a string result and a string `s`".into());
+        }
+        if self.checker == "balanced_bst" && !needs(Ty::Tree, "nums", Ty::IntArr) {
+            return Err("balanced_bst needs a TreeNode result and an int[] `nums`".into());
+        }
+        if self.checker == "tokens" && self.output_type() != Ty::StrArr {
+            return Err("tokens needs a string[] result".into());
+        }
+        if self.harness.as_deref().is_some_and(|h| {
+            !h.ends_with(".cpp")
+                || !h[..h.len() - 4]
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || "-_".contains(c))
+        }) {
+            return Err("harness must be a plain .cpp file name".into());
+        }
         if !self.stdin.is_empty() {
             let types = self.param_types();
             let (mut values, mut lengths) = (vec![0; types.len()], vec![false; types.len()]);
@@ -259,6 +298,22 @@ impl Io {
         write_value(self.output_type(), expected, &mut sink)
     }
     /// Generate the C++ main() that reads stdin, calls the method, and prints the result.
+    /// Shared reader/writer helpers plus List/Tree support, ending inside the
+    /// open `judge_harness` namespace.
+    fn helpers(&self) -> String {
+        let mut helpers = String::from(HELPERS);
+        if self.uses(Ty::List) {
+            helpers += LIST_HELPERS;
+        }
+        if self.uses(Ty::Tree) {
+            helpers += TREE_HELPERS;
+        }
+        helpers
+    }
+    /// Helpers followed by a hand-written main() (see `harness`).
+    pub fn custom_main(&self, main: &str) -> String {
+        format!("{}}}\n{main}", self.helpers())
+    }
     pub fn cpp_main(&self) -> String {
         let types = self.param_types();
         let mut body = String::new();
@@ -312,13 +367,7 @@ impl Io {
                 var(self.index(name).unwrap())
             ),
         };
-        let mut helpers = String::from(HELPERS);
-        if self.uses(Ty::List) {
-            helpers += LIST_HELPERS;
-        }
-        if self.uses(Ty::Tree) {
-            helpers += TREE_HELPERS;
-        }
+        let helpers = self.helpers();
         format!("{helpers}}}\nint main() {{\n    using namespace judge_harness;\n    cin >> boolalpha;\n{body}}}\n")
     }
     pub fn uses(&self, ty: Ty) -> bool {
@@ -353,6 +402,43 @@ impl Io {
                     && matches!((at(&pair[0]), at(&pair[1])), (Some(a), Some(b)) if a + b == target)
             }
             "unordered" => same(&sorted(actual), &sorted(expected.clone())),
+            "longest_palindrome" => {
+                let (Some(s), Some(got), Some(want)) = (
+                    self.arg(input, self.index("s").unwrap())
+                        .ok()
+                        .and_then(Value::as_str),
+                    actual.as_str(),
+                    expected.as_str(),
+                ) else {
+                    return false;
+                };
+                got.chars().count() == want.chars().count()
+                    && s.contains(got)
+                    && got.chars().eq(got.chars().rev())
+            }
+            "balanced_bst" => {
+                let Some(nums) = self
+                    .arg(input, self.index("nums").unwrap())
+                    .ok()
+                    .and_then(Value::as_array)
+                else {
+                    return false;
+                };
+                balanced_bst(&actual, nums)
+            }
+            "tokens" => match (actual.as_array(), expected.as_array()) {
+                (Some(a), Some(b)) => {
+                    a.len() == b.len()
+                        && a.iter().zip(b).all(|(x, y)| {
+                            let (x, y) = (x.as_str().unwrap_or(""), y.as_str().unwrap_or(""));
+                            match (x.parse::<f64>(), y.parse::<f64>()) {
+                                (Ok(p), Ok(q)) => (p - q).abs() <= 1e-5 * 1f64.max(q.abs()),
+                                _ => x == y,
+                            }
+                        })
+                }
+                _ => false,
+            },
             "unordered_nested" => same(
                 &sorted(sort_inner(actual)),
                 &sorted(sort_inner(expected.clone())),
@@ -587,6 +673,54 @@ impl<'a, I: Iterator<Item = &'a str>> Lines<I> {
     fn rest_blank(&mut self) -> bool {
         self.0.all(|l| l.trim().is_empty())
     }
+}
+/// Level-order tree must be a height-balanced BST whose in-order walk is `nums`.
+fn balanced_bst(tree: &Value, nums: &[Value]) -> bool {
+    let Some(tokens) = tree.as_array() else {
+        return false;
+    };
+    // Rebuild child links from LeetCode level order.
+    let mut left = vec![None; tokens.len()];
+    let mut right = vec![None; tokens.len()];
+    let mut queue = vec![];
+    if tokens.first().is_some_and(|v| !v.is_null()) {
+        queue.push(0usize);
+    } else if !tokens.is_empty() {
+        return false;
+    }
+    let (mut head, mut next) = (0, 1);
+    while head < queue.len() {
+        let node = queue[head];
+        head += 1;
+        for side in [&mut left, &mut right] {
+            if next < tokens.len() {
+                if !tokens[next].is_null() {
+                    side[node] = Some(next);
+                    queue.push(next);
+                }
+                next += 1;
+            }
+        }
+    }
+    if next < tokens.len() {
+        return false;
+    }
+    fn walk(
+        i: Option<usize>,
+        t: &[Value],
+        l: &[Option<usize>],
+        r: &[Option<usize>],
+        out: &mut Vec<Value>,
+    ) -> Option<i32> {
+        let Some(i) = i else { return Some(0) };
+        let a = walk(l[i], t, l, r, out)?;
+        out.push(t[i].clone());
+        let b = walk(r[i], t, l, r, out)?;
+        ((a - b).abs() <= 1).then_some(1 + a.max(b))
+    }
+    let mut order = vec![];
+    let root = (!queue.is_empty()).then_some(0);
+    walk(root, tokens, &left, &right, &mut order).is_some() && order == nums
 }
 fn same(a: &Value, b: &Value) -> bool {
     match (a, b) {

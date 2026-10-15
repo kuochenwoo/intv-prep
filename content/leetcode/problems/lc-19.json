@@ -1,0 +1,69 @@
+{
+  "id": "lc-19",
+  "title": "删除链表的倒数第 N 个结点",
+  "difficulty": "medium",
+  "tags": [
+    "链表",
+    "双指针"
+  ],
+  "statement": "给定链表的头节点 head 和整数 n，删除链表的倒数第 n 个节点（n = 1 表示最后一个节点），返回删除后链表的头节点。\n\n节点定义：struct ListNode { int val; ListNode* next; };",
+  "constraints": [
+    "1 ≤ 节点数 sz ≤ 30；0 ≤ 节点值 ≤ 100；1 ≤ n ≤ sz"
+  ],
+  "complexity": {
+    "time": "O(sz)（本地训练目标）",
+    "space": "O(1) 额外空间",
+    "officialRequirement": "官方 follow-up 要求只遍历一趟完成（未额外要求空间）。",
+    "notes": "sz 为节点数，输入链表不计入额外空间。哑节点 + 快慢指针：快指针先走 n 步，再同步前进至表尾，慢指针的下一个节点即待删节点。先求长度再删除的两趟做法同样能通过本地测试。最大测试为官方上限 sz = 30。",
+    "sourceUrl": "https://leetcode.com/problems/remove-nth-node-from-end-of-list/"
+  },
+  "cpp": {
+    "functionTemplate": "// ListNode is provided: int val; ListNode* next;\nclass Solution {\npublic:\n    ListNode* removeNthFromEnd(ListNode* head, int n) {\n        return head; // Head after removing the n-th node from the end.\n    }\n};",
+    "acmIoSpec": "stdin：第一行节点数 sz；第二行 sz 个整数表示链表值；第三行 n。stdout：一行，删除后链表的值，以空格分隔；结果为空时输出空行。",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n"
+  },
+  "io": {
+    "method": "removeNthFromEnd",
+    "params": [
+      {
+        "name": "head",
+        "type": "ListNode"
+      },
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "ListNode"
+  },
+  "limits": {
+    "timeLimitMs": 1000,
+    "memoryLimitMb": 128,
+    "outputLimitKb": 64
+  },
+  "examples": [
+    {
+      "input": "{\"head\": [1, 2, 3, 4, 5], \"n\": 2}",
+      "output": "[1, 2, 3, 5]"
+    },
+    {
+      "input": "{\"head\": [1], \"n\": 1}",
+      "output": "[]"
+    },
+    {
+      "input": "{\"head\": [1, 2], \"n\": 1}",
+      "output": "[1]"
+    }
+  ],
+  "tests": [
+    {"id": "t1", "logicalInput": {"head": [1, 2, 3, 4, 5], "n": 2}, "expected": [1, 2, 3, 5], "isSample": true},
+    {"id": "t2", "logicalInput": {"head": [1], "n": 1}, "expected": [], "isSample": true},
+    {"id": "t3", "logicalInput": {"head": [1, 2], "n": 1}, "expected": [1], "isSample": true},
+    {"id": "remove-head", "logicalInput": {"head": [1, 2], "n": 2}, "expected": [2], "isSample": false},
+    {"id": "remove-head-long", "logicalInput": {"head": [4, 3, 2, 1, 0], "n": 5}, "expected": [3, 2, 1, 0], "isSample": false},
+    {"id": "equal-values", "logicalInput": {"head": [7, 7, 7, 7], "n": 3}, "expected": [7, 7, 7], "isSample": false},
+    {"id": "random", "logicalInput": {"head": [86, 5, 100, 66, 15, 65, 25, 50, 44, 67, 37, 74], "n": 7}, "expected": [86, 5, 100, 66, 15, 25, 50, 44, 67, 37, 74], "isSample": false},
+    {"id": "max-size-30", "logicalInput": {"head": [18, 76, 33, 13, 33, 52, 41, 34, 13, 98, 41, 39, 2, 72, 79, 25, 9, 25, 14, 69, 58, 49, 93, 9, 12, 53, 2, 12, 74, 93], "n": 30}, "expected": [76, 33, 13, 33, 52, 41, 34, 13, 98, 41, 39, 2, 72, 79, 25, 9, 25, 14, 69, 58, 49, 93, 9, 12, 53, 2, 12, 74, 93], "isSample": false},
+    {"id": "max-size-30-last", "logicalInput": {"head": [54, 96, 50, 56, 84, 38, 73, 64, 20, 81, 52, 29, 99, 69, 73, 93, 13, 26, 49, 24, 17, 17, 80, 63, 13, 70, 90, 58, 0, 58], "n": 1}, "expected": [54, 96, 50, 56, 84, 38, 73, 64, 20, 81, 52, 29, 99, 69, 73, 93, 13, 26, 49, 24, 17, 17, 80, 63, 13, 70, 90, 58, 0], "isSample": false}
+  ]
+}

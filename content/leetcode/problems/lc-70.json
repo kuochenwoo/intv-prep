@@ -1,0 +1,60 @@
+{
+  "id": "lc-70",
+  "title": "爬楼梯",
+  "difficulty": "easy",
+  "tags": [
+    "记忆化搜索",
+    "数学",
+    "动态规划"
+  ],
+  "statement": "楼梯共有 n 级台阶，每一步可以向上走 1 级或 2 级。从地面出发恰好走到第 n 级，一共有多少种不同的走法？",
+  "constraints": [
+    "1 ≤ n ≤ 45"
+  ],
+  "complexity": {
+    "time": "O(n)（本地训练目标）",
+    "space": "O(1) 额外空间（滚动变量）",
+    "officialRequirement": "官方未强制复杂度要求。",
+    "notes": "n 为台阶数。f(n) = f(n-1) + f(n-2)，即斐波那契数列；f(45) = 1836311903 仍在 32 位有符号整数范围内。矩阵快速幂可做到 O(log n)，但 n ≤ 45 时没有必要。",
+    "sourceUrl": "https://leetcode.com/problems/climbing-stairs/"
+  },
+  "cpp": {
+    "functionTemplate": "class Solution {\npublic:\n    int climbStairs(int n) {\n        return 0; // Number of distinct ways to reach step n.\n    }\n};",
+    "acmIoSpec": "stdin：一行整数 n。stdout：一个整数，走法总数。",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n"
+  },
+  "io": {
+    "method": "climbStairs",
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "limits": {
+    "timeLimitMs": 1000,
+    "memoryLimitMb": 128,
+    "outputLimitKb": 64
+  },
+  "examples": [
+    {
+      "input": "2",
+      "output": "2"
+    },
+    {
+      "input": "3",
+      "output": "3"
+    }
+  ],
+  "tests": [
+    {"id": "t1", "logicalInput": 2, "expected": 2, "isSample": true},
+    {"id": "t2", "logicalInput": 3, "expected": 3, "isSample": true},
+    {"id": "min-1", "logicalInput": 1, "expected": 1, "isSample": false},
+    {"id": "n-10", "logicalInput": 10, "expected": 89, "isSample": false},
+    {"id": "n-30", "logicalInput": 30, "expected": 1346269, "isSample": false},
+    {"id": "n-44", "logicalInput": 44, "expected": 1134903170, "isSample": false},
+    {"id": "max-size-45", "logicalInput": 45, "expected": 1836311903, "isSample": false}
+  ]
+}

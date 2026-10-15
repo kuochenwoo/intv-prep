@@ -1,0 +1,63 @@
+{
+  "id": "lc-17",
+  "title": "电话号码的字母组合",
+  "difficulty": "medium",
+  "tags": [
+    "哈希表",
+    "字符串",
+    "回溯"
+  ],
+  "statement": "给定一个只包含数字 2-9 的字符串 digits，按电话按键的映射（2: abc，3: def，4: ghi，5: jkl，6: mno，7: pqrs，8: tuv，9: wxyz）返回它能表示的所有字母组合，顺序任意。数字 1 不对应任何字母。若 digits 为空，返回空列表。",
+  "constraints": [
+    "1 ≤ digits.length ≤ 4（官方现行约束；旧版题面允许长度为 0）",
+    "digits[i] 是 ['2', '9'] 范围内的数字",
+    "本地额外包含 digits 为空串的测试，应返回空列表"
+  ],
+  "complexity": {
+    "time": "O(n · 4^n)（本地训练目标）",
+    "space": "O(n) 额外空间（回溯递归栈与当前路径，计入递归栈；输出不计入）",
+    "officialRequirement": "官方未强制复杂度要求。",
+    "notes": "n 为 digits 长度；每个数字最多对应 4 个字母，组合数至多 4^n，每个长度 n。判题忽略组合之间的顺序。",
+    "sourceUrl": "https://leetcode.com/problems/letter-combinations-of-a-phone-number/"
+  },
+  "cpp": {
+    "functionTemplate": "class Solution {\npublic:\n    vector<string> letterCombinations(string digits) {\n        return {}; // All letter combinations, in any order.\n    }\n};",
+    "acmIoSpec": "stdin：一行字符串 digits（可能为空行）。stdout：第一行组合个数 k；随后 k 行，每行一个字母组合（顺序任意）。",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n"
+  },
+  "io": {
+    "method": "letterCombinations",
+    "params": [
+      {
+        "name": "digits",
+        "type": "string"
+      }
+    ],
+    "returns": "string[]",
+    "checker": "unordered"
+  },
+  "limits": {
+    "timeLimitMs": 1000,
+    "memoryLimitMb": 128,
+    "outputLimitKb": 64
+  },
+  "examples": [
+    {
+      "input": "\"23\"",
+      "output": "[\"ad\", \"ae\", \"af\", \"bd\", \"be\", \"bf\", \"cd\", \"ce\", \"cf\"]"
+    },
+    {
+      "input": "\"2\"",
+      "output": "[\"a\", \"b\", \"c\"]"
+    }
+  ],
+  "tests": [
+    {"id": "t1", "logicalInput": "23", "expected": ["ad", "ae", "af", "bd", "be", "bf", "cd", "ce", "cf"], "isSample": true},
+    {"id": "t2", "logicalInput": "2", "expected": ["a", "b", "c"], "isSample": true},
+    {"id": "empty", "logicalInput": "", "expected": [], "isSample": false},
+    {"id": "single-seven", "logicalInput": "7", "expected": ["p", "q", "r", "s"], "isSample": false},
+    {"id": "repeated", "logicalInput": "222", "expected": ["aaa", "aab", "aac", "aba", "abb", "abc", "aca", "acb", "acc", "baa", "bab", "bac", "bba", "bbb", "bbc", "bca", "bcb", "bcc", "caa", "cab", "cac", "cba", "cbb", "cbc", "cca", "ccb", "ccc"], "isSample": false},
+    {"id": "random-3", "logicalInput": "867", "expected": ["tmp", "tmq", "tmr", "tms", "tnp", "tnq", "tnr", "tns", "top", "toq", "tor", "tos", "ump", "umq", "umr", "ums", "unp", "unq", "unr", "uns", "uop", "uoq", "uor", "uos", "vmp", "vmq", "vmr", "vms", "vnp", "vnq", "vnr", "vns", "vop", "voq", "vor", "vos"], "isSample": false},
+    {"id": "max-size-4", "logicalInput": "7979", "expected": ["pwpw", "pwpx", "pwpy", "pwpz", "pwqw", "pwqx", "pwqy", "pwqz", "pwrw", "pwrx", "pwry", "pwrz", "pwsw", "pwsx", "pwsy", "pwsz", "pxpw", "pxpx", "pxpy", "pxpz", "pxqw", "pxqx", "pxqy", "pxqz", "pxrw", "pxrx", "pxry", "pxrz", "pxsw", "pxsx", "pxsy", "pxsz", "pypw", "pypx", "pypy", "pypz", "pyqw", "pyqx", "pyqy", "pyqz", "pyrw", "pyrx", "pyry", "pyrz", "pysw", "pysx", "pysy", "pysz", "pzpw", "pzpx", "pzpy", "pzpz", "pzqw", "pzqx", "pzqy", "pzqz", "pzrw", "pzrx", "pzry", "pzrz", "pzsw", "pzsx", "pzsy", "pzsz", "qwpw", "qwpx", "qwpy", "qwpz", "qwqw", "qwqx", "qwqy", "qwqz", "qwrw", "qwrx", "qwry", "qwrz", "qwsw", "qwsx", "qwsy", "qwsz", "qxpw", "qxpx", "qxpy", "qxpz", "qxqw", "qxqx", "qxqy", "qxqz", "qxrw", "qxrx", "qxry", "qxrz", "qxsw", "qxsx", "qxsy", "qxsz", "qypw", "qypx", "qypy", "qypz", "qyqw", "qyqx", "qyqy", "qyqz", "qyrw", "qyrx", "qyry", "qyrz", "qysw", "qysx", "qysy", "qysz", "qzpw", "qzpx", "qzpy", "qzpz", "qzqw", "qzqx", "qzqy", "qzqz", "qzrw", "qzrx", "qzry", "qzrz", "qzsw", "qzsx", "qzsy", "qzsz", "rwpw", "rwpx", "rwpy", "rwpz", "rwqw", "rwqx", "rwqy", "rwqz", "rwrw", "rwrx", "rwry", "rwrz", "rwsw", "rwsx", "rwsy", "rwsz", "rxpw", "rxpx", "rxpy", "rxpz", "rxqw", "rxqx", "rxqy", "rxqz", "rxrw", "rxrx", "rxry", "rxrz", "rxsw", "rxsx", "rxsy", "rxsz", "rypw", "rypx", "rypy", "rypz", "ryqw", "ryqx", "ryqy", "ryqz", "ryrw", "ryrx", "ryry", "ryrz", "rysw", "rysx", "rysy", "rysz", "rzpw", "rzpx", "rzpy", "rzpz", "rzqw", "rzqx", "rzqy", "rzqz", "rzrw", "rzrx", "rzry", "rzrz", "rzsw", "rzsx", "rzsy", "rzsz", "swpw", "swpx", "swpy", "swpz", "swqw", "swqx", "swqy", "swqz", "swrw", "swrx", "swry", "swrz", "swsw", "swsx", "swsy", "swsz", "sxpw", "sxpx", "sxpy", "sxpz", "sxqw", "sxqx", "sxqy", "sxqz", "sxrw", "sxrx", "sxry", "sxrz", "sxsw", "sxsx", "sxsy", "sxsz", "sypw", "sypx", "sypy", "sypz", "syqw", "syqx", "syqy", "syqz", "syrw", "syrx", "syry", "syrz", "sysw", "sysx", "sysy", "sysz", "szpw", "szpx", "szpy", "szpz", "szqw", "szqx", "szqy", "szqz", "szrw", "szrx", "szry", "szrz", "szsw", "szsx", "szsy", "szsz"], "isSample": false}
+  ]
+}

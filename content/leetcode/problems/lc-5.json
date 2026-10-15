@@ -1,0 +1,65 @@
+{
+  "id": "lc-5",
+  "title": "最长回文子串",
+  "difficulty": "medium",
+  "tags": [
+    "双指针",
+    "字符串",
+    "动态规划"
+  ],
+  "statement": "给定字符串 s，返回 s 中最长的回文连续子串。若有多个长度相同的最长回文子串，返回任意一个均可。",
+  "constraints": [
+    "1 ≤ s.length ≤ 1000；s 仅由数字和英文字母组成"
+  ],
+  "complexity": {
+    "time": "O(n^2)（本地训练目标，中心扩展）；Manacher 算法可达 O(n)",
+    "space": "中心扩展 O(1) 额外空间（不含返回值）；区间 DP 为 O(n^2)",
+    "officialRequirement": "官方未强制复杂度要求。",
+    "notes": "n 为字符串长度。以每个字符和每个字符间隙为中心向两侧扩展。答案可能不唯一，判题只检查返回串是 s 的子串、是回文且长度最长。",
+    "sourceUrl": "https://leetcode.com/problems/longest-palindromic-substring/"
+  },
+  "cpp": {
+    "functionTemplate": "class Solution {\npublic:\n    string longestPalindrome(string s) {\n        return \"\"; // Any longest palindromic substring of s.\n    }\n};",
+    "acmIoSpec": "stdin：一行字符串 s。stdout：一行，任意一个最长回文子串。",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n"
+  },
+  "io": {
+    "method": "longestPalindrome",
+    "params": [
+      {
+        "name": "s",
+        "type": "string"
+      }
+    ],
+    "returns": "string",
+    "checker": "longest_palindrome"
+  },
+  "limits": {
+    "timeLimitMs": 1000,
+    "memoryLimitMb": 128,
+    "outputLimitKb": 64
+  },
+  "examples": [
+    {
+      "input": "\"babad\"",
+      "output": "\"bab\""
+    },
+    {
+      "input": "\"cbbd\"",
+      "output": "\"bb\""
+    }
+  ],
+  "tests": [
+    {"id": "t1", "logicalInput": "babad", "expected": "bab", "isSample": true},
+    {"id": "t2", "logicalInput": "cbbd", "expected": "bb", "isSample": true},
+    {"id": "single", "logicalInput": "Z", "expected": "Z", "isSample": false},
+    {"id": "all-distinct", "logicalInput": "abc123XYZ", "expected": "a", "isSample": false},
+    {"id": "whole-string", "logicalInput": "racecar", "expected": "racecar", "isSample": false},
+    {"id": "even-at-end", "logicalInput": "xyzabba", "expected": "abba", "isSample": false},
+    {"id": "case-sensitive", "logicalInput": "Aa1aA", "expected": "Aa1aA", "isSample": false},
+    {"id": "random-200", "logicalInput": "cbcbaacabcababcccabccbbbabbbcbbaccbcbbbbabbbbabaaccbabaababccbabaabbacbbbcbccccaaabbccbcbccabbbcccaaabcbcaccaabbccccccbbbbccabbabacbcbcbbaabccbbcabccaacabaacabcbabcbaaaaccacabcbaacabaacaacacbcabaccacb", "expected": "baababccbabaab", "isSample": false},
+    {"id": "max-size-1000", "logicalInput": "4NiaBfuRMFFw8Px6diSsjKORGs68JJNoqeJpq1WsHiZp3xDVyliTbPvfKQcf3hGMDpy4DE9ugYHbIUyd2j88BRYoVhf6QF0niSNyw1psv7NTwYyyiU1wPsZOB92xHcLKnVlzegcclmmcF47EQWwaBEt47N6BuDDgmjPkex3y34EjJqhr0kWsRpcE5cw7Wxu8dSbRDE28jhYQusDRpUkcmTbKoQfNz6TxRtlDxseUTDkXplRn8cPMBUraDdCXRAkccJ11HKw8gTep5ZFf7EdRpPdFzYddq1ACtOd4c8mlSGOzmIof7uYgfI6kMe2UnNbCIwFBKXyHOiUa6WtSC50oJhitEfXXq0zuiiIfEpSfZB9KQprdFSpdTmYs4x4geAXuyWXJa5sP8WiKbCj0SPY9bUdSBrgZZyJiuetkiqFRusceIWVJbbhdi0wB3q88NboHBixmvwakLN0kUgrHMkOTjCW8BYBhvuC6oDMBkCdXQ7kIEFMagi02ARdnac6KpET4wzDnmr0mtJHwWWYpxwZp0Q162dNFzwjj1pFycgkzgWTs56mYZWuERE3INfZmySagGMLNl0ybuRbNtGyGEITSzCY0L77SJQdIjZAx9LbRXHnssebfXwNL3W8TAt97ar7TpecWfQ99t5wSZ17VMNJnEHf5hpvYIBzaQyylWPH5n6RNuyug1S4JSTxp4gnstZrZNe58keOAXloPeKKO1O4IUAAoBEHM5ptArfM49vlAbjhsKJMKlBmuMgPYSvUed8Fi1H9eum2DPy75o5SN1ZE1gamRkhfvjxNWgKWCVu0XZlT57J9LO393gxg0emnuxlD5RVWfpz8IDyahM9xiRaFy9v8VeFW8UTsbhZEwWVm6vyjs5FPSXYfKhsAv82eHBdoAprQUejr9gJEBlI2y27pfCwiZfa0XjxZbbqJD9y3HfdnmZCaEHf9rM91REGbdkzXXGB3L85QPNOLcnbAXUAZ300B65ya0Wk5vjtXmB1ex", "expected": "2y2", "isSample": false},
+    {"id": "max-size-1000-same", "logicalInput": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "isSample": false},
+    {"id": "max-size-1000-buried", "logicalInput": "abbababbbaaabaababaaabbbabaabaaabababbaababaabbbbbbaabaabaabaaaabaabaaabbabbbaabbbbbaabaababbbabbabaabaaaababbbbbaabbabbaabbaaabaababaababbaaaaaabbababbbbbbabbbbaabbabaababbbaaababbaabbbaaabbbbaabbbbbaaabaabaababbabbababbbbaabaaaababbaabababbabbaaaaaabbabbbbaabbabaaaabbabaaaabbabaaabaaaaaaaabbaaaabbabbaababbababbbbbabbaababbabbbabaaaaabbbbbabbabaabbabbabbbaaabbaaabaabbbbaaabbaaabaabbaabbababbbbbbbbaababbaabbbababbbbbbbaabbbbbbbbbbbbabbbaaabbbababbbaaabaaaabaaaaababaabbbbaaababbbbabababbbbabbbbaacaabbbbabbbbabababbbbabaaabbbbaababaaaaabaaaabaaabbbababbbaaabbbabbbbbbbbbbbbaabbbbbbbababbbaabbabaabbbbbbbbababbaabbaabaaabbaaabbbbaabaaabbaaabbbabbabbaababbabbbbbaaaaababbbabbabaabbabbbbbababbabaabbabbaaaabbaaaaaaaabaaababbaaaababbaaaababbabaabaababbbbbabbbbaaababaaaaabbbababbbaaaabbbbbababbbbabaaababbbbbbbaababbbaaabaaaaababbabaaaabbbaabbabaababaaaaabbbbbaabaabaabaabaaabaabababbaabaaabbababbabaabbbaabbaaababbabaaabaabbababaabbbbbbabbbaabbaabaabaabbabbabaaaabbabbabbbaabababbbaabbabababbabbabaa", "expected": "abbabaaaabbabaaaabbabaaabaaaaaaaabbaaaabbabbaababbababbbbbabbaababbabbbabaaaaabbbbbabbabaabbabbabbbaaabbaaabaabbbbaaabbaaabaabbaabbababbbbbbbbaababbaabbbababbbbbbbaabbbbbbbbbbbbabbbaaabbbababbbaaabaaaabaaaaababaabbbbaaababbbbabababbbbabbbbaacaabbbbabbbbabababbbbabaaabbbbaababaaaaabaaaabaaabbbababbbaaabbbabbbbbbbbbbbbaabbbbbbbababbbaabbabaabbbbbbbbababbaabbaabaaabbaaabbbbaabaaabbaaabbbabbabbaababbabbbbbaaaaababbbabbabaabbabbbbbababbabaabbabbaaaabbaaaaaaaabaaababbaaaababbaaaababba", "isSample": false}
+  ]
+}

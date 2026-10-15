@@ -17,7 +17,8 @@ pub struct Problem {
     pub cpp: Cpp,
     pub io: Io,
     // Hidden tests stay in the backend; the problem list sent to the UI omits them.
-    #[serde(skip_serializing)]
+    // The cached library drops them too and `problem()` re-parses on demand.
+    #[serde(default, skip_serializing)]
     pub tests: Vec<Test>,
 }
 #[derive(Clone, Serialize, Deserialize)]
@@ -51,40 +52,64 @@ pub struct Test {
     pub expected: Value,
     pub is_sample: bool,
 }
-// build.rs embeds every content/leetcode/problems/*.json as (file name, contents).
+// build.rs embeds content/leetcode/problems/*.json and harnesses/*.cpp as (file name, contents).
 include!(concat!(env!("OUT_DIR"), "/problem_files.rs"));
 struct Library {
+    // Metadata only: max-size tests are large, so they are parsed per judge run.
     problems: Vec<Problem>,
-    by_id: HashMap<String, usize>,
+    by_id: HashMap<String, (usize, &'static str)>,
+}
+pub fn parse(text: &str) -> Result<Problem, String> {
+    let p: Problem = serde_json::from_str(text).map_err(|e| format!("invalid JSON: {e}"))?;
+    p.io.validate()?;
+    if let Some(h) = &p.io.harness {
+        harness_source(h)?;
+    }
+    Ok(p)
 }
 fn library() -> &'static Library {
     static LIBRARY: OnceLock<Library> = OnceLock::new();
     LIBRARY.get_or_init(|| {
-        let mut problems: Vec<Problem> = PROBLEM_FILES
+        let mut problems: Vec<(Problem, &'static str)> = PROBLEM_FILES
             .iter()
             .map(|(file, text)| {
-                let p: Problem = serde_json::from_str(text)
-                    .unwrap_or_else(|e| panic!("bundled problem {file} is invalid JSON: {e}"));
-                if let Err(e) = validate(&p) {
-                    panic!("bundled problem {file} is invalid: {e}");
-                }
-                p
+                let mut p = parse(text)
+                    .unwrap_or_else(|e| panic!("bundled problem {file} is invalid: {e}"));
+                p.tests = vec![];
+                (p, *text)
             })
             .collect();
-        problems.sort_by_key(|p| {
+        problems.sort_by_key(|(p, _)| {
             let n = p.id.trim_start_matches(|c: char| !c.is_ascii_digit());
             (n.parse::<u32>().unwrap_or(u32::MAX), p.id.clone())
         });
         let mut by_id = HashMap::new();
-        for (i, p) in problems.iter().enumerate() {
-            if by_id.insert(p.id.clone(), i).is_some() {
+        for (i, (p, text)) in problems.iter().enumerate() {
+            if by_id.insert(p.id.clone(), (i, *text)).is_some() {
                 panic!("duplicate problem id {}", p.id);
             }
         }
-        Library { problems, by_id }
+        Library {
+            problems: problems.into_iter().map(|(p, _)| p).collect(),
+            by_id,
+        }
     })
 }
-/// Structural checks every bundled problem must pass before it is shown or judged.
+/// Custom harness text: bundled files, or (development only, for verifying new
+/// problems before a rebuild) `$INTV_CONTENT_DIR/harnesses/<name>`.
+pub fn harness_source(name: &str) -> Result<String, String> {
+    if let Some((_, text)) = HARNESS_FILES.iter().find(|(file, _)| *file == name) {
+        return Ok(text.to_string());
+    }
+    if let Some(dir) = std::env::var_os("INTV_CONTENT_DIR") {
+        let path = std::path::Path::new(&dir).join("harnesses").join(name);
+        if let Ok(text) = std::fs::read_to_string(path) {
+            return Ok(text);
+        }
+    }
+    Err(format!("missing harness {name}"))
+}
+/// Structural checks every problem must pass before it is judged.
 pub fn validate(p: &Problem) -> Result<(), String> {
     p.io.validate()?;
     if p.tests.is_empty() || !p.tests.iter().any(|t| t.is_sample) {
@@ -101,21 +126,24 @@ pub fn validate(p: &Problem) -> Result<(), String> {
     }
     Ok(())
 }
-/// All bundled problems, parsed and validated once per process.
+/// All bundled problems without tests, parsed once per process, by problem number.
 pub fn problems() -> &'static [Problem] {
     &library().problems
 }
+/// Cached metadata (no tests) for a bundled problem.
 pub fn find(id: &str) -> Result<&'static Problem, String> {
     let lib = library();
     lib.by_id
         .get(id)
-        .map(|&i| &lib.problems[i])
+        .map(|&(i, _)| &lib.problems[i])
         .ok_or_else(|| "未知题目".into())
 }
+/// A bundled problem with its full tests, parsed from the embedded JSON.
 pub fn problem(id: &str) -> Result<Problem, String> {
-    find(id).cloned()
+    let (_, text) = library().by_id.get(id).ok_or("未知题目")?;
+    parse(text)
 }
-pub const HEADERS: &str = "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\n#include <unordered_set>\n#include <queue>\n#include <stack>\n#include <set>\n#include <map>\n#include <climits>\nusing namespace std;\n";
+pub const HEADERS: &str = "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\n#include <unordered_set>\n#include <queue>\n#include <stack>\n#include <set>\n#include <map>\n#include <climits>\n#include <deque>\n#include <list>\n#include <numeric>\n#include <functional>\n#include <cmath>\n#include <sstream>\n#include <utility>\n#include <tuple>\n#include <array>\n#include <bitset>\n#include <cstring>\n#include <cstdint>\n#include <limits>\nusing namespace std;\n";
 pub fn input(p: &Problem, t: &Test) -> String {
     p.io.stdin_for(&t.logical_input)
         .expect("tests are validated when the library loads")
@@ -134,11 +162,17 @@ pub fn source(p: &Problem, mode: &str, code: &str) -> Result<String, String> {
     if p.io.uses(Ty::Tree) {
         prelude += harness::TREE_STRUCT;
     }
+    if let Some(extra) = &p.io.prelude {
+        prelude += extra;
+        prelude.push('\n');
+    }
+    let main = match &p.io.harness {
+        Some(name) => p.io.custom_main(&harness_source(name)?),
+        None => p.io.cpp_main(),
+    };
     Ok(format!(
         "{}\n#line 1 \"user.cpp\"\n{}\n#line 1 \"harness.cpp\"\n{}",
-        prelude,
-        code,
-        p.io.cpp_main()
+        prelude, code, main
     ))
 }
 pub fn compare(p: &Problem, t: &Test, output: &str) -> bool {

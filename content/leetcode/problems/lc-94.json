@@ -1,0 +1,71 @@
+{
+  "id": "lc-94",
+  "title": "二叉树的中序遍历",
+  "difficulty": "easy",
+  "tags": [
+    "栈",
+    "树",
+    "深度优先搜索",
+    "二叉树"
+  ],
+  "statement": "给定二叉树的根节点 root，按“左子树 → 根 → 右子树”的中序顺序返回所有节点值。空树返回空数组。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入输出中的树均为 LeetCode 层序表示，null 表示空位。",
+  "constraints": [
+    "节点数在 [0, 100] 范围内；-100 ≤ Node.val ≤ 100"
+  ],
+  "complexity": {
+    "time": "O(n)",
+    "space": "O(h) 额外空间（显式栈或递归栈，h 为树高，最坏 O(n)）；Morris 遍历可做到 O(1)。输出数组不计入。",
+    "officialRequirement": "官方未强制复杂度要求；follow-up 要求用迭代代替递归实现。",
+    "notes": "n 为节点数，h 为树高（平衡时约 log n，退化成链时为 n）。本地含 100 个节点的随机树与单链最坏情况。",
+    "sourceUrl": "https://leetcode.com/problems/binary-tree-inorder-traversal/"
+  },
+  "cpp": {
+    "functionTemplate": "/**\n * struct TreeNode {\n *     int val;\n *     TreeNode *left;\n *     TreeNode *right;\n * };\n */\nclass Solution {\npublic:\n    vector<int> inorderTraversal(TreeNode* root) {\n        return {}; // Values in in-order.\n    }\n};",
+    "acmIoSpec": "stdin：第一行 m（层序 token 数，空树为 0）；第二行 m 个 token（整数或 null），为树的 LeetCode 层序表示。stdout：一行，中序遍历的节点值，空格分隔（空树输出空行）。",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n"
+  },
+  "io": {
+    "method": "inorderTraversal",
+    "params": [
+      {
+        "name": "root",
+        "type": "TreeNode"
+      }
+    ],
+    "returns": "int[]"
+  },
+  "limits": {
+    "timeLimitMs": 1000,
+    "memoryLimitMb": 128,
+    "outputLimitKb": 64
+  },
+  "examples": [
+    {
+      "input": "[1, null, 2, 3]",
+      "output": "[1, 3, 2]"
+    },
+    {
+      "input": "[1, 2, 3, 4, 5, null, 8, null, null, 6, 7, 9]",
+      "output": "[4, 2, 6, 5, 7, 1, 3, 9, 8]"
+    },
+    {
+      "input": "[]",
+      "output": "[]"
+    },
+    {
+      "input": "[1]",
+      "output": "[1]"
+    }
+  ],
+  "tests": [
+    {"id": "t1", "logicalInput": [1, null, 2, 3], "expected": [1, 3, 2], "isSample": true},
+    {"id": "t2", "logicalInput": [1, 2, 3, 4, 5, null, 8, null, null, 6, 7, 9], "expected": [4, 2, 6, 5, 7, 1, 3, 9, 8], "isSample": true},
+    {"id": "t3", "logicalInput": [], "expected": [], "isSample": true},
+    {"id": "t4", "logicalInput": [1], "expected": [1], "isSample": true},
+    {"id": "duplicates", "logicalInput": [0, 0, 0, null, 0, 0], "expected": [0, 0, 0, 0, 0], "isSample": false},
+    {"id": "left-chain-100", "logicalInput": [39, -54, null, -69, null, -29, null, -23, null, 10, null, -96, null, 75, null, 27, null, -6, null, -22, null, 9, null, 52, null, -30, null, 37, null, -95, null, 11, null, -97, null, 90, null, 11, null, -9, null, 16, null, -11, null, -46, null, 71, null, 85, null, -89, null, 5, null, 19, null, 64, null, -60, null, -33, null, -67, null, -77, null, 70, null, -24, null, 21, null, 76, null, -30, null, -81, null, -5, null, 10, null, 61, null, -11, null, -90, null, 39, null, 98, null, -96, null, -30, null, 70, null, -43, null, -90, null, 15, null, -14, null, -39, null, -33, null, -57, null, -88, null, -58, null, 75, null, 99, null, 90, null, 20, null, 46, null, -48, null, 21, null, -96, null, 82, null, -48, null, 43, null, 86, null, 28, null, -74, null, 64, null, 84, null, 72, null, 84, null, 55, null, 52, null, -28, null, -90, null, -68, null, 67, null, 41, null, 70, null, 62, null, -67, null, -48, null, -52, null, -91, null, 5, null, 50, null, 56, null, 59, null, 79, null, -58, null, 76, null, -44, null, -57, null, 73], "expected": [73, -57, -44, 76, -58, 79, 59, 56, 50, 5, -91, -52, -48, -67, 62, 70, 41, 67, -68, -90, -28, 52, 55, 84, 72, 84, 64, -74, 28, 86, 43, -48, 82, -96, 21, -48, 46, 20, 90, 99, 75, -58, -88, -57, -33, -39, -14, 15, -90, -43, 70, -30, -96, 98, 39, -90, -11, 61, 10, -5, -81, -30, 76, 21, -24, 70, -77, -67, -33, -60, 64, 19, 5, -89, 85, 71, -46, -11, 16, -9, 11, 90, -97, 11, -95, 37, -30, 52, 9, -22, -6, 27, 75, -96, 10, -23, -29, -69, -54, 39], "isSample": false},
+    {"id": "zigzag-100", "logicalInput": [-42, 23, null, null, 96, 72, null, null, -60, 29, null, null, 68, 8, null, null, -46, -15, null, null, -7, 67, null, null, 6, -63, null, null, 30, 72, null, null, 52, -68, null, null, 59, 85, null, null, -19, 60, null, null, 9, -65, null, null, 19, -62, null, null, 40, -16, null, null, -19, -24, null, null, 29, -87, null, null, 61, -18, null, null, -14, -51, null, null, 57, 65, null, null, -97, 28, null, null, -48, -61, null, null, -50, 63, null, null, 79, 49, null, null, -63, -68, null, null, -21, 26, null, null, 15, -46, null, null, 75, -95, null, null, 12, 0, null, null, 85, -4, null, null, -76, -100, null, null, -66, 58, null, null, -62, -11, null, null, -38, 3, null, null, -79, -87, null, null, -74, 89, null, null, -76, -86, null, null, 14, 78, null, null, -80, 56, null, null, 15, -32, null, null, -73, -24, null, null, 40, 11, null, null, 64, -5, null, null, 13, -96, null, null, -55, 67, null, null, 52, 57, null, null, 91, 98, null, null, 23, 97, null, null, -28, 7, null, null, -16, -93, null, null, 44, 43], "expected": [23, 72, 29, 8, -15, 67, -63, 72, -68, 85, 60, -65, -62, -16, -24, -87, -18, -51, 65, 28, -61, 63, 49, -68, 26, -46, -95, 0, -4, -100, 58, -11, 3, -87, 89, -86, 78, 56, -32, -24, 11, -5, -96, 67, 57, 98, 97, 7, -93, 43, 44, -16, -28, 23, 91, 52, -55, 13, 64, 40, -73, 15, -80, 14, -76, -74, -79, -38, -62, -66, -76, 85, 12, 75, 15, -21, -63, 79, -50, -48, -97, 57, -14, 61, 29, -19, 40, 19, 9, -19, 59, 52, 30, 6, -7, -46, 68, -60, 96, -42], "isSample": false},
+    {"id": "random-30", "logicalInput": [-45, 80, 43, -36, -57, 89, -2, -28, -4, -41, 70, 55, null, -49, 20, null, null, 49, 94, null, null, null, null, null, 79, null, 65, -1, 49, -25, -15, null, null, null, null, null, null, null, null, -46, null, null, null, null, -66, null, null, -6, null, -68, 35, 43, null, null, -9, null, 27], "expected": [-28, -36, -25, 49, -15, 43, 27, -68, -6, 35, -9, -66, -4, 94, 80, -41, -57, 70, -45, 55, 79, 89, 43, -49, 65, -2, -1, 20, -46, 49], "isSample": false},
+    {"id": "max-size-100", "logicalInput": [-79, 44, 51, -4, 1, -79, -45, 28, -9, -49, -39, 68, 53, 8, -22, null, -96, 50, -59, 76, -36, 56, -68, null, null, -21, -47, null, -82, 62, -11, -87, null, -36, -80, 8, 62, 0, null, -26, null, 72, null, 45, -48, -90, 48, null, null, 48, -26, null, 97, 46, null, null, null, -68, -71, -6, null, null, -96, null, 84, -80, 40, null, null, null, -90, 98, -16, null, null, null, 58, null, null, 90, null, 15, -41, 3, null, null, null, 3, -62, 99, 47, null, null, null, 4, null, null, null, -55, null, 9, 46, null, null, null, 76, 42, null, null, null, null, -52, 1, null, null, -90, -62, null, 93, -6, 5, -93, -24, null, -98, -5, null, 11, -86, 17, null, null, null, null, null, null, null, null, null, -69, 90, null, null, null, null, -75, 86, null, null, 68, null, null, null, null, null, null, null, null, null, -82, null, null, 13, null, null, -9, null, null, -64, 53, -92, null, null, null, null, 29, 12, 52, -18, null, null, null, 76, null, null, null, null, null, null, null, null, null, -23, null, null, null, null, null, -9], "expected": [28, -87, -96, -4, 3, 53, -75, -92, 93, 86, -68, -6, -62, 68, 5, -36, -93, 99, -24, -71, 47, -98, 50, -6, -80, -9, 8, -96, -5, 4, -59, 62, 84, 44, -80, 29, -82, 12, 11, -55, -86, 52, -23, -9, 13, -18, 0, 40, 17, 9, 76, -49, -26, -36, 1, 72, 46, -90, 56, -39, 98, 45, 76, -16, 42, -68, -48, -79, 68, -79, -90, 58, -21, 48, 53, -47, 51, 8, 90, 48, -82, -52, 15, -9, -69, 1, 90, -64, 76, -26, -41, -45, 62, -90, 3, -62, 97, -22, 46, -11], "isSample": false}
+  ]
+}

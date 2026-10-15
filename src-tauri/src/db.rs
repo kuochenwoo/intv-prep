@@ -10,13 +10,23 @@ pub struct Progress {
     pub status: String,
     pub last_result: Option<String>,
 }
+/// Open a connection to an already-migrated database. Cheap: no schema work.
+pub fn connect(path: &Path) -> Result<Connection, String> {
+    let c = Connection::open(path).map_err(|e| e.to_string())?;
+    c.busy_timeout(std::time::Duration::from_secs(3))
+        .map_err(|e| e.to_string())?;
+    // Per-connection setting; session deletes rely on ON DELETE CASCADE.
+    c.execute_batch("PRAGMA foreign_keys=ON;")
+        .map_err(|e| e.to_string())?;
+    Ok(c)
+}
+/// Create or upgrade the database, then return a connection. The app calls this
+/// once at startup; migrations are idempotent so reopening an old file is safe.
 pub fn open(path: &Path) -> Result<Connection, String> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
-    let c = Connection::open(path).map_err(|e| e.to_string())?;
-    c.busy_timeout(std::time::Duration::from_secs(3))
-        .map_err(|e| e.to_string())?;
+    let c = connect(path)?;
     c.execute_batch("PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS coding_progress(problem_id TEXT NOT NULL, mode TEXT NOT NULL, code TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'in_progress', last_result TEXT, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(problem_id,mode)); CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);").map_err(|e|e.to_string())?;
     crate::interview_store::migrate(&c)?;
     Ok(c)

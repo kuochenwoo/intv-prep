@@ -4,32 +4,49 @@ use swe_interview_prep::{
     content::{self, problem},
     db,
 };
-fn solution(id: &str, mode: &str) -> &'static str {
-    match (id, mode) {
-        ("lc-1", "function") => include_str!("solutions/lc-1-function.cpp"),
-        ("lc-3", "function") => include_str!("solutions/lc-3-function.cpp"),
-        ("lc-206", "function") => include_str!("solutions/lc-206-function.cpp"),
-        ("lc-283", "function") => include_str!("solutions/lc-283-function.cpp"),
-        ("lc-1", "acm") => include_str!("solutions/lc-1-acm.cpp"),
-        ("lc-3", "acm") => include_str!("solutions/lc-3-acm.cpp"),
-        ("lc-206", "acm") => include_str!("solutions/lc-206-acm.cpp"),
-        ("lc-283", "acm") => include_str!("solutions/lc-283-acm.cpp"),
-        _ => panic!("missing test solution"),
-    }
+// Reference solutions live in tests/solutions/<id>-function.cpp and <id>-acm.cpp.
+fn solution(id: &str, mode: &str) -> String {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/solutions")
+        .join(format!("{id}-{mode}.cpp"));
+    std::fs::read_to_string(&path).unwrap_or_else(|_| panic!("missing {}", path.display()))
 }
 #[test]
-fn all_four_problems_pass_real_cpp20_in_both_modes() {
-    for p in content::problems() {
-        let code = solution(&p.id, "function");
-        let r = judge(p, "function", code, false, "").unwrap();
-        assert_eq!(r.status, "accepted", "{}: {}", p.id, r.diagnostics);
-        assert_eq!(r.passed, p.tests.len());
-        // Independently written full programs verify the documented IO protocol.
-        let acm = solution(&p.id, "acm");
-        let r = judge(p, "acm", acm, false, "").unwrap();
-        assert_eq!(r.status, "accepted", "{} ACM", p.id);
-        assert_eq!(r.passed, p.tests.len());
-    }
+fn every_problem_passes_reference_solutions_in_both_modes() {
+    let ids: Vec<String> = content::problems().iter().map(|p| p.id.clone()).collect();
+    let next = std::sync::atomic::AtomicUsize::new(0);
+    // Half the cores: per-test time limits are wall-clock, so avoid oversubscribing.
+    let workers = std::thread::available_parallelism().map_or(2, |n| (n.get() / 2).clamp(1, 4));
+    let failures = std::sync::Mutex::new(vec![]);
+    std::thread::scope(|scope| {
+        for _ in 0..workers {
+            scope.spawn(|| loop {
+                let i = next.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                let Some(id) = ids.get(i) else { break };
+                let p = problem(id).unwrap();
+                for mode in ["function", "acm"] {
+                    // Independently written full programs verify the documented IO protocol.
+                    let r = judge(&p, mode, &solution(id, mode), false, "").unwrap();
+                    if r.status != "accepted" || r.passed != p.tests.len() || p.tests.is_empty() {
+                        let case = r.cases.iter().find(|c| c.status != "accepted");
+                        failures.lock().unwrap().push(format!(
+                            "{id} {mode}: {} {}/{} {} {:?}",
+                            r.status,
+                            r.passed,
+                            p.tests.len(),
+                            r.diagnostics.chars().take(400).collect::<String>(),
+                            case.map(|c| format!(
+                                "case {} got {:.200} stderr {:.200}",
+                                c.id, c.actual, c.stderr
+                            ))
+                        ));
+                    }
+                }
+            });
+        }
+    });
+    let failures = failures.into_inner().unwrap();
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 #[test]
 fn malformed_wrong_crashed_hung_and_noisy_programs_are_classified() {
@@ -351,21 +368,44 @@ fn per_problem_resource_limits_are_executed_in_both_modes() {
 
 #[test]
 fn every_problem_has_sourced_complexity_policy_and_maximum_size_test() {
-    for p in content::problems() {
-        assert!(!p.complexity.time.is_empty());
-        assert!(!p.complexity.space.is_empty());
-        assert!(!p.complexity.official_requirement.is_empty());
-        assert!(p
-            .complexity
-            .source_url
-            .starts_with("https://leetcode.com/problems/"));
-        assert_eq!(p.limits.time_limit_ms, 1000);
-        assert_eq!(p.limits.memory_limit_mb, 128);
-        assert_eq!(p.limits.output_limit_kb, 64);
-        assert!(p
-            .tests
-            .iter()
-            .any(|t| !t.is_sample
-                && (t.id.starts_with("max-size-") || t.id.starts_with("worst-case-"))));
+    for meta in content::problems() {
+        let p = problem(&meta.id).unwrap();
+        content::validate(&p).unwrap_or_else(|e| panic!("{}: {e}", p.id));
+        assert!(!p.complexity.time.is_empty(), "{}", p.id);
+        assert!(!p.complexity.space.is_empty(), "{}", p.id);
+        assert!(!p.complexity.official_requirement.is_empty(), "{}", p.id);
+        assert!(!p.complexity.notes.is_empty(), "{}", p.id);
+        assert!(
+            p.complexity
+                .source_url
+                .starts_with("https://leetcode.com/problems/"),
+            "{}",
+            p.id
+        );
+        // Budgets are chosen per problem from input scale and measured runs.
+        assert!((500..=5000).contains(&p.limits.time_limit_ms), "{}", p.id);
+        assert!((64..=512).contains(&p.limits.memory_limit_mb), "{}", p.id);
+        assert!((16..=1024).contains(&p.limits.output_limit_kb), "{}", p.id);
+        assert!(
+            p.tests.iter().any(|t| !t.is_sample
+                && (t.id.starts_with("max-size-") || t.id.starts_with("worst-case-"))),
+            "{} needs a max-size or worst-case test",
+            p.id
+        );
     }
+}
+
+#[test]
+fn background_connections_share_migrated_data_and_enforce_foreign_keys() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("nested/prep.sqlite3");
+    let c = db::open(&path).unwrap();
+    db::save(&c, "lc-1", "acm", "shared draft").unwrap();
+    // Background tasks use connect(): no schema work, same data, WAL allows both.
+    let other = db::connect(&path).unwrap();
+    assert_eq!(db::load(&other).unwrap()[0].code, "shared draft");
+    let fk: i32 = other
+        .query_row("PRAGMA foreign_keys", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(fk, 1);
 }

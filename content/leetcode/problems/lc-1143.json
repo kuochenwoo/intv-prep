@@ -1,0 +1,71 @@
+{
+  "id": "lc-1143",
+  "title": "最长公共子序列",
+  "difficulty": "medium",
+  "tags": [
+    "字符串",
+    "动态规划"
+  ],
+  "statement": "给定两个字符串 text1 和 text2，返回它们最长公共子序列的长度；不存在公共子序列时返回 0。子序列由原串删去若干字符且保持剩余字符相对顺序得到，不要求连续。",
+  "constraints": [
+    "1 ≤ text1.length, text2.length ≤ 1000；两串仅含小写英文字母"
+  ],
+  "complexity": {
+    "time": "O(m · n)（本地训练目标）",
+    "space": "O(m · n) 二维 DP；滚动数组可降为 O(min(m, n)) 额外空间",
+    "officialRequirement": "官方未强制复杂度要求。",
+    "notes": "m、n 为两串长度。dp[i][j] 为 text1 前 i 个字符与 text2 前 j 个字符的 LCS 长度：末字符相同取 dp[i-1][j-1] + 1，否则取 max(dp[i-1][j], dp[i][j-1])。",
+    "sourceUrl": "https://leetcode.com/problems/longest-common-subsequence/"
+  },
+  "cpp": {
+    "functionTemplate": "class Solution {\npublic:\n    int longestCommonSubsequence(string text1, string text2) {\n        return 0; // Length of the longest common subsequence.\n    }\n};",
+    "acmIoSpec": "stdin：第一行字符串 text1；第二行字符串 text2。stdout：一个整数，最长公共子序列的长度。",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n"
+  },
+  "io": {
+    "method": "longestCommonSubsequence",
+    "params": [
+      {
+        "name": "text1",
+        "type": "string"
+      },
+      {
+        "name": "text2",
+        "type": "string"
+      }
+    ],
+    "returns": "int"
+  },
+  "limits": {
+    "timeLimitMs": 1000,
+    "memoryLimitMb": 128,
+    "outputLimitKb": 64
+  },
+  "examples": [
+    {
+      "input": "{\"text1\": \"abcde\", \"text2\": \"ace\"}",
+      "output": "3"
+    },
+    {
+      "input": "{\"text1\": \"abc\", \"text2\": \"abc\"}",
+      "output": "3"
+    },
+    {
+      "input": "{\"text1\": \"abc\", \"text2\": \"def\"}",
+      "output": "0"
+    }
+  ],
+  "tests": [
+    {"id": "t1", "logicalInput": {"text1": "abcde", "text2": "ace"}, "expected": 3, "isSample": true},
+    {"id": "t2", "logicalInput": {"text1": "abc", "text2": "abc"}, "expected": 3, "isSample": true},
+    {"id": "t3", "logicalInput": {"text1": "abc", "text2": "def"}, "expected": 0, "isSample": true},
+    {"id": "single-chars-equal", "logicalInput": {"text1": "q", "text2": "q"}, "expected": 1, "isSample": false},
+    {"id": "single-vs-long", "logicalInput": {"text1": "z", "text2": "abcdefghijklmnopqrstuvwxyz"}, "expected": 1, "isSample": false},
+    {"id": "reversed", "logicalInput": {"text1": "abcdef", "text2": "fedcba"}, "expected": 1, "isSample": false},
+    {"id": "random-small", "logicalInput": {"text1": "cccabccbba", "text2": "aacaaccbabcb"}, "expected": 7, "isSample": false},
+    {"id": "random-200", "logicalInput": {"text1": "addadacddddddcddcccdaababdadccbdcccabbbacabdaddaaccdccabaacbbadaadcdcbadabbaaababacbbcbccacbbdcacdbcccbaabadcbbcdccbababdbcbbbdacbdbbbbbbdadcdbadcddadbcbcacddbabccbacdcabccadaaadacdacccabbdddabbadcbdb", "text2": "bdbaabbcabdccabaacddddbdbdaadddccbcaccdabdadccddbccbbbdcabbbdcabcccdcabbbdaccbadbbbcacabbbaaddcbacdacbdccbbaddcbcaaabdaabcdacdbbcbaaddbccbcadaadbbcdca"}, "expected": 106, "isSample": false},
+    {"id": "max-size-1000", "logicalInput": {"text1": "abbaabaaabbbaaaaabbbbabbababababababaabaaabbbabababaabbaabbbbababbbaabbabaaaabbabbaaaaaabaabaaaaabaaaabbaaaaaaaaabbbbbaaabaababaaabbaaaabbbabbabbbabbabaabbaaabbaabaaaaabaaabbabbbabaaaaabbbbbbbbabbbbbbaabbabbbabbbaaabbabbaabaabaaabbabaaaaaaaabbabbbbbaaaabbbbbbabaababaaaabbaabbabbbaababbabbbaabaababaababababaabaababaaaabababbbababaabbbbababaaaababbbbbabbbbaaaaabbbbabaabaaaaaaabbaaaabaababbabbbbbaaaaaaabbaaabbbbabaaaaaabaabaaabbbaaabaabbbaaababbbabaabbabababbababbbaaaaababaaabbabbbbaaababbbbbbbbabaaabbaaaaaabbabbbbabaaaabbbbbbbabaaababbaaababbaabaabbabbaabbaaabaaabbabbbaabaabaabaaabbabbaaaabbaabbbabaabaaaabbbabbbaababaabbbbbabbabbbaaabbbbabaaabbbbaabbabaababbbbbababbaaaabaababbaabaaaababbbabaababababbbbbaaaababbabaababbbbaababababaaaabaabbbababbababbaaaaaababababbbaababbaabbaaababbbabbabbbbbbabaaaaabaaabbaaabbbbababbaaabbabaaaababbbaaaabbbbabaabbaaabaaabaabaabaabbbbbbbaabaaababaaabbbabbabbbbaaabbabababbbaaababbaaabbaaaaabbbabbbaaaaabaabbbaabbbaaabababbbaaabaaabaabbbaabbaababbaaaabbabbbbab", "text2": "babaabaabbbbabbabababbaabbaaaabababaaabaababaaabbbaababaababbbbabbababaabbbbaaaabaaabbbbbbabbbbaabababaabaaabbabaaabbbbbabaababbabbaaaabbbbaabbbbbbabbbaaaaaababbaabaaababbababaabaaaabbababbbaabaabbabbbbbbabbaaababbaabbbbbababaabbbaaabbabbbaabaaaabbaaabaaabbbaaaabbbbaabaaabbbabbbbbabbabbabaaabbabaaababbabbbabaababbbbbaaaaaaaabaaaabaababbbbabbbbaababaaaaaaaaaaabbabaababaaabbbabbaababaaabaaaaaabababbbbaaaabbaabbbbbbbabbbbaaabbababaaabbabbaaaaaaabaaabaabbabaabbbbbabbbbbabbabaaabbbaaaaaaababaabbbbaaabbabbbbbaabbbbaaaaaaaaababbbaabaaabbabaaabaaaababababbbbbaabbaaaabaaababbbabbbabbbbaaaaababbbabaaaaabaaabbabbaaaaababbabbbaabaaabaabbabbbabbaabbbaaabbbabaaabaaabbaaabaaaabbabbaababbabbabaaababbaababbbaababbbbbbabbbbbaababababbbbaabbbaaabbaaababbbabbbabaaaabbbabbaaabbabbbbbaabaaaabbaaaaaabbabbaabaabaaaabbbbaabbabbaaaaaaaaaabbabbbbabbbaaaabbbbbabbaabaabaaaabaaabaaaabbbbaaaaaababaababbbaabaaababbbbbaaabbbaaaaabababbabababbbbbabbaaaaaaababbaaaaaaabaababbabaabbababaaaaaaabaaaaabbabaabbabbbbbaabbabaab"}, "expected": 807, "isSample": false},
+    {"id": "max-size-1000-full-alphabet", "logicalInput": {"text1": "hshehsaiwazbigzmlufknjzypaxneejrgvsafscbzelrfujhnjdqdavjrbcizcfredohuwgpilkzbdllminccdaefmvjqiuzbspysvsbrqpnygddurneogmrqgkhfdxraiyhrplrfekmmvtklvgeccevzdhgsidzhsghvakpmfoopuuhyiaejkbpoadseanxmkrwitdfcxcwgjrdhxcpagsfcbonsijnjzkhavnhdcijnutabegfbapdytxyuvjytceubomwwagfrxakiayravnhdkivdczdarjzorzzcuozospedbmuetisxmhnptfpjesspovowcdvtaoedazoggccucsiwcazatzucsyncckcsltzkmsfrledncuppabkfpwqmepgtdleecwaqfgxypttstubmjzcxjlfxnxmzvrfklbqbqvaxjncmkvrdduvnjfoxsfyjnlknjujazxanstjtsecgvahbivevigjngfhoxknhrnpfwqvnxhgxtjucnapjvzutrxrocoorlimgmjkamdirxtyuybxgsdmqfqxrfjorcbjegluucnesfdpdytctzknxilnaogngwcsxwfenywkionglkrobsjipfdcahlfqexevdvghdekwqswtuwodiojnqwlxurpzqpfabapdyhsqajmotwxtpudrctnltuzliwzbvlouvwbfdasktwgyjbkakwyudtailwujriuymfrudvwqqnppwtgbnsindkcuzkjllqipvjfzknrpstzjovgicsljohjvqzmfuaggfqbhqnwyjowmtwkfpvragaslslmzhtzknrrejadlaacvyoikuwkbldehezretnlpyhephvayasmofcnkvjepkhlzrksolblsbahapjxvrdssuxfkwvcqlzyagacfmvopzweuouyhjfpihijrtqmijwvxsbidhkknfgkyujdefwlzclvokycbcuxpckaguvyuotaldzlcthflyhs", "text2": "basaukdwzkcomovrxvcbmjuiespzvgyjxapwpypnoanrunfjhgbkdrmzmtsehoraytutvlvnkvfvhqlhdievoftrdngdmnbdlcwbdiimavfmbapkyznxrwmsvvfcepronomnezxlrgekiqawcvobhyhadowzonqphtbghrxzsbztvebeuzaqrvacixhznujvgokzzjvopezzalzspncuytwpgjqipdecfrbyukkjkzhbpxujnhpodtkqluzmfavecmidlwpardksghzzfyospdvipminhpekvjgbchaufcocueguhitpnuboilgcssxcjeqmovzpkxlsldmutskkqmyzxedkivhlvwsjwcreasrkmdqieqmupghhkpyeijbrxhljykdfwnqfxewxuvxxwcqcamfaxvowaychdaywfsjhopbvflmrvzstmxcprxbljhvgmnpdhjxsqjzozuhvdiilvuhfmwphixmihxepzipelpijuipovoynxgjxekujmgdycsfwwfqgpkeeavhdannbwmggpgbdummfkcfuifqvpsgrozahkkcwtpjjhelixvkyafijettlwiitbtxbxlarxsopmnzoygibcxxdyihnpkmhhkoylhiokuyloetjarqvhmzbsfnnqvzlgymkcwustttzkmqnvzrlgbhmsijzkyiyhagpgzoiwwsojvbjthscdsalgrmwzgtwihxdjatxelpqklcobzyowaymjretwmaiwbztdlkelwniezjjhrfmmnedbmifksithniddacmwuzhdkjqvhpvcwflwqymchaembiesfghnafqhkibakffboopswgyhxskhouadoinuhwecsoexogheedsajyqpviaghnllzflnhaskvssbqcmtaobhqhxaeiqzlkjzeyyfxatmptqncnlurhvxovunnstsnzgmwarprjtxqzxgmgskycocbwtpvijbcepatmbcwzayzyfnyaefgnx"}, "expected": 333, "isSample": false},
+    {"id": "max-size-1000-disjoint", "logicalInput": {"text1": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "text2": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}, "expected": 0, "isSample": false}
+  ]
+}

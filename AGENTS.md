@@ -14,7 +14,7 @@ Follow `SWE_Interview_Prep_Requirements.md` and the user's currently authorized 
 
 ## Current phase status
 
-P0 is complete. Preserve all LC complexity and resource-limit requirements. The user authorized P1, which now includes Claude / DeepSeek Technical Deep Dive UI, caching, interviews, feedback, and failure recovery. The currently requested model is Claude Haiku 5.5 (`claude-haiku-5-5`). Claude has passed real question generation, follow-ups, five-dimension feedback, and retry recovery. DeepSeek's real multi-turn acceptance remains affected by HTTP 503 / keepalive timeouts; do not claim that DeepSeek has passed. Do not start P2 or P3.
+P0 is complete. Preserve all LC complexity and resource-limit requirements. The user authorized P1, which now includes Claude / DeepSeek Technical Deep Dive UI, caching, interviews, feedback, and failure recovery. The currently requested model is Claude Haiku 5.5 (`claude-haiku-5-5`). Claude has passed real question generation, follow-ups, five-dimension feedback, and retry recovery. DeepSeek's real multi-turn acceptance remains affected by HTTP 503 / keepalive timeouts; do not claim that DeepSeek has passed. The user authorized P3's Hot 100 problem coverage: all 100 problems are bundled with complexity requirements and reference solutions verified in both modes (see `tools/leetcode/README.md` for authoring rules). Do not start P2.
 
 The user explicitly requested storing keys in a Git-ignored `.env` with mode 0600 for testing, before migrating to the system Keychain after tests pass. The current runtime only reads/writes `.env`; do not automatically fall back to system storage or migrate early. Preserve separate keys for each provider. Never commit `.env`, print real keys, or write keys to SQLite.
 

@@ -177,12 +177,14 @@ fn invalid_specs_and_tests_are_rejected_at_load() {
     }
 }
 #[test]
-fn bundled_library_is_validated_sorted_and_hides_tests_from_the_ui() {
+fn bundled_library_is_sorted_cached_and_hides_tests_from_the_ui() {
     let ids: Vec<_> = content::problems().iter().map(|p| p.id.as_str()).collect();
-    assert_eq!(ids, ["lc-1", "lc-3", "lc-206", "lc-283"]);
+    let numbers: Vec<u32> = ids.iter().map(|id| id[3..].parse().unwrap()).collect();
+    assert!(numbers.windows(2).all(|w| w[0] < w[1]));
     for p in content::problems() {
-        content::validate(p).unwrap();
+        assert!(p.tests.is_empty());
         assert!(std::ptr::eq(p, content::find(&p.id).unwrap()));
+        assert!(!content::problem(&p.id).unwrap().tests.is_empty());
     }
     let listed = serde_json::to_value(content::problems()).unwrap();
     assert!(listed[0].get("tests").is_none());

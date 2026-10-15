@@ -1,0 +1,68 @@
+{
+  "id": "lc-72",
+  "title": "编辑距离",
+  "difficulty": "medium",
+  "tags": [
+    "字符串",
+    "动态规划"
+  ],
+  "statement": "给定两个单词 word1 和 word2，每次操作可以在 word1 中插入一个字符、删除一个字符或替换一个字符。求把 word1 变成 word2 所需的最少操作次数。",
+  "constraints": [
+    "0 ≤ word1.length, word2.length ≤ 500；两串仅含小写英文字母"
+  ],
+  "complexity": {
+    "time": "O(m · n)（本地训练目标）",
+    "space": "O(m · n) 二维 DP；滚动数组可降为 O(min(m, n)) 额外空间",
+    "officialRequirement": "官方未强制复杂度要求。",
+    "notes": "m、n 为两串长度。dp[i][j] 为 word1 前 i 个字符变为 word2 前 j 个字符的最少操作数；任一串为空时答案为另一串的长度（空串输入为空行）。",
+    "sourceUrl": "https://leetcode.com/problems/edit-distance/"
+  },
+  "cpp": {
+    "functionTemplate": "class Solution {\npublic:\n    int minDistance(string word1, string word2) {\n        return 0; // Minimum number of insert/delete/replace operations.\n    }\n};",
+    "acmIoSpec": "stdin：第一行字符串 word1；第二行字符串 word2（任一行都可能为空行）。stdout：一个整数，最少操作次数。",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n"
+  },
+  "io": {
+    "method": "minDistance",
+    "params": [
+      {
+        "name": "word1",
+        "type": "string"
+      },
+      {
+        "name": "word2",
+        "type": "string"
+      }
+    ],
+    "returns": "int"
+  },
+  "limits": {
+    "timeLimitMs": 1000,
+    "memoryLimitMb": 128,
+    "outputLimitKb": 64
+  },
+  "examples": [
+    {
+      "input": "{\"word1\": \"horse\", \"word2\": \"ros\"}",
+      "output": "3"
+    },
+    {
+      "input": "{\"word1\": \"intention\", \"word2\": \"execution\"}",
+      "output": "5"
+    }
+  ],
+  "tests": [
+    {"id": "t1", "logicalInput": {"word1": "horse", "word2": "ros"}, "expected": 3, "isSample": true},
+    {"id": "t2", "logicalInput": {"word1": "intention", "word2": "execution"}, "expected": 5, "isSample": true},
+    {"id": "both-empty", "logicalInput": {"word1": "", "word2": ""}, "expected": 0, "isSample": false},
+    {"id": "first-empty", "logicalInput": {"word1": "", "word2": "abc"}, "expected": 3, "isSample": false},
+    {"id": "second-empty", "logicalInput": {"word1": "hello", "word2": ""}, "expected": 5, "isSample": false},
+    {"id": "identical", "logicalInput": {"word1": "same", "word2": "same"}, "expected": 0, "isSample": false},
+    {"id": "single-replace", "logicalInput": {"word1": "a", "word2": "b"}, "expected": 1, "isSample": false},
+    {"id": "random-small", "logicalInput": {"word1": "accabcccbbcccca", "word2": "ccbabacacabababacb"}, "expected": 10, "isSample": false},
+    {"id": "random-120", "logicalInput": {"word1": "adccccbcdbcedbcdecbdbaacdadabcaddaededbadeacdcdaacccbbecbadaadbeacbebacdbcebaeedbdaeccdebcadbeeddacabeedcdaebecaceabadaa", "word2": "aceeccaeaebabcdaacbbaeabcaecaebdabdadaedeeecedccbbdaaecedcbceeeedbeaabddccaddbaceaccceabeddccbeebeda"}, "expected": 66, "isSample": false},
+    {"id": "max-size-500", "logicalInput": {"word1": "bbbacacacccbbcaccbcabcabcbccacaccacbaabaaccbccccbccaacaaabcbbcbcacbccaabcbcbaccaabbcbbbabcaaabaaacbacacbcababacacbcabcbccbabcccaacbbbbccaaaaaaaabccbbbbbaabaacbbcabcbabbcabbbcbcccccbaccbacccaacacacbacbccbaacccabcacabcbbbbaacaccacbbcabbabaacbbccccbccaabccbbbbbacbccbbacabaaccababbacacbbbaabbcacaacacaaacabcaacaccbaccbcacbaaacbcaabbaacbccacaaccaaaabbcbcccbcbabcbccccaacbcccbbabacbcaacaaaaabccbabaccbaaababcbaacaaaacbcbabcacbbcccabbbacaacbaaaababccbcbbabcbbcbabaaabbcabcaabcbaccabbabbaabbcbbbaaabccacacba", "word2": "bbacabbbabcabccacabaabccabcabcbbacacaccbaabbbabccabbcbaccbbbaabbabcbcbaacababbbccaaaaccbbcaabbbbbcbcbcaaaaaaaabbbbbbacaaaaaccbcccbcaccbcbaacabaccbbacacbcaabccabccbbcabccbbccbaabbabbbcbcacbcacccbabcacabcbabcabacaccaccbbcaaaaabbccccaacbbcbbcbcbccbacbccabababacbbbccbbbbaabacbbbbabbbbbcabacccabbcbbaacaabcaaacbbbcacacabbcccabcbaababaaabbbbbacaccabbccbaccacbbcbbbbbbababacccbcacbbabbaabbbacccabcbcbbaacbcbbcaabcccaccacaacbbabcbbbabcabbcbaaaabbacccaabcacaabbbcaccccabbabbabcbacacaaacbbbacaacaacbbbbbccabcb"}, "expected": 220, "isSample": false},
+    {"id": "max-size-500-full-alphabet", "logicalInput": {"word1": "trxnldbjlrxvsrhqoaqomwdacaegyouqxexyfxsmllfogxfesoiterkmkrcbyohccqzwtolvmkiqtzbwmpmerfstmgooohofabtuklhpivhbzwovyzbydnlrzepkmqhbltzwtajgutiopuspozurcgrldvpihjcngusoxfziybmvrhuwkqkwsownuynzinucvepsxwjfinfkealgrniwxuloajgfmgtarrqhltefumyeqlawasogvvdnbulkrnlvxjftksjlsgaahbzedwdcwyhpemhcihdbpvrrpznsjlnbcswjoerlqiimkyqwjbkepivwvbnamrgqccrmlsvcvpnkctgvpagdcjawfvlgiczsmmiaukmcbtvldtiwcnwmiexpchounjxrdidcvbsrxkasisrjhbbveznnarqqwypgtkelstnfhqpjvthwrjoaghdgfzvzxtndyvapfnrtkvhqkxapblwqhwzhshwbywepxlxjkxhs", "word2": "tnulunnewpwzrxyodecfrglklfnwldcfbhkyaivkrtemmnbmwjimijrhvzteshdxbxkrbrprmyopglayancdddsfnulsabavazykypsqpldnksztkpwiwqinchvjqacsoyeeqvkzmlxgvcadqxsyctfnsroxirefjsgfxpboaarybohfqjohuzgiajkpzwkkrhpbxmzbsvehdvzimlcnetjmboxefxdkdlbvxpjscipjykymrqzdmjcyedwmohgjyywoaqmeycdmixduvhzxmtmfborrqaqkkvzniwtfiitnirdtngvyvbarcstiuxgtxfcqrepsiuqulzzhhreobzmrzhdhcwdlrbzvqbtwctaaaeihhtatzypewichjlbbozyuvjjzoyowcuddxmabwbilkhadnbvrwsiengalwbcolmsgfokvbuxsxemshtpuzndvqtsosvdnefedwgojwvxzxhubsrpravhnlqpbpqnmbgmwvkqq"}, "expected": 445, "isSample": false},
+    {"id": "max-size-500-vs-empty", "logicalInput": {"word1": "lkklmeiorjzouevgknawjoojibhszbbqertzfmyweujvdarojrcpasnizxxcnrxzmbofufytrthxrdfuzorisosjctrtkrzjzdftfvmydtiusylgvythhrvuudnbpdyvugeeszfemslyerrqimofzxgfreljnxxegbwhhbqctyoozbuofcmgouplbszmopwycqqrjrrzeuhlgxmstlzujnkjzgwxywdqihzcjwkdyjxgphgnhzgfxrecevazgzoqzmdqonmvfjenqlfyrpywwfrltkqjufacnieffwlkrsoqxpvhnpweldeisuvtcgrxjlbmscceumqenkqdnjgxjpnzytxbtsfvhohqoaeairwobbtqdpkbhumwumjphvaxcsufcpaslpcrxczdcxvgrtwtopgrcsybmviegsttzpblutumnhfxxqzwbkfjbzcynjkknkrfarottpnnpzbzssptmbllcsvuyhxuhvvgdsbbmswjzmnp", "word2": ""}, "expected": 500, "isSample": false}
+  ]
+}

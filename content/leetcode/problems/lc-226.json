@@ -1,0 +1,66 @@
+{
+  "id": "lc-226",
+  "title": "翻转二叉树",
+  "difficulty": "easy",
+  "tags": [
+    "树",
+    "深度优先搜索",
+    "广度优先搜索",
+    "二叉树"
+  ],
+  "statement": "给定二叉树的根节点 root，将每个节点的左右子树互换（即得到原树的镜像），返回翻转后的根节点。\n\n节点定义：struct TreeNode { int val; TreeNode *left; TreeNode *right; }。输入输出中的树均为 LeetCode 层序表示，null 表示空位。",
+  "constraints": [
+    "节点数在 [0, 100] 范围内；-100 ≤ Node.val ≤ 100"
+  ],
+  "complexity": {
+    "time": "O(n)",
+    "space": "递归为 O(h) 递归栈；BFS 为 O(w) 队列。最坏 O(n)。原地修改，不新建节点。",
+    "officialRequirement": "官方未强制复杂度要求。",
+    "notes": "n 为节点数，h 为树高，w 为最大层宽。本地含 100 个节点的随机树与单链。",
+    "sourceUrl": "https://leetcode.com/problems/invert-binary-tree/"
+  },
+  "cpp": {
+    "functionTemplate": "/**\n * struct TreeNode {\n *     int val;\n *     TreeNode *left;\n *     TreeNode *right;\n * };\n */\nclass Solution {\npublic:\n    TreeNode* invertTree(TreeNode* root) {\n        return root; // Root of the mirrored tree.\n    }\n};",
+    "acmIoSpec": "stdin：第一行 m（层序 token 数，空树为 0）；第二行 m 个 token（整数或 null），为树的 LeetCode 层序表示。stdout：一行，翻转后树的层序 token（空格分隔，省略末尾 null；空树输出空行）。",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n"
+  },
+  "io": {
+    "method": "invertTree",
+    "params": [
+      {
+        "name": "root",
+        "type": "TreeNode"
+      }
+    ],
+    "returns": "TreeNode"
+  },
+  "limits": {
+    "timeLimitMs": 1000,
+    "memoryLimitMb": 128,
+    "outputLimitKb": 64
+  },
+  "examples": [
+    {
+      "input": "[4, 2, 7, 1, 3, 6, 9]",
+      "output": "[4, 7, 2, 9, 6, 3, 1]"
+    },
+    {
+      "input": "[2, 1, 3]",
+      "output": "[2, 3, 1]"
+    },
+    {
+      "input": "[]",
+      "output": "[]"
+    }
+  ],
+  "tests": [
+    {"id": "t1", "logicalInput": [4, 2, 7, 1, 3, 6, 9], "expected": [4, 7, 2, 9, 6, 3, 1], "isSample": true},
+    {"id": "t2", "logicalInput": [2, 1, 3], "expected": [2, 3, 1], "isSample": true},
+    {"id": "t3", "logicalInput": [], "expected": [], "isSample": true},
+    {"id": "single", "logicalInput": [5], "expected": [5], "isSample": false},
+    {"id": "only-left", "logicalInput": [1, 2, null, 3], "expected": [1, null, 2, null, 3], "isSample": false},
+    {"id": "left-chain-100", "logicalInput": [23, -92, null, 64, null, 40, null, 50, null, 52, null, -88, null, -56, null, -6, null, -13, null, -2, null, 40, null, 16, null, 78, null, 42, null, 90, null, -12, null, 91, null, -78, null, 56, null, -10, null, 34, null, -96, null, -56, null, 83, null, 39, null, -9, null, -17, null, 9, null, 42, null, -78, null, 9, null, -64, null, 18, null, 3, null, 91, null, -85, null, -93, null, 4, null, 43, null, -8, null, -97, null, -30, null, -2, null, -77, null, -4, null, -50, null, 94, null, -91, null, 37, null, 68, null, 94, null, 22, null, 32, null, -37, null, -70, null, -44, null, 16, null, 41, null, -49, null, -20, null, -77, null, -9, null, 98, null, -75, null, -28, null, 22, null, -26, null, -59, null, -56, null, -61, null, 23, null, 11, null, 4, null, -74, null, -93, null, 60, null, -15, null, 76, null, -60, null, 66, null, 28, null, -51, null, 46, null, -51, null, 59, null, -43, null, 76, null, -80, null, -80, null, 72, null, -29, null, 8, null, 37, null, 71, null, 93, null, -70, null, -47, null, -1, null, -75], "expected": [23, null, -92, null, 64, null, 40, null, 50, null, 52, null, -88, null, -56, null, -6, null, -13, null, -2, null, 40, null, 16, null, 78, null, 42, null, 90, null, -12, null, 91, null, -78, null, 56, null, -10, null, 34, null, -96, null, -56, null, 83, null, 39, null, -9, null, -17, null, 9, null, 42, null, -78, null, 9, null, -64, null, 18, null, 3, null, 91, null, -85, null, -93, null, 4, null, 43, null, -8, null, -97, null, -30, null, -2, null, -77, null, -4, null, -50, null, 94, null, -91, null, 37, null, 68, null, 94, null, 22, null, 32, null, -37, null, -70, null, -44, null, 16, null, 41, null, -49, null, -20, null, -77, null, -9, null, 98, null, -75, null, -28, null, 22, null, -26, null, -59, null, -56, null, -61, null, 23, null, 11, null, 4, null, -74, null, -93, null, 60, null, -15, null, 76, null, -60, null, 66, null, 28, null, -51, null, 46, null, -51, null, 59, null, -43, null, 76, null, -80, null, -80, null, 72, null, -29, null, 8, null, 37, null, 71, null, 93, null, -70, null, -47, null, -1, null, -75], "isSample": false},
+    {"id": "zigzag-100", "logicalInput": [32, 34, null, null, 67, -38, null, null, -48, 71, null, null, -86, -20, null, null, -10, -73, null, null, -79, 36, null, null, -24, 66, null, null, 43, -59, null, null, -15, -53, null, null, 22, 37, null, null, 69, 84, null, null, 65, -13, null, null, -92, -65, null, null, -52, -74, null, null, -68, -72, null, null, -98, -80, null, null, -85, 58, null, null, -43, -33, null, null, -22, 40, null, null, -33, -38, null, null, -82, 29, null, null, 78, 32, null, null, 54, -67, null, null, -62, 66, null, null, 65, 90, null, null, 6, -36, null, null, -28, 99, null, null, -43, -89, null, null, 7, -78, null, null, -75, 91, null, null, 6, 65, null, null, 87, 10, null, null, 55, -60, null, null, -40, -31, null, null, 88, -94, null, null, 73, 27, null, null, 40, 83, null, null, -72, -79, null, null, -78, 1, null, null, 16, -19, null, null, -56, -89, null, null, 75, 90, null, null, -39, -18, null, null, 12, -36, null, null, -22, -31, null, null, -6, -99, null, null, 77, -40, null, null, 39, 30, null, null, -71, -100, null, null, -47, 65], "expected": [32, null, 34, 67, null, null, -38, -48, null, null, 71, -86, null, null, -20, -10, null, null, -73, -79, null, null, 36, -24, null, null, 66, 43, null, null, -59, -15, null, null, -53, 22, null, null, 37, 69, null, null, 84, 65, null, null, -13, -92, null, null, -65, -52, null, null, -74, -68, null, null, -72, -98, null, null, -80, -85, null, null, 58, -43, null, null, -33, -22, null, null, 40, -33, null, null, -38, -82, null, null, 29, 78, null, null, 32, 54, null, null, -67, -62, null, null, 66, 65, null, null, 90, 6, null, null, -36, -28, null, null, 99, -43, null, null, -89, 7, null, null, -78, -75, null, null, 91, 6, null, null, 65, 87, null, null, 10, 55, null, null, -60, -40, null, null, -31, 88, null, null, -94, 73, null, null, 27, 40, null, null, 83, -72, null, null, -79, -78, null, null, 1, 16, null, null, -19, -56, null, null, -89, 75, null, null, 90, -39, null, null, -18, 12, null, null, -36, -22, null, null, -31, -6, null, null, -99, 77, null, null, -40, 39, null, null, 30, -71, null, null, -100, -47, null, null, 65], "isSample": false},
+    {"id": "max-size-100", "logicalInput": [74, -60, -50, -16, -57, -63, 68, 56, -33, -20, -4, 73, -79, null, null, 87, 87, 13, 63, -47, 16, 88, 80, 91, 22, null, -67, 43, 1, null, null, -46, 81, 17, 27, null, null, null, -6, 81, 68, 13, 5, 28, 11, null, -9, 93, -72, null, 89, -29, null, 79, 72, null, null, 50, null, null, null, null, null, 31, null, 81, null, 81, -12, null, null, null, null, -75, -2, null, null, -54, 56, null, 71, null, null, -31, 1, -54, null, -15, null, 5, null, -54, -68, null, null, 24, null, 4, -19, null, null, -64, -29, null, -53, 15, null, null, null, null, null, 62, -47, null, null, null, 10, null, null, null, 70, null, 34, null, 15, 72, 76, 52, 92, -99, -85, null, -85, null, null, null, null, null, null, null, null, null, null, -63, -66, 100, null, -85, 5, 33, null, null, 21, 5, null, null, null, 77, null, null, null, -34, null, null, 82, 85, null, null, null, null, null, null, null, null, null, -88, null, null, null, 46, null, null, null, -2, null, null, 92, null, null, -10, null, -61, null, null, -17], "expected": [74, -50, -60, 68, -63, -57, -16, null, null, -79, 73, -4, -20, -33, 56, -67, null, 22, 91, 80, 88, 16, -47, 63, 13, 87, 87, -72, 93, -9, null, 11, 28, 5, 13, 68, 81, -6, null, null, null, 27, 17, 81, -46, null, null, 1, 43, 71, null, 56, -54, null, null, -2, -75, null, null, null, null, -12, 81, null, 81, null, 31, null, null, null, null, null, 50, null, null, 72, 79, null, -29, 89, null, null, null, null, 15, -53, null, -29, -64, null, null, -19, 4, null, 24, null, null, -68, -54, null, 5, null, -15, null, -54, 1, -31, null, null, null, null, null, null, -85, null, -85, -99, 92, 52, 76, 72, 15, null, 34, null, 70, null, null, null, 10, null, null, null, -47, 62, null, null, null, -34, null, null, null, 77, null, null, null, 5, 21, null, null, 33, 5, -85, null, 100, -66, -63, null, null, null, null, null, null, null, null, null, 46, null, null, null, -88, null, null, null, null, null, null, null, null, null, 85, 82, null, null, -10, null, null, 92, null, null, -2, null, null, -17, null, null, -61], "isSample": false}
+  ]
+}

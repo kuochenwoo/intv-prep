@@ -1,6 +1,6 @@
 # SWE Interview Prep · P0 + P1
 
-A local SWE interview-preparation desktop application. P0's dual-mode local Judge is complete. P1's Technical Deep Dive supports Claude / DeepSeek, caching, and resumable interviews. Claude Haiku 5.5 has passed real question generation, follow-ups, feedback, and failure recovery. DeepSeek's real multi-turn acceptance remains affected by HTTP 503 / keepalive timeouts. P2 System Design and P3's complete Hot 100 coverage are not implemented.
+A local SWE interview-preparation desktop application. P0's dual-mode local Judge is complete. P1's Technical Deep Dive supports Claude / DeepSeek, caching, and resumable interviews. Claude Haiku 5.5 has passed real question generation, follow-ups, feedback, and failure recovery. DeepSeek's real multi-turn acceptance remains affected by HTTP 503 / keepalive timeouts. P3's Hot 100 library is bundled: all 100 problems have complexity requirements and reference solutions verified in both modes. P2 System Design is not implemented.
 
 Project documentation and code comments are in English. The application UI, problem statements, and interview content remain in Chinese.
 
@@ -204,7 +204,7 @@ src-tauri/tests/p0.rs           Integration tests with real compilation and exec
 src-tauri/tests/harness.rs      Generated-harness tests for trees, grids, strings, and checkers
 ```
 
-Problems are embedded into Rust at compile time. `build.rs` embeds every `content/leetcode/problems/*.json`, so adding a problem needs no Rust or C++ adapter change. The library is parsed and validated once per process and listed by problem number; hidden tests are not sent to the UI.
+Problems are embedded into Rust at compile time. `build.rs` embeds every `content/leetcode/problems/*.json` and `content/leetcode/harnesses/*.cpp`, so adding a problem needs no Rust change. Problem metadata is parsed once per process and listed by problem number; the larger hidden tests are parsed only when judging and are never sent to the UI.
 
 ### Adding a problem
 
@@ -224,9 +224,12 @@ Each problem JSON carries an `io` block that drives Function-mode wrapping, ACM 
 - `output`: `"return"` (default) or a parameter name checked after an in-place call, e.g. `"returns": "void", "output": "nums"`.
 - `stdin` (optional): one string per line of `name` / `name.length` items for scalars and 1-D arrays. Without it each parameter uses its default layout: scalars and strings on one line; 1-D arrays as a length line then values; `string[]` as a count then one line each; `int[][]` as a row count then `k v1..vk` per row; `char[][]` as a row count then one string per row; `string[][]` as a group count then `k` and `k` lines per group; trees as a token count then level-order tokens.
 - stdout uses the same shapes, except 1-D arrays, lists, and trees print values only (no length) and `int[][]` rows print values only. `bool` prints `true`/`false` (`1`/`0` accepted); `double` compares with 1e-5 relative tolerance.
-- `checker`: `exact` (default), `unordered` (outer order ignored), `unordered_nested` (outer and inner order ignored), or `valid_pair` (Two Sum style index pair).
-- `logicalInput` is the bare value for one parameter, or an object keyed by parameter name. Every test's input and expected value is type-checked when the library loads, and `cargo test` fails on a malformed problem.
-- Design problems (LRU Cache, Min Stack, Trie, and similar operation sequences) are not covered by this spec yet. Monaco and its workers are bundled by Vite; there is no runtime CDN or LeetCode API dependency. After installing dependencies and packaging, LC problems, editing, judging, and storage work without external network access. SQLite uses Tauri's application-data directory, for example on macOS:
+- `checker`: `exact` (default), `unordered` (outer order ignored), `unordered_nested` (outer and inner order ignored), `valid_pair` (Two Sum style index pair), `longest_palindrome`, `balanced_bst`, or `tokens` (design-class call logs, numbers within 1e-5).
+- `logicalInput` is the bare value for one parameter, or an object keyed by parameter name. `cargo test` type-checks every test and judges both reference solutions for every bundled problem.
+- `harness` (optional) names a hand-written Function-mode `main()` in `content/leetcode/harnesses/` for design classes, cycles, and shared-node problems; `prelude` (optional) adds declarations such as a custom `Node` before the user's code.
+- The full authoring workflow (generator scripts, reference solutions, `verify_problem` tool, content rules including required complexity fields) is in [tools/leetcode/README.md](tools/leetcode/README.md).
+
+Monaco and its workers are bundled by Vite; there is no runtime CDN or LeetCode API dependency. After installing dependencies and packaging, LC problems, editing, judging, and storage work without external network access. SQLite uses Tauri's application-data directory, for example on macOS:
 
 ```text
 ~/Library/Application Support/local.swe.interview-prep/prep.sqlite3
@@ -240,4 +243,4 @@ Execution boundary: run only personally authored, trusted C++ code. Each Judge r
 
 - Keep temporary `.env` testing mode as requested; enable system-credential storage before distribution. DeepSeek's real multi-turn acceptance remains pending service recovery.
 - P2: System Design scenarios, stage control, and explainable feedback.
-- P3: Complete and verify the full Hot 100 (add `io` specs and tests; design-class problems need an operation-sequence harness), and improve quality.
+- P3: Hot 100 coverage is done; remaining work is quality (official-requirement checks, scaled-down tests noted in each problem).

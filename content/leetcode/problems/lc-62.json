@@ -1,0 +1,68 @@
+{
+  "id": "lc-62",
+  "title": "不同路径",
+  "difficulty": "medium",
+  "tags": [
+    "数学",
+    "动态规划",
+    "组合数学"
+  ],
+  "statement": "机器人位于 m × n 网格的左上角，每步只能向右或向下移动一格，问到达右下角共有多少条不同的路径。",
+  "constraints": [
+    "1 ≤ m, n ≤ 100",
+    "数据保证答案不超过 2 × 10^9"
+  ],
+  "complexity": {
+    "time": "O(m · n)（本地训练目标）；组合数公式 O(min(m, n))",
+    "space": "O(min(m, n)) 额外空间（滚动数组）",
+    "officialRequirement": "官方未强制复杂度要求。",
+    "notes": "答案为组合数 C(m + n - 2, m - 1)。用组合数逐项相乘再整除时需 64 位中间值。由于答案上限 2 × 10^9，m = n = 100 不会出现；本地最大测试为 m = 100, n = 7 与 m = 18, n = 17 等答案接近上限的网格。",
+    "sourceUrl": "https://leetcode.com/problems/unique-paths/"
+  },
+  "cpp": {
+    "functionTemplate": "class Solution {\npublic:\n    int uniquePaths(int m, int n) {\n        return 0; // Number of right/down paths in an m x n grid.\n    }\n};",
+    "acmIoSpec": "stdin：第一行整数 m；第二行整数 n。stdout：一个整数，不同路径数。",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n"
+  },
+  "io": {
+    "method": "uniquePaths",
+    "params": [
+      {
+        "name": "m",
+        "type": "int"
+      },
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "limits": {
+    "timeLimitMs": 1000,
+    "memoryLimitMb": 128,
+    "outputLimitKb": 64
+  },
+  "examples": [
+    {
+      "input": "{\"m\": 3, \"n\": 7}",
+      "output": "28"
+    },
+    {
+      "input": "{\"m\": 3, \"n\": 2}",
+      "output": "3"
+    }
+  ],
+  "tests": [
+    {"id": "t1", "logicalInput": {"m": 3, "n": 7}, "expected": 28, "isSample": true},
+    {"id": "t2", "logicalInput": {"m": 3, "n": 2}, "expected": 3, "isSample": true},
+    {"id": "one-by-one", "logicalInput": {"m": 1, "n": 1}, "expected": 1, "isSample": false},
+    {"id": "single-row-100", "logicalInput": {"m": 1, "n": 100}, "expected": 1, "isSample": false},
+    {"id": "single-column-100", "logicalInput": {"m": 100, "n": 1}, "expected": 1, "isSample": false},
+    {"id": "square-10", "logicalInput": {"m": 10, "n": 10}, "expected": 48620, "isSample": false},
+    {"id": "near-limit-17x18", "logicalInput": {"m": 17, "n": 18}, "expected": 1166803110, "isSample": false},
+    {"id": "near-limit-18x17", "logicalInput": {"m": 18, "n": 17}, "expected": 1166803110, "isSample": false},
+    {"id": "max-size-100x7", "logicalInput": {"m": 100, "n": 7}, "expected": 1609344100, "isSample": false},
+    {"id": "max-size-7x100", "logicalInput": {"m": 7, "n": 100}, "expected": 1609344100, "isSample": false}
+  ]
+}
