@@ -3,8 +3,8 @@ import { invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { Button } from "@astryxdesign/core/Button";
 import { TextArea } from "@astryxdesign/core/TextArea";
+import { HistoryDrawer } from "../interview/HistoryDrawer";
 import { TextInput } from "@astryxdesign/core/TextInput";
-import { NumberInput } from "@astryxdesign/core/NumberInput";
 import { Selector } from "@astryxdesign/core/Selector";
 import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
@@ -16,7 +16,7 @@ import { LiveResponse } from "../interview/LiveResponse";
 import { Diagram, Markdown } from "./DesignDocument";
 import "../interview/interview.css";
 import "./system-design.css";
-import { SessionTools, UsagePanel } from "../interview/SessionTools";
+import { SessionTools } from "../interview/SessionTools";
 
 const stages = [
   "requirements",
@@ -108,7 +108,13 @@ const emptyWorkspace = (): Workspace => ({
   diagram: "",
 });
 
-export default function SystemDesignApp({ dark }: { dark: boolean }) {
+export default function SystemDesignApp({
+  dark,
+  settingsVersion = 0,
+}: {
+  dark: boolean;
+  settingsVersion?: number;
+}) {
   const { t, lang } = useI18n();
   const [data, setData] = useState<Overview | null>(null),
     [scenarioId, setScenarioId] = useState("url-shortener"),
@@ -136,11 +142,8 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
     [live, setLive] = useState(""),
     [saveFailed, setSaveFailed] = useState(false);
   const [online, setOnline] = useState(navigator.onLine),
-    [apiKey, setApiKey] = useState(""),
     [connection, setConnection] = useState<Connection>({ kind: "unverified" }),
-    [confirm, setConfirm] = useState<"key" | "history" | "session" | null>(
-      null,
-    );
+    [confirm, setConfirm] = useState<"history" | "session" | null>(null);
   const [config, setConfig] = useState<Config>({
     provider: "claude",
     model: "claude-haiku-5-5",
@@ -152,7 +155,12 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
     revision = useRef(0),
     running = useRef(false),
     activeId = useRef("");
+  const [historyOpen, setHistoryOpen] = useState(false);
+  useEffect(() => {
+    if (isTauri()) void overview().catch((e) => setError(String(e)));
+  }, [settingsVersion]);
   function show(s: Session) {
+    setHistoryOpen(false);
     activeId.current = s.id;
     setScenarioId(s.question.seedId);
     setQuestionId(s.question.id);
@@ -305,14 +313,6 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
     workRef.current = emptyWorkspace();
     setWorkspace(emptyWorkspace());
   }
-  const keyStatus =
-    data && config.provider !== data.settings.config.provider
-      ? t("providerUnsaved")
-      : data?.settings.keyStatus === "saved"
-        ? t("keySaved")
-        : data?.settings.keyStatus === "unavailable"
-          ? t("keyUnavailable")
-          : t("keyMissing");
   const connectionText =
     connection.kind === "requesting"
       ? t("requesting", { p: connection.provider })
@@ -414,90 +414,6 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
           />
         </div>
       </section>
-      <div className="provider-settings">
-        <Collapsible
-          trigger={
-            <span>
-              <strong>{t("settingsTitle")}</strong>{" "}
-              <span className="muted">· {keyStatus}</span>
-            </span>
-          }
-          defaultIsOpen={!data || data.settings.keyStatus !== "saved"}
-        >
-          <div className="provider-fields">
-            <Selector
-              label="Provider"
-              size="sm"
-              width={160}
-              value={config.provider}
-              isDisabled={busy}
-              onChange={(v) => {
-                setApiKey("");
-                setConfig({
-                  ...config,
-                  provider: v,
-                  model: v === "claude" ? "claude-haiku-5-5" : "deepseek-flash",
-                });
-              }}
-              options={[
-                { value: "claude", label: "Claude" },
-                { value: "deepseek", label: "DeepSeek" },
-              ]}
-            />
-            <TextInput
-              label={t("modelName")}
-              size="sm"
-              width={220}
-              value={config.model}
-              isDisabled={busy}
-              onChange={(v) => setConfig({ ...config, model: v })}
-            />
-            <NumberInput
-              label={t("timeoutSeconds")}
-              size="sm"
-              min={15}
-              max={120}
-              value={config.timeoutSeconds}
-              isDisabled={busy}
-              onChange={(v) => setConfig({ ...config, timeoutSeconds: v })}
-            />
-            <TextInput
-              label={`${config.provider} API Key`}
-              type="password"
-              autoComplete="off"
-              size="sm"
-              width={240}
-              placeholder={t("apiKeyPlaceholder")}
-              value={apiKey}
-              isDisabled={busy}
-              onChange={setApiKey}
-            />
-            <Button
-              label={t("saveSettings")}
-              variant="primary"
-              size="sm"
-              isDisabled={busy || !data}
-              onClick={() =>
-                perform(async () => {
-                  await invoke("save_llm_settings", {
-                    config,
-                    apiKey: apiKey.trim() || null,
-                  });
-                  setApiKey("");
-                })
-              }
-            />
-            <Button
-              label={t("deleteKey")}
-              variant="destructive"
-              size="sm"
-              isDisabled={busy || !data}
-              onClick={() => setConfirm("key")}
-            />
-          </div>
-          <p className="muted">{t("settingsNote")}</p>
-        </Collapsible>
-      </div>
       <p className="privacy-note">
         {t("sdScope")} {t("privacyNote")}
       </p>
@@ -521,18 +437,12 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
         isOpen={confirm !== null}
         onOpenChange={(open) => !open && !busy && setConfirm(null)}
         title={
-          confirm === "key"
-            ? t("confirmKeyTitle", { p: config.provider })
-            : confirm === "history"
-              ? t("sdConfirmHistoryTitle")
-              : t("sdConfirmSessionTitle")
+          confirm === "history"
+            ? t("sdConfirmHistoryTitle")
+            : t("sdConfirmSessionTitle")
         }
         description={
-          confirm === "key"
-            ? t("confirmKey")
-            : confirm === "history"
-              ? t("sdConfirmHistory")
-              : t("sdConfirmSession")
+          confirm === "history" ? t("sdConfirmHistory") : t("sdConfirmSession")
         }
         actionLabel={t("confirmDelete")}
         cancelLabel={t("cancel")}
@@ -540,10 +450,7 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
         onAction={async () => {
           // perform() reports failures in the error banner, so the dialog closes either way.
           await perform(async () => {
-            if (confirm === "key") {
-              await invoke("delete_llm_key", { provider: config.provider });
-              setApiKey("");
-            } else if (confirm === "history") {
+            if (confirm === "history") {
               await invoke("sd_clear_history");
               forget();
               setQuestionId("");
@@ -558,6 +465,11 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
       {!data && isTauri() && <p className="sd-message">{t("sdLoading")}</p>}
       <div className="interview-main">
         <aside>
+          <Button
+            label={t("openHistory", { n: data?.sessions.length ?? 0 })}
+            width="100%"
+            onClick={() => setHistoryOpen(true)}
+          />
           <div className="list-head">
             <h2>{t("sdScenarios")}</h2>
             <Badge
@@ -627,7 +539,15 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
               </button>
             ))}
           </div>
-          <h3>{t("sdHistory")}</h3>
+        </aside>
+        <HistoryDrawer
+          open={historyOpen}
+          onOpenChange={setHistoryOpen}
+          title={t("sdHistory")}
+        >
+          {error && (
+            <Banner status="error" title={localizeError(error, lang)} />
+          )}
           {data?.sessions.length === 0 && (
             <p className="muted">{t("noSessions")}</p>
           )}
@@ -635,6 +555,7 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
             <button
               className={`problem ${s.id === session?.id ? "active" : ""}`}
               key={s.id}
+              aria-current={s.id === session?.id ? "true" : undefined}
               disabled={busy}
               title={s.title}
               onClick={() =>
@@ -661,9 +582,12 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
             size="sm"
             width="100%"
             isDisabled={busy || !data}
-            onClick={() => setConfirm("history")}
+            onClick={() => {
+              setHistoryOpen(false);
+              setConfirm("history");
+            }}
           />
-        </aside>
+        </HistoryDrawer>
         <main className="interview-workspace">
           {seed && (
             <section className="topic-panel card">
@@ -733,12 +657,6 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
           {!session ? (
             <>
               <p>{t("sdEmpty")}</p>
-              <UsagePanel
-                module="p2"
-                provider={config.provider}
-                model={config.model}
-                refreshKey={String(busy)}
-              />
             </>
           ) : (
             <section className="conversation-panel card">
@@ -771,8 +689,6 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
                 module="p2"
                 sessionId={session.id}
                 status={session.status}
-                provider={session.provider}
-                model={session.model}
                 busy={busy || saving}
                 turns={
                   session.turns.filter((t) => t.role === "candidate").length

@@ -4,6 +4,7 @@ import { Button } from "@astryxdesign/core/Button";
 import { Selector } from "@astryxdesign/core/Selector";
 import { NumberInput } from "@astryxdesign/core/NumberInput";
 import { Collapsible } from "@astryxdesign/core/Collapsible";
+import { AlertDialog } from "@astryxdesign/core/AlertDialog";
 import { Banner } from "@astryxdesign/core/Banner";
 import { useI18n } from "../../i18n";
 import { localizeError } from "../../errors";
@@ -64,8 +65,6 @@ export function SessionTools({
   module,
   sessionId,
   status,
-  provider,
-  model,
   busy,
   turns,
   stage,
@@ -73,8 +72,6 @@ export function SessionTools({
   module: "p1" | "p2";
   sessionId: string;
   status: string;
-  provider: string;
-  model: string;
   busy: boolean;
   turns: number;
   stage?: string;
@@ -86,7 +83,8 @@ export function SessionTools({
     [loaded, setLoaded] = useState(false),
     [working, setWorking] = useState(false),
     [error, setError] = useState(""),
-    [notice, setNotice] = useState("");
+    [notice, setNotice] = useState(""),
+    [exportFormat, setExportFormat] = useState<"md" | "json" | null>(null);
   const args = { module, sessionId };
   useEffect(() => {
     let active = true;
@@ -154,94 +152,97 @@ export function SessionTools({
   return (
     <section className="session-tools" aria-label={t("sessionTools")}>
       <div className="actions">
-        {!clock ? (
-          <>
-            <Selector
-              size="sm"
-              label={t("timer")}
-              value={minutes}
-              isDisabled={!loaded || working || busy || status !== "active"}
-              onChange={setMinutes}
-              options={[
-                { value: "off", label: t("timerOff") },
-                ...[10, 20, 30].map((n) => ({
-                  value: String(n),
-                  label: t("timerMinutes", { n }),
-                })),
-              ]}
-            />
-            {minutes !== "off" && (
-              <Button
+        <div className="session-export-actions">
+          <span className="muted">
+            {t("mockProgress", { n: turns })}
+            {stage
+              ? ` · ${t(`sdStage_${stage}` as Parameters<typeof t>[0])}`
+              : ""}
+          </span>
+          <Button
+            size="sm"
+            label={t("exportMarkdown")}
+            isDisabled={busy || working}
+            onClick={() => setExportFormat("md")}
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            label={t("exportJson")}
+            isDisabled={busy || working}
+            onClick={() => setExportFormat("json")}
+          />
+        </div>
+        <div className="session-timer-right">
+          {!clock ? (
+            <>
+              <Selector
                 size="sm"
-                variant="primary"
-                label={t("timerStart")}
+                label={t("timer")}
+                value={minutes}
                 isDisabled={!loaded || working || busy || status !== "active"}
-                onClick={() => void timing("start")}
+                onChange={setMinutes}
+                options={[
+                  { value: "off", label: t("timerOff") },
+                  ...[10, 20, 30].map((n) => ({
+                    value: String(n),
+                    label: t("timerMinutes", { n }),
+                  })),
+                ]}
               />
-            )}
-          </>
-        ) : (
-          <>
-            <span
-              role="timer"
-              className={`timer-clock ${left === 0 ? "urgent" : ""}`}
-              aria-label={t("timeLeft", { t: clockText(left) })}
-            >
-              {clockText(left)} / {clockText(clock.budgetMs)}
-            </span>
-            <span>
-              {clock.endedAt !== null
-                ? t("mockFinished")
-                : left === 0
-                  ? t("timeUp")
-                  : clock.deadlineMs === null
-                    ? t("mockPaused")
-                    : t("mockRunning")}
-            </span>
-            {clock.endedAt === null && status === "active" && left > 0 && (
-              <Button
-                size="sm"
-                variant="ghost"
-                label={t(
-                  clock.deadlineMs === null ? "timerResume" : "timerPause",
-                )}
-                isDisabled={working}
-                onClick={() =>
-                  void timing(clock.deadlineMs === null ? "resume" : "pause")
-                }
-              />
-            )}
-            {clock.endedAt === null && status === "active" && (
-              <Button
-                size="sm"
-                variant="ghost"
-                label={t("timerReset")}
-                isDisabled={working || busy}
-                onClick={() => void timing("reset")}
-              />
-            )}
-          </>
-        )}
-        <span className="muted">
-          {t("mockProgress", { n: turns })}
-          {stage
-            ? ` · ${t(`sdStage_${stage}` as Parameters<typeof t>[0])}`
-            : ""}
-        </span>
-        <span className="spacer" />
-        <Button
-          size="sm"
-          label={t("exportMarkdown")}
-          isDisabled={busy || working}
-          onClick={() => void exportFile("md")}
-        />
-        <Button
-          size="sm"
-          variant="ghost"
-          label={t("exportJson")}
-          isDisabled={busy || working}
-          onClick={() => void exportFile("json")}
-        />
+              {minutes !== "off" && (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  label={t("timerStart")}
+                  isDisabled={!loaded || working || busy || status !== "active"}
+                  onClick={() => void timing("start")}
+                />
+              )}
+            </>
+          ) : (
+            <>
+              <span
+                role="timer"
+                className={`timer-clock ${left === 0 ? "urgent" : ""}`}
+                aria-label={t("timeLeft", { t: clockText(left) })}
+              >
+                {clockText(left)} / {clockText(clock.budgetMs)}
+              </span>
+              <span>
+                {clock.endedAt !== null
+                  ? t("mockFinished")
+                  : left === 0
+                    ? t("timeUp")
+                    : clock.deadlineMs === null
+                      ? t("mockPaused")
+                      : t("mockRunning")}
+              </span>
+              {clock.endedAt === null && status === "active" && left > 0 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  label={t(
+                    clock.deadlineMs === null ? "timerResume" : "timerPause",
+                  )}
+                  isDisabled={working}
+                  onClick={() =>
+                    void timing(clock.deadlineMs === null ? "resume" : "pause")
+                  }
+                />
+              )}
+              {clock.endedAt === null && status === "active" && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  label={t("timerReset")}
+                  isDisabled={working || busy}
+                  onClick={() => void timing("reset")}
+                />
+              )}
+            </>
+          )}
+        </div>
       </div>
       {clock && clock.endedAt === null && left === 0 && (
         <Banner
@@ -253,12 +254,24 @@ export function SessionTools({
       <small className="muted">{t("exportScope")}</small>
       {error && <Banner status="error" title={localizeError(error, lang)} />}
       {notice && <p role="status">{notice}</p>}
-      <UsagePanel
-        module={module}
-        sessionId={sessionId}
-        provider={provider}
-        model={model}
-        refreshKey={`${status}-${turns}-${busy}`}
+      <AlertDialog
+        isOpen={exportFormat !== null}
+        onOpenChange={(open) => {
+          if (!open && !working) setExportFormat(null);
+        }}
+        title={t("confirmExportTitle")}
+        description={t("confirmExportDescription", {
+          format: exportFormat === "md" ? "Markdown" : "JSON",
+        })}
+        actionLabel={t("confirmExportAction")}
+        actionVariant="primary"
+        cancelLabel={t("cancel")}
+        isActionLoading={working}
+        onAction={async () => {
+          if (!exportFormat || busy) return;
+          await exportFile(exportFormat);
+          setExportFormat(null);
+        }}
       />
     </section>
   );
@@ -277,8 +290,7 @@ export function UsagePanel({
   refreshKey: string;
 }) {
   const { t, lang } = useI18n();
-  const [scope, setScope] = useState(sessionId ? "session" : "all"),
-    [data, setData] = useState<Accounting | null>(null),
+  const [data, setData] = useState<Accounting | null>(null),
     [error, setError] = useState(""),
     [working, setWorking] = useState(false),
     [rates, setRates] = useState<Rates>({
@@ -291,8 +303,8 @@ export function UsagePanel({
     [dirtyRates, setDirtyRates] = useState(false);
   async function load() {
     const next = await invoke<Accounting>("api_usage", {
-      module: scope === "session" ? module : null,
-      sessionId: scope === "session" ? sessionId : null,
+      module: sessionId ? module : null,
+      sessionId: sessionId ?? null,
     });
     setData(next);
   }
@@ -300,8 +312,8 @@ export function UsagePanel({
     let active = true;
     if (!isTauri()) return;
     invoke<Accounting>("api_usage", {
-      module: scope === "session" ? module : null,
-      sessionId: scope === "session" ? sessionId : null,
+      module: sessionId ? module : null,
+      sessionId: sessionId ?? null,
     })
       .then((next) => {
         if (active) setData(next);
@@ -312,7 +324,7 @@ export function UsagePanel({
     return () => {
       active = false;
     };
-  }, [scope, sessionId, module, refreshKey]);
+  }, [sessionId, module, refreshKey]);
   useEffect(() => {
     setDirtyRates(false);
     setSaved(false);
@@ -336,24 +348,9 @@ export function UsagePanel({
       minimumFractionDigits: 6,
     }).format(n);
   return (
-    <Collapsible
-      trigger={<strong>{t("usageTitle")}</strong>}
-      defaultIsOpen={false}
-    >
+    <section className="usage-panel">
       <p className="muted">{t("usageExplanation")}</p>
       <div className="actions">
-        {sessionId && (
-          <Selector
-            size="sm"
-            label={t("usageScope")}
-            value={scope}
-            onChange={setScope}
-            options={[
-              { value: "session", label: t("usageSession") },
-              { value: "all", label: t("usageAll") },
-            ]}
-          />
-        )}
         <Button
           size="sm"
           variant="ghost"
@@ -470,6 +467,6 @@ export function UsagePanel({
         {saved && <p role="status">{t("usagePricesSaved")}</p>}
       </Collapsible>
       {error && <Banner status="error" title={localizeError(error, lang)} />}
-    </Collapsible>
+    </section>
   );
 }

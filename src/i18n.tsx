@@ -5,6 +5,22 @@ export type Lang = "zh" | "en";
 // UI strings. Problem and topic text has its own `en` blocks in the content files,
 // and backend errors are translated in errors.ts.
 const strings = {
+  settingsPage: ["设置", "Settings"],
+  settingsPageNote: [
+    "管理模型、密钥、API 用量和费用。已有面试继续使用创建时的模型。",
+    "Manage models, credentials, API usage and costs. Existing interviews keep their original model.",
+  ],
+  settingsSaved: ["设置已保存。", "Settings saved."],
+  providerLabel: ["供应商", "Provider"],
+  providerKeyLabel: ["{p} API 密钥", "{p} API key"],
+  openHistory: ["面试历史 · {n}", "Interview history · {n}"],
+  confirmExportTitle: ["确认导出面试记录？", "Export this interview?"],
+  confirmExportDescription: [
+    "将下载 {format} 文件，包含已保存的题目、对话、AI 辅助标记、参考回答、反馈、设计笔记及用量。文件可能包含你的个人练习内容；不包含未提交草稿、密钥或私有考点。",
+    "Download a {format} file containing saved questions, conversation, AI-assistance labels, references, feedback, design notes and usage. It may contain personal practice content. Unsubmitted drafts, keys and private checkpoints are excluded.",
+  ],
+  confirmExportAction: ["确认导出", "Export file"],
+
   sessionTools: ["会话工具", "Session tools"],
   exportMarkdown: ["导出 Markdown", "Export Markdown"],
   exportJson: ["导出 JSON", "Export JSON"],

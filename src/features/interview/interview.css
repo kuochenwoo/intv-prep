@@ -293,3 +293,79 @@
     padding-inline-end: 4px;
   }
 }
+
+/* History is a modal drawer; primary navigation has its own uninterrupted scroll area. */
+.history-drawer[open] {
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+}
+.history-drawer-content {
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+.history-drawer-content > h3 {
+  display: none;
+}
+.interview-main > aside .topic-list {
+  max-height: none;
+  flex: 1;
+  min-height: 100px;
+  overflow-y: auto;
+}
+@media (min-width: 761px) {
+  .interview-main > aside {
+    height: calc(100dvh - var(--app-nav-height, 57px) - 32px);
+    overflow: hidden;
+  }
+}
+.settings-page {
+  max-width: 1120px;
+  margin-inline: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.settings-page h1,
+.settings-page h2 {
+  margin-block: 0 12px;
+}
+.settings-page .provider-settings,
+.settings-accounting {
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-container);
+  background: var(--color-background-card);
+}
+.session-tools > .actions {
+  align-items: center;
+}
+.session-timer-right {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  order: 2;
+}
+.session-export-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  order: 1;
+}
+.coding-timer-right {
+  margin-inline-start: auto;
+}
+
+.interview-main > aside > :not(.topic-list) {
+  flex-shrink: 0;
+}

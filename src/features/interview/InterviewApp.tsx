@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { Button } from "@astryxdesign/core/Button";
+import { HistoryDrawer } from "./HistoryDrawer";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { TextArea } from "@astryxdesign/core/TextArea";
-import { NumberInput } from "@astryxdesign/core/NumberInput";
 import { Selector } from "@astryxdesign/core/Selector";
 import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
@@ -14,7 +14,7 @@ import { lookup, useI18n } from "../../i18n";
 import { localizeError } from "../../errors";
 import { LiveResponse } from "./LiveResponse";
 import "./interview.css";
-import { SessionTools, UsagePanel } from "./SessionTools";
+import { SessionTools } from "./SessionTools";
 type Config = { provider: string; model: string; timeoutSeconds: number };
 type Settings = { config: Config; keyStatus: string; credentialSource: string };
 type Topic = {
@@ -107,7 +107,11 @@ const stateBadge: Record<string, "info" | "warning" | "success"> = {
   feedback_pending: "warning",
   finished: "success",
 };
-export default function InterviewApp() {
+export default function InterviewApp({
+  settingsVersion = 0,
+}: {
+  settingsVersion?: number;
+}) {
   const { t, lang } = useI18n();
   const [data, setData] = useState<Overview | null>(null),
     [topicId, setTopicId] = useState("cache-selection"),
@@ -117,11 +121,10 @@ export default function InterviewApp() {
   const [topicSearch, setTopicSearch] = useState(""),
     [topicCategory, setTopicCategory] = useState("");
   const [config, setConfig] = useState<Config>({
-      provider: "claude",
-      model: "claude-haiku-5-5",
-      timeoutSeconds: 60,
-    }),
-    [apiKey, setApiKey] = useState("");
+    provider: "claude",
+    model: "claude-haiku-5-5",
+    timeoutSeconds: 60,
+  });
   const [busy, setBusy] = useState(false),
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
@@ -130,9 +133,7 @@ export default function InterviewApp() {
     }),
     [live, setLive] = useState("");
   const [online, setOnline] = useState(navigator.onLine),
-    [confirm, setConfirm] = useState<"key" | "history" | "session" | null>(
-      null,
-    );
+    [confirm, setConfirm] = useState<"history" | "session" | null>(null);
   const queue = useRef(Promise.resolve()),
     saveError = useRef(""),
     revision = useRef(0);
@@ -158,7 +159,12 @@ export default function InterviewApp() {
           .includes(query))
     );
   });
+  const [historyOpen, setHistoryOpen] = useState(false);
+  useEffect(() => {
+    if (isTauri()) void overview().catch((e) => setError(String(e)));
+  }, [settingsVersion]);
   function show(s: Session) {
+    setHistoryOpen(false);
     setSession(s);
     setDraft(s.draft);
   }
@@ -321,14 +327,6 @@ export default function InterviewApp() {
       )
     );
   }
-  const keyStatus =
-    data && config.provider !== data.settings.config.provider
-      ? t("providerUnsaved")
-      : data?.settings.keyStatus === "saved"
-        ? t("keySaved")
-        : data?.settings.keyStatus === "unavailable"
-          ? t("keyUnavailable")
-          : t("keyMissing");
   const connectionText =
     connection.kind === "requesting"
       ? t("requesting", { p: connection.provider })
@@ -368,90 +366,6 @@ export default function InterviewApp() {
           />
         </div>
       </section>
-      <div className="provider-settings">
-        <Collapsible
-          trigger={
-            <span>
-              <strong>{t("settingsTitle")}</strong>{" "}
-              <span className="muted">· {keyStatus}</span>
-            </span>
-          }
-          defaultIsOpen={!data || data.settings.keyStatus !== "saved"}
-        >
-          <div className="provider-fields">
-            <Selector
-              label="Provider"
-              size="sm"
-              width={160}
-              value={config.provider}
-              isDisabled={busy}
-              onChange={(v) => {
-                setApiKey("");
-                setConfig({
-                  ...config,
-                  provider: v,
-                  model: v === "claude" ? "claude-haiku-5-5" : "deepseek-flash",
-                });
-              }}
-              options={[
-                { value: "claude", label: "Claude" },
-                { value: "deepseek", label: "DeepSeek" },
-              ]}
-            />
-            <TextInput
-              label={t("modelName")}
-              size="sm"
-              width={220}
-              value={config.model}
-              isDisabled={busy}
-              onChange={(v) => setConfig({ ...config, model: v })}
-            />
-            <NumberInput
-              label={t("timeoutSeconds")}
-              size="sm"
-              min={15}
-              max={120}
-              value={config.timeoutSeconds}
-              isDisabled={busy}
-              onChange={(v) => setConfig({ ...config, timeoutSeconds: v })}
-            />
-            <TextInput
-              label={`${config.provider} API Key`}
-              type="password"
-              autoComplete="off"
-              size="sm"
-              width={240}
-              placeholder={t("apiKeyPlaceholder")}
-              value={apiKey}
-              isDisabled={busy}
-              onChange={setApiKey}
-            />
-            <Button
-              label={t("saveSettings")}
-              variant="primary"
-              size="sm"
-              isDisabled={busy || !data}
-              onClick={() =>
-                perform(async () => {
-                  await invoke("save_llm_settings", {
-                    config,
-                    apiKey: apiKey.trim() || null,
-                  });
-                  setApiKey("");
-                })
-              }
-            />
-            <Button
-              label={t("deleteKey")}
-              variant="destructive"
-              size="sm"
-              isDisabled={busy || !data}
-              onClick={() => setConfirm("key")}
-            />
-          </div>
-          <p className="muted">{t("settingsNote")}</p>
-        </Collapsible>
-      </div>
       <p className="privacy-note">{t("privacyNote")}</p>
       {busy && live && <LiveResponse text={live} />}
       {error && (
@@ -468,18 +382,12 @@ export default function InterviewApp() {
         isOpen={confirm !== null}
         onOpenChange={(open) => !open && !busy && setConfirm(null)}
         title={
-          confirm === "key"
-            ? t("confirmKeyTitle", { p: config.provider })
-            : confirm === "history"
-              ? t("confirmHistoryTitle")
-              : t("confirmSessionTitle")
+          confirm === "history"
+            ? t("confirmHistoryTitle")
+            : t("confirmSessionTitle")
         }
         description={
-          confirm === "key"
-            ? t("confirmKey")
-            : confirm === "history"
-              ? t("confirmHistory")
-              : t("confirmSession")
+          confirm === "history" ? t("confirmHistory") : t("confirmSession")
         }
         actionLabel={t("confirmDelete")}
         cancelLabel={t("cancel")}
@@ -487,12 +395,7 @@ export default function InterviewApp() {
         onAction={async () => {
           // perform() reports failures in the error banner, so the dialog closes either way.
           await perform(async () => {
-            if (confirm === "key") {
-              await invoke("delete_llm_key", {
-                provider: config.provider,
-              });
-              setApiKey("");
-            } else if (confirm === "history") {
+            if (confirm === "history") {
               await invoke("clear_interview_history");
               setSession(null);
               setDraft("");
@@ -510,6 +413,11 @@ export default function InterviewApp() {
       />
       <main className="interview-main">
         <aside>
+          <Button
+            label={t("openHistory", { n: data?.sessions.length ?? 0 })}
+            width="100%"
+            onClick={() => setHistoryOpen(true)}
+          />
           <div className="list-head">
             <h2>{t("topics")}</h2>
             <Badge label={t("topicCount", { n: data?.topics.length ?? 0 })} />
@@ -593,7 +501,15 @@ export default function InterviewApp() {
               </button>
             ))}
           </div>
-          <h3>{t("history")}</h3>
+        </aside>
+        <HistoryDrawer
+          open={historyOpen}
+          onOpenChange={setHistoryOpen}
+          title={t("history")}
+        >
+          {error && (
+            <Banner status="error" title={localizeError(error, lang)} />
+          )}
           {data?.sessions.length === 0 && (
             <p className="muted">{t("noSessions")}</p>
           )}
@@ -601,6 +517,7 @@ export default function InterviewApp() {
             <button
               className={`problem ${s.id === session?.id ? "active" : ""}`}
               key={s.id}
+              aria-current={s.id === session?.id ? "true" : undefined}
               disabled={busy}
               onClick={() =>
                 perform(async () =>
@@ -628,9 +545,12 @@ export default function InterviewApp() {
             size="sm"
             width="100%"
             isDisabled={busy || !data}
-            onClick={() => setConfirm("history")}
+            onClick={() => {
+              setHistoryOpen(false);
+              setConfirm("history");
+            }}
           />
-        </aside>
+        </HistoryDrawer>
         <section className="interview-workspace">
           <section className="topic-panel card">
             {topic && (
@@ -718,12 +638,6 @@ export default function InterviewApp() {
             {!session ? (
               <>
                 <p className="muted">{t("noSession")}</p>
-                <UsagePanel
-                  module="p1"
-                  provider={config.provider}
-                  model={config.model}
-                  refreshKey={String(busy)}
-                />
               </>
             ) : (
               <>
@@ -750,8 +664,6 @@ export default function InterviewApp() {
                   module="p1"
                   sessionId={session.id}
                   status={session.status}
-                  provider={session.provider}
-                  model={session.model}
                   busy={busy || saving}
                   turns={answered}
                 />

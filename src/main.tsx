@@ -24,6 +24,7 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
 import "./style.css";
 import logo from "./assets/logo.png";
+import SettingsPage from "./features/interview/SettingsPage";
 import InterviewApp from "./features/interview/InterviewApp";
 import SystemDesignApp from "./features/system-design/SystemDesignApp";
 import { LangProvider, lookup, useI18n } from "./i18n";
@@ -126,9 +127,7 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
   );
   // Tag names differ per language, so a tag filter does not carry over.
   useEffect(() => setTag("all"), [lang]);
-  const [compiler, setCompiler] = useState(""),
-    [compilerInfo, setCompilerInfo] = useState(""),
-    [error, setError] = useState(""),
+  const [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [ready, setReady] = useState(false),
     [saving, setSaving] = useState(false);
@@ -143,9 +142,8 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
     Promise.all([
       invoke<Problem[]>("list_problems"),
       invoke<Progress[]>("load_progress"),
-      invoke<string>("get_compiler"),
     ])
-      .then(([ps, rows, path]) => {
+      .then(([ps, rows]) => {
         setProblems(ps);
         setProgress(
           Object.fromEntries(rows.map((r) => [keyOf(r.problemId, r.mode), r])),
@@ -161,7 +159,6 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
           }
         }
         setResults(rs);
-        setCompiler(path);
         setReady(true);
       })
       .catch((e) => setError(String(e)));
@@ -230,19 +227,6 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
       setBusy(false);
     }
   }
-  async function configure() {
-    setBusy(true);
-    setError("");
-    try {
-      const path = await invoke<string>("set_compiler", { path: compiler });
-      setCompiler(path);
-      setCompilerInfo(t("compilerDetected", { path }));
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setBusy(false);
-    }
-  }
   const result = results[key];
   const status = (s: string) => lookup(t, "status_", s);
   const visible = problems.filter(
@@ -259,25 +243,6 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
   };
   return (
     <div className="coding-app">
-      <section className="toolbar-row">
-        <TextInput
-          label={t("compiler")}
-          value={compiler}
-          placeholder={t("compilerPlaceholder")}
-          onChange={setCompiler}
-          isDisabled={busy}
-          size="sm"
-          width={420}
-        />
-        <Button
-          label={t("detectSave")}
-          size="sm"
-          isDisabled={!ready || busy}
-          onClick={configure}
-        />
-        <Badge variant="purple" label={t("offlineJudge")} />
-        {compilerInfo && <small className="muted">{compilerInfo}</small>}
-      </section>
       {error && (
         <div className="page-banner">
           <Banner
@@ -453,11 +418,14 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
               />
               <SegmentedControlItem value="acm" label={t("modeAcmFull")} />
             </SegmentedControl>
-            <Timer key={selected} />
             <small className="muted">
               {saving ? t("saving") : t("saved")} ·{" "}
               {mode === "function" ? t("mainProvided") : t("mainYours")}
             </small>
+            <Badge variant="purple" label={t("offlineJudge")} />
+            <div className="coding-timer-right">
+              <Timer key={selected} />
+            </div>
           </div>
           <div className="editor-frame">
             <Editor
@@ -562,7 +530,11 @@ function storedScheme(): Scheme {
 }
 function App() {
   const { lang, setLang, t } = useI18n();
-  const [view, setView] = useState<"lc" | "deep_dive" | "system_design">("lc");
+  const [view, setView] = useState<
+    "lc" | "deep_dive" | "system_design" | "settings"
+  >("lc");
+  const [settingsVersion, setSettingsVersion] = useState(0);
+  const [settingsVisited, setSettingsVisited] = useState(false);
   const [visited, setVisited] = useState(false);
   const [designVisited, setDesignVisited] = useState(false);
   const [scheme, setScheme] = useState<Scheme>(storedScheme);
@@ -599,7 +571,10 @@ function App() {
                 onChange={(v) => {
                   if (v === "deep_dive") setVisited(true);
                   if (v === "system_design") setDesignVisited(true);
-                  setView(v as "lc" | "deep_dive" | "system_design");
+                  if (v === "settings") setSettingsVisited(true);
+                  setView(
+                    v as "lc" | "deep_dive" | "system_design" | "settings",
+                  );
                 }}
               >
                 <SegmentedControlItem value="lc" label={t("moduleLc")} />
@@ -610,6 +585,10 @@ function App() {
                 <SegmentedControlItem
                   value="system_design"
                   label={t("moduleSystemDesign")}
+                />
+                <SegmentedControlItem
+                  value="settings"
+                  label={t("settingsPage")}
                 />
               </SegmentedControl>
             }
@@ -636,14 +615,25 @@ function App() {
           <div hidden={view !== "lc"}>
             <CodingApp scheme={scheme} />
           </div>
+          {settingsVisited && (
+            <div hidden={view !== "settings"}>
+              <SettingsPage
+                active={view === "settings"}
+                onSaved={() => setSettingsVersion((n) => n + 1)}
+              />
+            </div>
+          )}
           {designVisited && (
             <div hidden={view !== "system_design"}>
-              <SystemDesignApp dark={scheme === "dark"} />
+              <SystemDesignApp
+                dark={scheme === "dark"}
+                settingsVersion={settingsVersion}
+              />
             </div>
           )}
           {visited && (
             <div hidden={view !== "deep_dive"}>
-              <InterviewApp />
+              <InterviewApp settingsVersion={settingsVersion} />
             </div>
           )}
         </div>
