@@ -152,6 +152,19 @@ const strings = {
     "Technical and cross-component trade-offs",
   ],
   sdAssessment_communication: ["沟通表达", "Communication"],
+  sdConfirmHistoryTitle: ["清空系统设计历史？", "Clear system design history?"],
+  sdConfirmHistory: [
+    "将删除所有系统设计会话和缓存设计题，无法恢复。LC、技术深挖数据和密钥会保留。",
+    "This deletes all system design sessions and cached design questions and cannot be undone. LeetCode and Deep Dive data and keys are kept.",
+  ],
+  sdConfirmSessionTitle: [
+    "删除当前系统设计面试？",
+    "Delete this design interview?",
+  ],
+  sdConfirmSession: [
+    "将删除这次面试及其反馈，无法恢复。缓存设计题会保留。",
+    "This deletes the interview and its feedback and cannot be undone. Cached design questions are kept.",
+  ],
   sdRetrySave: ["重试保存工作区", "Retry saving workspace"],
   sdModelSettings: [
     "模型设置（与技术深挖共享）",
@@ -449,6 +462,8 @@ const strings = {
   dim_tradeoffs: ["替代方案权衡", "Trade-offs"],
   dim_failure_and_correctness: ["故障边界与正确性", "Failure and correctness"],
   dim_communication: ["沟通清晰度", "Communication"],
+  liveHide: ["收起", "Hide"],
+  liveShow: ["展开", "Show"],
   stream_question: ["题目", "Question"],
   stream_background: ["背景", "Background"],
   stream_constraints: ["约束", "Constraints"],

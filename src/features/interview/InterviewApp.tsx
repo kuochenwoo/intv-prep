@@ -12,7 +12,7 @@ import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { AlertDialog } from "@astryxdesign/core/AlertDialog";
 import { lookup, useI18n } from "../../i18n";
 import { localizeError } from "../../errors";
-import { readablePartialJson } from "./stream";
+import { LiveResponse } from "./LiveResponse";
 import "./interview.css";
 type Config = { provider: string; model: string; timeoutSeconds: number };
 type Settings = { config: Config; keyStatus: string; credentialSource: string };
@@ -429,17 +429,7 @@ export default function InterviewApp() {
         </Collapsible>
       </div>
       <p className="privacy-note">{t("privacyNote")}</p>
-      {busy && live && (
-        <div className="live-response" aria-live="polite">
-          <strong>{t("aiWriting")}</strong>
-          {readablePartialJson(live).map((s, i) => (
-            <section key={i}>
-              <span>{lookup(t, "stream_", s.field)}</span>
-              <p>{s.text}</p>
-            </section>
-          ))}
-        </div>
-      )}
+      {busy && live && <LiveResponse text={live} />}
       {error && (
         <div className="page-banner">
           <Banner

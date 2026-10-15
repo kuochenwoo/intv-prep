@@ -316,6 +316,26 @@ fn p1_and_coding_data_remain_untouched_by_p2() {
     assert_eq!(db::load(&c).unwrap()[0].code, "original code");
     swe_interview_prep::interview_store::clear_history(&c).unwrap();
     assert_eq!(store::sessions(&c).unwrap().len(), 1);
+    // Clearing system design history leaves coding progress alone, and vice versa above.
+    store::clear_history(&c).unwrap();
+    assert!(store::sessions(&c).unwrap().is_empty());
+    assert!(store::questions(&c).unwrap().is_empty());
+    assert_eq!(db::load(&c).unwrap()[0].code, "original code");
+}
+#[test]
+fn deleting_one_design_session_keeps_the_others_and_the_cache() {
+    let dir = tempfile::tempdir().unwrap();
+    let c = db::open(&dir.path().join("delete.sqlite3")).unwrap();
+    let first = start(&c);
+    let second = start(&c);
+    store::delete_session(&c, &first.id).unwrap();
+    let left: Vec<_> = store::sessions(&c)
+        .unwrap()
+        .into_iter()
+        .map(|s| s.id)
+        .collect();
+    assert_eq!(left, vec![second.id]);
+    assert_eq!(store::questions(&c).unwrap().len(), 2);
 }
 
 #[test]

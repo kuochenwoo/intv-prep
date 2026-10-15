@@ -9,9 +9,10 @@ import { Selector } from "@astryxdesign/core/Selector";
 import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
 import { Collapsible } from "@astryxdesign/core/Collapsible";
+import { AlertDialog } from "@astryxdesign/core/AlertDialog";
 import { lookup, useI18n, type Lang } from "../../i18n";
 import { localizeError } from "../../errors";
-import { readablePartialJson } from "../interview/stream";
+import { LiveResponse } from "../interview/LiveResponse";
 import { Diagram, Markdown } from "./DesignDocument";
 import "../interview/interview.css";
 import "./system-design.css";
@@ -82,6 +83,11 @@ type Summary = {
   createdAt: string;
 };
 type Config = { provider: string; model: string; timeoutSeconds: number };
+type Connection =
+  | { kind: "unverified" }
+  | { kind: "requesting"; provider: string }
+  | { kind: "ok" }
+  | { kind: "failed" };
 type Overview = {
   scenarios: Scenario[];
   questions: Question[];
@@ -107,7 +113,11 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
     [live, setLive] = useState(""),
     [saveFailed, setSaveFailed] = useState(false);
   const [online, setOnline] = useState(navigator.onLine),
-    [apiKey, setApiKey] = useState("");
+    [apiKey, setApiKey] = useState(""),
+    [connection, setConnection] = useState<Connection>({ kind: "unverified" }),
+    [confirm, setConfirm] = useState<"key" | "history" | "session" | null>(
+      null,
+    );
   const [config, setConfig] = useState<Config>({
     provider: "claude",
     model: "claude-haiku-5-5",
@@ -185,19 +195,26 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
         if (version === revision.current) setSaving(false);
       });
   }
-  async function perform(task: () => Promise<void>) {
+  async function perform(task: () => Promise<void>, network = false) {
     if (running.current) return;
     running.current = true;
     setBusy(true);
     setError("");
     setLive("");
+    if (network)
+      setConnection({
+        kind: "requesting",
+        provider: session?.provider ?? config.provider,
+      });
     try {
       await queue.current;
       if (saveError.current) throw new Error(saveError.current);
       await task();
       await overview();
+      if (network) setConnection({ kind: "ok" });
     } catch (e) {
       setError(String(e));
+      if (network) setConnection({ kind: "failed" });
       if (activeId.current && !saveError.current) {
         try {
           show(
@@ -246,16 +263,41 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
   );
   function request(action: "answer" | "feedback" | "retry") {
     if (!session) return;
-    void perform(async () =>
-      show(
-        await invoke<Session>("sd_request", {
-          sessionId: session.id,
-          action,
-          answer: action === "answer" ? draft : null,
-        }),
-      ),
+    void perform(
+      async () =>
+        show(
+          await invoke<Session>("sd_request", {
+            sessionId: session.id,
+            action,
+            answer: action === "answer" ? draft : null,
+          }),
+        ),
+      true,
     );
   }
+  // Clears the open session after it is deleted on disk.
+  function forget() {
+    activeId.current = "";
+    setSession(null);
+    workRef.current = emptyWorkspace();
+    setWorkspace(emptyWorkspace());
+  }
+  const keyStatus =
+    data && config.provider !== data.settings.config.provider
+      ? t("providerUnsaved")
+      : data?.settings.keyStatus === "saved"
+        ? t("keySaved")
+        : data?.settings.keyStatus === "unavailable"
+          ? t("keyUnavailable")
+          : t("keyMissing");
+  const connectionText =
+    connection.kind === "requesting"
+      ? t("requesting", { p: connection.provider })
+      : connection.kind === "ok"
+        ? t("lastOk")
+        : connection.kind === "failed"
+          ? t("lastFailed")
+          : t("apiUnverified");
   const list = (values: string[]) => (
     <ul>
       {values.map((v, i) => (
@@ -270,43 +312,44 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
           <h1>{t("moduleSystemDesign")}</h1>
           <p className="muted">{t("sdTagline")}</p>
         </div>
-        <div className="dd-status">
+        <div className="dd-status" aria-live="polite">
           <Badge
-            variant={online ? "success" : "warning"}
+            variant={online ? "success" : "error"}
             label={online ? t("online") : t("offline")}
           />
           <Badge
+            variant={
+              connection.kind === "failed"
+                ? "error"
+                : connection.kind === "ok"
+                  ? "success"
+                  : "neutral"
+            }
+            label={busy ? t("busyNote") : connectionText}
+          />
+          <Badge
             variant="purple"
-            label={`${session?.provider ?? config.provider} · ${session?.model ?? config.model}`}
+            label={`${config.provider} · ${config.model}`}
           />
         </div>
       </section>
-      <p className="privacy-note">
-        {t("sdScope")} {t("privacyNote")}
-      </p>
       <div className="provider-settings">
         <Collapsible
-          defaultIsOpen={false}
           trigger={
-            <strong>
-              {t("sdModelSettings")} ·{" "}
-              {data?.settings.keyStatus === "saved"
-                ? t("keySaved")
-                : t("keyMissing")}
-            </strong>
+            <span>
+              <strong>{t("settingsTitle")}</strong>{" "}
+              <span className="muted">· {keyStatus}</span>
+            </span>
           }
+          defaultIsOpen={!data || data.settings.keyStatus !== "saved"}
         >
           <div className="provider-fields">
             <Selector
-              label={t("sdProvider")}
+              label="Provider"
               size="sm"
-              width={150}
+              width={160}
               value={config.provider}
               isDisabled={busy}
-              options={[
-                { value: "claude", label: "Claude" },
-                { value: "deepseek", label: "DeepSeek" },
-              ]}
               onChange={(v) => {
                 setApiKey("");
                 setConfig({
@@ -315,13 +358,18 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
                   model: v === "claude" ? "claude-haiku-5-5" : "deepseek-flash",
                 });
               }}
+              options={[
+                { value: "claude", label: "Claude" },
+                { value: "deepseek", label: "DeepSeek" },
+              ]}
             />
             <TextInput
               label={t("modelName")}
               size="sm"
+              width={220}
               value={config.model}
-              onChange={(v) => setConfig({ ...config, model: v })}
               isDisabled={busy}
+              onChange={(v) => setConfig({ ...config, model: v })}
             />
             <NumberInput
               label={t("timeoutSeconds")}
@@ -329,21 +377,23 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
               min={15}
               max={120}
               value={config.timeoutSeconds}
-              onChange={(v) => setConfig({ ...config, timeoutSeconds: v })}
               isDisabled={busy}
+              onChange={(v) => setConfig({ ...config, timeoutSeconds: v })}
             />
             <TextInput
               label={`${config.provider} API Key`}
               type="password"
               autoComplete="off"
               size="sm"
-              value={apiKey}
-              onChange={setApiKey}
+              width={240}
               placeholder={t("apiKeyPlaceholder")}
+              value={apiKey}
               isDisabled={busy}
+              onChange={setApiKey}
             />
             <Button
               label={t("saveSettings")}
+              variant="primary"
               size="sm"
               isDisabled={busy || !data}
               onClick={() =>
@@ -356,51 +406,106 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
                 })
               }
             />
+            <Button
+              label={t("deleteKey")}
+              variant="ghost"
+              size="sm"
+              isDisabled={busy || !data}
+              onClick={() => setConfirm("key")}
+            />
           </div>
           <p className="muted">{t("settingsNote")}</p>
         </Collapsible>
       </div>
-      {!isTauri() && <Banner status="warning" title={t("needDesktop")} />}
+      <p className="privacy-note">
+        {t("sdScope")} {t("privacyNote")}
+      </p>
+      {!isTauri() && (
+        <div className="page-banner">
+          <Banner status="warning" title={t("needDesktop")} />
+        </div>
+      )}
+      {busy && live && <LiveResponse text={live} />}
       {error && (
-        <div className="sd-message">
-          <Banner status="error" title={localizeError(error, lang)} />
+        <div className="page-banner">
+          <Banner
+            status="error"
+            title={localizeError(error, lang)}
+            isDismissable
+            onDismiss={() => setError("")}
+          />
         </div>
       )}
-      {busy && (
-        <div className="live-response" aria-live="polite">
-          <strong>{t("busyNote")}</strong>
-          {readablePartialJson(live).map((s, i) => (
-            <section key={i}>
-              <p>{s.text}</p>
-            </section>
-          ))}
-        </div>
-      )}
+      <AlertDialog
+        isOpen={confirm !== null}
+        onOpenChange={(open) => !open && !busy && setConfirm(null)}
+        title={
+          confirm === "key"
+            ? t("confirmKeyTitle", { p: config.provider })
+            : confirm === "history"
+              ? t("sdConfirmHistoryTitle")
+              : t("sdConfirmSessionTitle")
+        }
+        description={
+          confirm === "key"
+            ? t("confirmKey")
+            : confirm === "history"
+              ? t("sdConfirmHistory")
+              : t("sdConfirmSession")
+        }
+        actionLabel={t("confirmDelete")}
+        cancelLabel={t("cancel")}
+        isActionLoading={busy}
+        onAction={async () => {
+          // perform() reports failures in the error banner, so the dialog closes either way.
+          await perform(async () => {
+            if (confirm === "key") {
+              await invoke("delete_llm_key", { provider: config.provider });
+              setApiKey("");
+            } else if (confirm === "history") {
+              await invoke("sd_clear_history");
+              forget();
+              setQuestionId("");
+            } else if (session) {
+              await invoke("sd_delete_session", { sessionId: session.id });
+              forget();
+            }
+          });
+          setConfirm(null);
+        }}
+      />
       {!data && isTauri() && <p className="sd-message">{t("sdLoading")}</p>}
       <div className="interview-main">
         <aside>
-          <h2>{t("sdScenarios")}</h2>
+          <div className="list-head">
+            <h2>{t("sdScenarios")}</h2>
+            <Badge
+              label={t("topicCount", { n: data?.scenarios.length ?? 0 })}
+            />
+          </div>
           {data?.scenarios.map((s) => (
-            <Button
+            <button
+              className={`problem ${s.id === scenarioId ? "active" : ""}`}
               key={s.id}
-              label={lang === "en" ? s.en.title : s.title}
-              variant={s.id === scenarioId ? "primary" : "ghost"}
-              isDisabled={busy}
+              disabled={busy}
               onClick={() => {
                 setScenarioId(s.id);
                 setQuestionId("");
               }}
-            />
+            >
+              <strong>{lang === "en" ? s.en.title : s.title}</strong>
+            </button>
           ))}
           <h3>{t("sdHistory")}</h3>
+          {data?.sessions.length === 0 && (
+            <p className="muted">{t("noSessions")}</p>
+          )}
           {data?.sessions.map((s) => (
-            <Button
+            <button
+              className={`problem ${s.id === session?.id ? "active" : ""}`}
               key={s.id}
-              label={`${s.title.slice(0, 70)} · ${stageLabel(s.stage)} · ${lookup(t, "state_", s.status)}`}
-              tooltip={`${s.title} · ${date(s.createdAt)}`}
-              variant={session?.id === s.id ? "primary" : "ghost"}
-              size="sm"
-              isDisabled={busy}
+              disabled={busy}
+              title={s.title}
               onClick={() =>
                 perform(async () =>
                   show(
@@ -408,12 +513,29 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
                   ),
                 )
               }
-            />
+            >
+              <strong>
+                {s.title.slice(0, 50)}
+                {s.title.length > 50 ? "…" : ""}
+              </strong>
+              <small>
+                {stageLabel(s.stage)} · {lookup(t, "state_", s.status)} ·{" "}
+                {date(s.createdAt)}
+              </small>
+            </button>
           ))}
+          <Button
+            label={t("clearHistory")}
+            variant="ghost"
+            size="sm"
+            width="100%"
+            isDisabled={busy || !data}
+            onClick={() => setConfirm("history")}
+          />
         </aside>
         <main className="interview-workspace">
           {seed && (
-            <section className="topic-panel">
+            <section className="topic-panel card">
               <h2>{seed.title}</h2>
               <p>{seed.description}</p>
               <Collapsible trigger={t("sdSeed")} defaultIsOpen={false}>
@@ -439,7 +561,7 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
                       show(
                         await invoke<Session>("sd_start", { questionId: q.id }),
                       );
-                    })
+                    }, true)
                   }
                 />
               </div>
@@ -479,7 +601,7 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
           {!session ? (
             <p>{t("sdEmpty")}</p>
           ) : (
-            <section className="conversation-panel">
+            <section className="conversation-panel card">
               <div className="session-heading">
                 <h2>{t("sdCurrent")}</h2>
                 <Badge
@@ -491,6 +613,17 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
                         : "info"
                   }
                   label={lookup(t, "state_", session.status)}
+                />
+                <small className="muted">
+                  {session.provider} / {session.model}
+                </small>
+                <span className="spacer" />
+                <Button
+                  label={t("deleteSession")}
+                  variant="ghost"
+                  size="sm"
+                  isDisabled={busy}
+                  onClick={() => setConfirm("session")}
                 />
               </div>
               <div className="question-context">

@@ -79,25 +79,9 @@
   border-radius: var(--radius-element);
   margin-top: 10px;
 }
-.sd-app .interview-main aside button {
-  white-space: normal;
-  text-align: start;
-  height: auto;
-  min-height: 40px;
-}
 @media (max-width: 1000px) {
   .sd-app .interview-main {
     grid-template-columns: 210px minmax(0, 1fr);
     padding-inline: 16px;
   }
-}
-
-/* Keep stream progress visible while the user waits at the answer controls. */
-.sd-app > .live-response {
-  position: fixed;
-  inset-inline-end: 24px;
-  bottom: 16px;
-  width: min(640px, calc(100vw - 48px));
-  max-height: 32vh;
-  z-index: 5;
 }

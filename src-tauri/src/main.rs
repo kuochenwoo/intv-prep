@@ -354,6 +354,22 @@ fn clear_interview_history(state: State<AppState>) -> Result<(), String> {
     interview_store::clear_history(&state.db())
 }
 #[tauri::command]
+fn sd_delete_session(state: State<AppState>, session_id: String) -> Result<(), String> {
+    let _guard = state
+        .interview
+        .try_lock()
+        .map_err(|_| "请等待当前面试请求完成")?;
+    system_design_store::delete_session(&state.db(), &session_id)
+}
+#[tauri::command]
+fn sd_clear_history(state: State<AppState>) -> Result<(), String> {
+    let _guard = state
+        .interview
+        .try_lock()
+        .map_err(|_| "请等待当前面试请求完成")?;
+    system_design_store::clear_history(&state.db())
+}
+#[tauri::command]
 fn sd_overview(state: State<AppState>) -> Result<serde_json::Value, String> {
     let c = state.db();
     Ok(
@@ -496,6 +512,8 @@ fn main() {
             sd_change_stage,
             sd_generate,
             sd_request,
+            sd_delete_session,
+            sd_clear_history,
             interview_overview,
             save_llm_settings,
             delete_llm_key,

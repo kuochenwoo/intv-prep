@@ -299,3 +299,15 @@ pub fn retry_pending(
     }
     outcome
 }
+pub fn delete_session(c: &Connection, id: &str) -> Result<(), String> {
+    c.execute("DELETE FROM sd_sessions WHERE id=?1", [id])
+        .map_err(err)?;
+    Ok(())
+}
+/// Deletes every system design session and cached question; P1 and coding data are untouched.
+pub fn clear_history(c: &Connection) -> Result<(), String> {
+    let tx = c.unchecked_transaction().map_err(err)?;
+    tx.execute("DELETE FROM sd_sessions", []).map_err(err)?;
+    tx.execute("DELETE FROM sd_questions", []).map_err(err)?;
+    tx.commit().map_err(err)
+}
