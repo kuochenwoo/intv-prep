@@ -442,7 +442,7 @@ export default function InterviewApp() {
             />
             <Button
               label={t("deleteKey")}
-              variant="ghost"
+              variant="destructive"
               size="sm"
               isDisabled={busy || !data}
               onClick={() => setConfirm("key")}
@@ -623,7 +623,7 @@ export default function InterviewApp() {
           ))}
           <Button
             label={t("clearHistory")}
-            variant="ghost"
+            variant="destructive"
             size="sm"
             width="100%"
             isDisabled={busy || !data}
@@ -738,7 +738,7 @@ export default function InterviewApp() {
                   <span className="spacer" />
                   <Button
                     label={t("deleteSession")}
-                    variant="ghost"
+                    variant="destructive"
                     size="sm"
                     isDisabled={busy}
                     onClick={() => setConfirm("session")}
