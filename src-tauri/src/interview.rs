@@ -37,6 +37,19 @@ pub struct FollowUp {
     pub should_end: bool,
 }
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReferenceAnswer {
+    pub answer: String,
+    pub key_points: Vec<String>,
+}
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReferenceView {
+    pub turn_index: usize,
+    #[serde(flatten)]
+    pub content: ReferenceAnswer,
+}
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Rating {
     Good,
@@ -94,10 +107,21 @@ impl Validated for GeneratedQuestion {
 }
 impl Validated for FollowUp {
     fn validate(&self) -> Result<(), String> {
-        if text(&self.observation) && text(&self.follow_up_question) {
+        if !text(&self.observation) {
+            return Err("追问观察为空或超过6000字符，请重试".into());
+        }
+        if !text(&self.follow_up_question) {
+            return Err("追问问题为空或超过6000字符，请重试".into());
+        }
+        Ok(())
+    }
+}
+impl Validated for ReferenceAnswer {
+    fn validate(&self) -> Result<(), String> {
+        if text(&self.answer) && list(&self.key_points, 1) {
             Ok(())
         } else {
-            Err("追问字段为空或过长，请重试".into())
+            Err("参考答案为空、过长或缺少要点，请重试".into())
         }
     }
 }
@@ -149,6 +173,8 @@ pub struct QuestionView {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Turn {
+    #[serde(default)]
+    pub ai_assisted: bool,
     pub role: String,
     pub text: String,
     pub timestamp: String,
@@ -166,6 +192,7 @@ pub struct SessionView {
     pub should_end: bool,
     pub turns: Vec<Turn>,
     pub feedback: Option<Feedback>,
+    pub references: Vec<ReferenceView>,
     pub created_at: String,
 }
 #[derive(Serialize)]
@@ -182,5 +209,11 @@ pub struct SessionSummary {
 pub trait LlmProvider {
     fn generate_question(&self, topic: &Topic) -> Result<GeneratedQuestion, String>;
     fn next_turn(&self, question: &GeneratedQuestion, turns: &[Turn]) -> Result<FollowUp, String>;
+    fn reference_answer(
+        &self,
+        question: &GeneratedQuestion,
+        target_question: &str,
+        turns: &[Turn],
+    ) -> Result<ReferenceAnswer, String>;
     fn summarize(&self, question: &GeneratedQuestion, turns: &[Turn]) -> Result<Feedback, String>;
 }

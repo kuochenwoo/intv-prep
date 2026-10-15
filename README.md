@@ -78,12 +78,15 @@ macOS 应用输出到 `src-tauri/target/release/bundle/macos/SWE Interview Prep.
 - 内置 10 个主题：缓存选型、热点与缓存故障、幂等与重试、消息可靠投递、队列选型、限流/熔断、并发事务、副本故障转移、分片扩容、RPC 尾延迟。
 - 选择主题 → 显式联网生成新题 → SQLite 缓存 → 新建面试 → 提交回答并动态追问 → 结束并生成五维定性反馈。
 - 可随机选择本地主题、复用已缓存问题、查看历史和恢复未完成会话；这些操作不调用 API。
+- “AI 参考作答并追问（联网）”会让模型回答当前原题或追问，自动作为候选人消息提交，再由面试官继续追问。会话明确标记“AI 参考代答”，可回看作答要点；支持与手写回答交替使用。代答进入后续追问上下文，结束反馈会区分 AI 辅助与用户独立回答。
 - 面试官内部的追问方向和检查点不会随题目/会话 DTO 发给前端；反馈只在结束后显示，不做百分制评分。
 - 一次最多 20 轮回答，每条最多 6000 字符。追问只发送当前题目和最近 12 条消息；反馈发送本会话完整记录，不发送其他会话或题库。
 - 模型、超时（15–120 秒）可设置。会话使用创建时的模型，之后改设置不会悄悄改变已有会话的模型。
 - 失败后保留内容并提供手动重试，不做自动收费重试。超时涵盖整次请求，持续空白保活不会重置截止时间；响应上限 1 MiB。
 
 使用方式：打开顶部 **Technical Deep Dive**，检查模型设置。已有 `.env` 时直接使用；没有时可通过应用内密码输入框保存，或先从 `.env.example` 创建 `.env` 再填写（不要覆盖已有 `.env`）。新配置默认模型 `claude-haiku-5-5`；已有 DeepSeek 配置保留，可在 Provider 下拉框切换并保存。已有会话仍使用创建时的 Provider 和模型。按钮明确标示哪些操作联网，并显示最近一次请求状态。
+
+AI 代答使用当前会话创建时的 Provider / 模型，一次操作通常有“生成代答”和“获取追问”两次 API 请求，可能产生费用；已有本轮代答缓存会复用。代答先保存再请求追问，后者失败时通过“重试待处理请求”恢复，不重复生成或追加代答。已有未提交草稿时先自行提交或清空，再使用 AI 代答；重启后历史消息和 AI 标记都会恢复。
 
 ### 当前临时密钥策略（用户指定）
 
@@ -105,7 +108,7 @@ Claude 接口依据：[Haiku 5.5 迁移指南](https://platform.claude.com/docs/
 
 ### P1 验证与实际限制
 
-- 26 项默认自动化测试通过：11 项 P0 回归、9 项 HTTP/JSON/整体超时及 Claude 协议测试、6 项面试存储和临时 `.env` 测试。
+- 30 项默认自动化测试通过：11 项 P0 回归、9 项 HTTP/JSON/整体超时及 Claude 协议测试、10 项面试存储、AI 代答、失败恢复、旧数据迁移和临时 `.env` 测试。
 - 供应商故障测试使用明确的本机 HTTP 夹具；状态恢复测试使用明确的测试 Provider。这些结果不冒充真实 AI 的出题、追问或评价质量。
 - 真实 macOS Keychain 独立测试在切换临时 `.env` 策略前已通过；该测试默认忽略，当前不再写入系统凭据。
 - 真实账户的 `/models` 查询成功，返回 `deepseek-flash`、`deepseek-v4-pro`。`flash` 生成请求返回 HTTP 503；`pro` 曾返回 HTTP 200 但持续空白保活，未得到可验证的完成内容。桌面端已确认显示失败、解除忙碌状态并保留密钥设置。DeepSeek 完整真实面试仍待服务恢复后验收。
@@ -123,6 +126,14 @@ npm test
 cargo run --manifest-path src-tauri/Cargo.toml --no-default-features --example live_deep_dive
 # 或指定账户另一可用模型及独立的测试数据库
 INTERVIEW_PROVIDER=deepseek INTERVIEW_MODEL=deepseek-v4-pro cargo run --manifest-path src-tauri/Cargo.toml --no-default-features --example live_deep_dive -- /tmp/intv-p1-live-pro.sqlite3
+```
+
+已用 Claude Haiku 5.5 完成真实原题代答→自动提交→继续追问→追问代答→继续追问→五维反馈→重开恢复，并验证追问失败后的恢复不会重复追加代答。Claude 请求输出预算为 8192 tokens，给思考及完整 JSON 留出空间；截断或空追问会被拦截，可重试。
+
+下面的真实 AI 代答验收会在已有 Claude 场景题的测试数据库中新建一个会话，连续为原题及下一轮追问代答并自动提交，随后检查五维反馈和重开恢复；会调用真实 API 并产生费用：
+
+```sh
+cargo run --manifest-path src-tauri/Cargo.toml --no-default-features --example live_reference -- /tmp/intv-p1-live-claude-final.sqlite3
 ```
 
 单独验证系统凭据适配（当前测试阶段不必执行；只使用独立临时测试条目，不会覆盖实际 Key）：

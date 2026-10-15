@@ -240,6 +240,28 @@ async fn retry_interview(
     })
     .await
 }
+#[tauri::command(async)]
+async fn submit_interview_reference(
+    state: State<'_, AppState>,
+    session_id: String,
+    turn_index: usize,
+) -> Result<interview::SessionView, String> {
+    let state = state.inner().clone();
+    background(move || {
+        let _guard = state
+            .interview
+            .try_lock()
+            .map_err(|_| "已有面试请求正在运行")?;
+        let c = db::open(&state.path)?;
+        interview_store::submit_reference(
+            &c,
+            &session_id,
+            turn_index,
+            &provider(&c, Some(&session_id))?,
+        )
+    })
+    .await
+}
 #[tauri::command]
 fn delete_interview_session(state: State<AppState>, session_id: String) -> Result<(), String> {
     let _guard = state
@@ -279,6 +301,7 @@ fn main() {
             submit_interview_answer,
             finish_interview,
             retry_interview,
+            submit_interview_reference,
             delete_interview_session,
             clear_interview_history,
             list_problems,

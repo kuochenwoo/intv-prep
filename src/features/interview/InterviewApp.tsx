@@ -32,6 +32,7 @@ type Feedback = {
   gaps: string[];
   nextPracticeTopics: string[];
 };
+type Reference = { turnIndex: number; answer: string; keyPoints: string[] };
 type Session = {
   id: string;
   question: Question;
@@ -41,8 +42,14 @@ type Session = {
   draft: string;
   lastError: string | null;
   shouldEnd: boolean;
-  turns: { role: string; text: string; timestamp: string }[];
+  turns: {
+    role: string;
+    text: string;
+    timestamp: string;
+    aiAssisted: boolean;
+  }[];
   feedback: Feedback | null;
+  references: Reference[];
   createdAt: string;
 };
 type Summary = {
@@ -531,9 +538,25 @@ export default function InterviewApp() {
                   {session.turns.map((t, i) => (
                     <section className={`turn ${t.role}`} key={i}>
                       <strong>
-                        {t.role === "candidate" ? "你的回答" : "面试官追问"}
+                        {t.role === "candidate"
+                          ? t.aiAssisted
+                            ? "AI 参考代答"
+                            : "你的回答"
+                          : "面试官追问"}
                       </strong>
                       <p>{t.text}</p>
+                      {t.aiAssisted && (
+                        <details className="reference-content">
+                          <summary>参考作答要点</summary>
+                          <ul>
+                            {session.references
+                              .find((r) => r.turnIndex === i)
+                              ?.keyPoints.map((point, n) => (
+                                <li key={n}>{point}</li>
+                              ))}
+                          </ul>
+                        </details>
+                      )}
                     </section>
                   ))}
                 </div>
@@ -629,6 +652,31 @@ export default function InterviewApp() {
                         disabled={
                           busy ||
                           !!draft.trim() ||
+                          session.turns.filter((t) => t.role === "candidate")
+                            .length >= 20
+                        }
+                        onClick={() =>
+                          perform(
+                            async () =>
+                              show(
+                                await invoke<Session>(
+                                  "submit_interview_reference",
+                                  {
+                                    sessionId: session.id,
+                                    turnIndex: session.turns.length,
+                                  },
+                                ),
+                              ),
+                            true,
+                          )
+                        }
+                      >
+                        AI 参考作答并追问（联网）
+                      </button>
+                      <button
+                        disabled={
+                          busy ||
+                          !!draft.trim() ||
                           !session.turns.some((t) => t.role === "candidate")
                         }
                         onClick={() =>
@@ -646,9 +694,13 @@ export default function InterviewApp() {
                         结束并生成反馈（联网）
                       </button>
                     </div>
+                    <p className="muted">
+                      AI 参考作答会自动回答当前问题并继续追问，在记录中标注为 AI
+                      代答。
+                    </p>
                     {draft.trim() && (
                       <p className="muted">
-                        结束前请先提交回答，或自行清空尚未提交的草稿。
+                        使用 AI 代答或结束前，请先提交或清空当前草稿。
                       </p>
                     )}
                     {session.shouldEnd && (

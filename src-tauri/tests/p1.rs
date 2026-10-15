@@ -36,6 +36,7 @@ struct FixtureProvider {
     generated: Cell<usize>,
     turns: Cell<usize>,
     summaries: Cell<usize>,
+    reference_turns: Cell<usize>,
 }
 impl FixtureProvider {
     fn new() -> Self {
@@ -44,6 +45,7 @@ impl FixtureProvider {
             generated: Cell::new(0),
             turns: Cell::new(0),
             summaries: Cell::new(0),
+            reference_turns: Cell::new(0),
         }
     }
 }
@@ -64,6 +66,27 @@ impl LlmProvider for FixtureProvider {
                 should_end: false,
             })
         }
+    }
+    fn reference_answer(
+        &self,
+        _: &GeneratedQuestion,
+        target: &str,
+        turns: &[Turn],
+    ) -> Result<ReferenceAnswer, String> {
+        self.reference_turns.set(turns.len());
+        if self.fail.get() {
+            return Err("测试参考请求失败".into());
+        }
+        if turns.is_empty() {
+            assert_eq!(target, question().question);
+        } else {
+            assert_eq!(target, turns.last().unwrap().text);
+        }
+        assert!(!turns.iter().any(|t| t.text.contains("UNSUBMITTED_DRAFT")));
+        Ok(ReferenceAnswer {
+            answer: format!("测试参考，仅针对：{target}"),
+            key_points: vec!["测试要点".into()],
+        })
     }
     fn summarize(&self, _: &GeneratedQuestion, turns: &[Turn]) -> Result<Feedback, String> {
         self.summaries.set(self.summaries.get() + 1);
@@ -274,4 +297,162 @@ fn temporary_env_keys_are_private_atomic_and_provider_specific() {
             0o600
         );
     }
+}
+
+#[test]
+fn references_are_per_question_cached_and_do_not_change_answers_or_session_state() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("prep.sqlite3");
+    let c = db::open(&path).unwrap();
+    let config = LlmSettings::default();
+    let api = FixtureProvider::new();
+    let q = store::cache_question(&c, "cache-selection", &config, &question()).unwrap();
+    let s = store::start(&c, &q.id, &config).unwrap();
+    store::save_draft(&c, &s.id, "UNSUBMITTED_DRAFT").unwrap();
+    api.fail.set(true);
+    assert!(store::generate_reference(&c, &s.id, 0, &api).is_err());
+    assert!(store::session(&c, &s.id).unwrap().references.is_empty());
+    api.fail.set(false);
+    let original = store::generate_reference(&c, &s.id, 0, &api).unwrap();
+    assert_eq!(api.reference_turns.get(), 0);
+    let unchanged = store::session(&c, &s.id).unwrap();
+    assert_eq!(unchanged.status, "active");
+    assert_eq!(unchanged.draft, "UNSUBMITTED_DRAFT");
+    assert!(unchanged.turns.is_empty());
+    for _ in 0..2 {
+        store::begin_answer(&c, &s.id, "我使用 Redis").unwrap();
+        store::retry_pending(&c, &s.id, &api).unwrap();
+    }
+    let followup = store::generate_reference(&c, &s.id, 2, &api).unwrap();
+    assert_eq!(api.reference_turns.get(), 2); // No later answer/turn leaks into an old reference.
+    assert_ne!(original.answer, followup.answer);
+    assert!(store::generate_reference(&c, &s.id, 1, &api).is_err()); // Candidate message.
+    assert!(store::generate_reference(&c, &s.id, 999, &api).is_err());
+    store::begin_answer(&c, &s.id, "继续回答").unwrap();
+    assert!(store::generate_reference(&c, &s.id, 4, &api).is_err()); // Pending request.
+    store::retry_pending(&c, &s.id, &api).unwrap();
+    store::begin_feedback(&c, &s.id).unwrap();
+    store::retry_pending(&c, &s.id, &api).unwrap();
+    drop(c);
+    let c = db::open(&path).unwrap();
+    api.fail.set(true);
+    assert_eq!(
+        store::generate_reference(&c, &s.id, 2, &api)
+            .unwrap()
+            .answer,
+        followup.answer
+    );
+    assert!(store::reference(&c, &s.id, 0).unwrap().is_some());
+    let restored = store::session(&c, &s.id).unwrap();
+    assert_eq!(restored.references.len(), 2);
+    assert_eq!(restored.turns.len(), 6);
+    assert!(!restored.turns.iter().any(|t| t.text.contains("测试参考")));
+    assert_eq!(restored.status, "finished");
+    store::delete_session(&c, &s.id).unwrap();
+    let count: i64 = c
+        .query_row("SELECT count(*) FROM interview_references", [], |r| {
+            r.get(0)
+        })
+        .unwrap();
+    assert_eq!(count, 0);
+}
+
+#[test]
+fn ai_reference_submits_current_question_then_continues_interview() {
+    let dir = tempfile::tempdir().unwrap();
+    let c = db::open(&dir.path().join("prep.sqlite3")).unwrap();
+    let config = LlmSettings::default();
+    let api = FixtureProvider::new();
+    let q = store::cache_question(&c, "cache-selection", &config, &question()).unwrap();
+    let s = store::start(&c, &q.id, &config).unwrap();
+    store::save_draft(&c, &s.id, "UNSUBMITTED_DRAFT").unwrap();
+    assert!(store::submit_reference(&c, &s.id, 0, &api).is_err());
+    assert_eq!(
+        store::session(&c, &s.id).unwrap().draft,
+        "UNSUBMITTED_DRAFT"
+    );
+    store::save_draft(&c, &s.id, "").unwrap();
+    api.fail.set(true);
+    assert!(store::submit_reference(&c, &s.id, 0, &api).is_err());
+    let failed = store::session(&c, &s.id).unwrap();
+    assert_eq!(failed.status, "active");
+    assert!(failed.turns.is_empty());
+    api.fail.set(false);
+    let first = store::submit_reference(&c, &s.id, 0, &api).unwrap();
+    assert_eq!(first.status, "active");
+    assert_eq!(first.turns.len(), 2);
+    assert_eq!(first.turns[0].role, "candidate");
+    assert!(first.turns[0].ai_assisted);
+    assert_eq!(first.turns[0].text, first.references[0].content.answer);
+    assert_eq!(first.turns[1].role, "interviewer");
+    assert!(!first.turns[1].ai_assisted);
+    assert!(store::submit_reference(&c, &s.id, 0, &api).is_err()); // Stale click.
+    let second = store::submit_reference(&c, &s.id, 2, &api).unwrap();
+    assert_eq!(second.turns.len(), 4);
+    assert!(second.turns[2].ai_assisted);
+    assert_eq!(api.reference_turns.get(), 2);
+    assert!(second.turns[2].text.contains(&first.turns[1].text));
+    store::begin_answer(&c, &s.id, "我再自行补充方案").unwrap();
+    let third = store::retry_pending(&c, &s.id, &api).unwrap();
+    assert!(!third.turns[4].ai_assisted);
+    store::begin_feedback(&c, &s.id).unwrap();
+    let finished = store::retry_pending(&c, &s.id, &api).unwrap();
+    assert_eq!(finished.status, "finished");
+    assert_eq!(finished.turns.iter().filter(|t| t.ai_assisted).count(), 2);
+    assert!(store::submit_reference(&c, &s.id, 6, &api).is_err());
+}
+
+#[test]
+fn ai_answer_is_saved_before_failed_followup_and_retry_never_duplicates_it() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("prep.sqlite3");
+    let c = db::open(&path).unwrap();
+    let config = LlmSettings::default();
+    let api = FixtureProvider::new();
+    let q = store::cache_question(&c, "cache-selection", &config, &question()).unwrap();
+    let s = store::start(&c, &q.id, &config).unwrap();
+    // Existing generation cache allows the next request to fail specifically at followup.
+    let cached = store::generate_reference(&c, &s.id, 0, &api).unwrap();
+    api.fail.set(true);
+    assert!(store::submit_reference(&c, &s.id, 0, &api).is_err());
+    drop(c);
+    let c = db::open(&path).unwrap();
+    let pending = store::session(&c, &s.id).unwrap();
+    assert_eq!(pending.status, "awaiting_reply");
+    assert_eq!(pending.turns.len(), 1);
+    assert!(pending.turns[0].ai_assisted);
+    assert_eq!(pending.turns[0].text, cached.answer);
+    assert!(store::submit_reference(&c, &s.id, 0, &api).is_err());
+    api.fail.set(false);
+    let next = store::retry_pending(&c, &s.id, &api).unwrap();
+    assert_eq!(next.turns.len(), 2);
+    assert_eq!(next.references.len(), 1);
+    assert!(next.draft.is_empty());
+    assert_eq!(next.turns.iter().filter(|t| t.ai_assisted).count(), 1);
+}
+
+#[test]
+fn ai_provenance_migration_preserves_legacy_turns_and_is_idempotent() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("prep.sqlite3");
+    let c = db::open(&path).unwrap();
+    let config = LlmSettings::default();
+    let q = store::cache_question(&c, "cache-selection", &config, &question()).unwrap();
+    let s = store::start(&c, &q.id, &config).unwrap();
+    store::begin_answer(&c, &s.id, "旧版本的手写回答").unwrap();
+    c.execute("ALTER TABLE interview_turns DROP COLUMN ai_assisted", [])
+        .unwrap();
+    drop(c);
+    for _ in 0..2 {
+        let c = db::open(&path).unwrap();
+        let restored = store::session(&c, &s.id).unwrap();
+        assert_eq!(restored.status, "awaiting_reply");
+        assert_eq!(restored.turns[0].text, "旧版本的手写回答");
+        assert!(!restored.turns[0].ai_assisted);
+    }
+    let legacy: Turn = serde_json::from_value(
+        serde_json::json!({"role":"candidate","text":"旧回答","timestamp":"test"}),
+    )
+    .unwrap();
+    assert!(!legacy.ai_assisted);
 }

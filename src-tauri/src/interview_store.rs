@@ -23,7 +23,26 @@ pub fn migrate(c: &Connection) -> Result<(), String> {
         UNIQUE(session_id,turn_index));
     CREATE TABLE IF NOT EXISTS interview_feedback (
         session_id TEXT PRIMARY KEY REFERENCES interview_sessions(id) ON DELETE CASCADE,
-        feedback_json TEXT NOT NULL);").map_err(err)
+        feedback_json TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS interview_references (
+        session_id TEXT NOT NULL REFERENCES interview_sessions(id) ON DELETE CASCADE,
+        turn_index INTEGER NOT NULL CHECK(turn_index >= 0), content_json TEXT NOT NULL,
+        PRIMARY KEY(session_id,turn_index));").map_err(err)?;
+    let columns = c
+        .prepare("PRAGMA table_info(interview_turns)")
+        .map_err(err)?
+        .query_map([], |r| r.get::<_, String>(1))
+        .map_err(err)?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(err)?;
+    if !columns.iter().any(|name| name == "ai_assisted") {
+        c.execute(
+            "ALTER TABLE interview_turns ADD COLUMN ai_assisted INTEGER NOT NULL DEFAULT 0",
+            [],
+        )
+        .map_err(err)?;
+    }
+    Ok(())
 }
 fn new_id(c: &Connection) -> Result<String, String> {
     c.query_row("SELECT lower(hex(randomblob(16)))", [], |r| r.get(0))
@@ -83,12 +102,29 @@ pub fn start(
     session(c, &id)
 }
 pub fn session(c: &Connection, id: &str) -> Result<SessionView, String> {
-    let mut s=c.query_row("SELECT question_id,provider,model,status,draft,last_error,should_end,created_at FROM interview_sessions WHERE id=?1",[id],|r|Ok(SessionView{id:id.into(),question:QuestionView{id:r.get(0)?,seed_id:String::new(),provider:String::new(),model:String::new(),question:String::new(),background:String::new(),constraints:vec![],created_at:String::new()},provider:r.get(1)?,model:r.get(2)?,status:r.get(3)?,draft:r.get(4)?,last_error:r.get(5)?,should_end:r.get(6)?,turns:vec![],feedback:None,created_at:r.get(7)?})).optional().map_err(err)?.ok_or("面试会话不存在")?;
+    let mut s=c.query_row("SELECT question_id,provider,model,status,draft,last_error,should_end,created_at FROM interview_sessions WHERE id=?1",[id],|r|Ok(SessionView{id:id.into(),question:QuestionView{id:r.get(0)?,seed_id:String::new(),provider:String::new(),model:String::new(),question:String::new(),background:String::new(),constraints:vec![],created_at:String::new()},provider:r.get(1)?,model:r.get(2)?,status:r.get(3)?,draft:r.get(4)?,last_error:r.get(5)?,should_end:r.get(6)?,turns:vec![],feedback:None,references:vec![],created_at:r.get(7)?})).optional().map_err(err)?.ok_or("面试会话不存在")?;
     s.question = question(c, &s.question.id)?.0;
-    let mut stmt=c.prepare("SELECT role,text,created_at FROM interview_turns WHERE session_id=?1 ORDER BY turn_index").map_err(err)?;
+    let mut refs = c.prepare("SELECT turn_index,content_json FROM interview_references WHERE session_id=?1 ORDER BY turn_index").map_err(err)?;
+    let rows = refs
+        .query_map([id], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?)))
+        .map_err(err)?;
+    for row in rows {
+        let (turn_index, raw) = row.map_err(err)?;
+        let turn_index = usize::try_from(turn_index).map_err(|_| "本地参考答案索引无效")?;
+        let content: ReferenceAnswer =
+            serde_json::from_str(&raw).map_err(|_| "本地参考答案数据损坏")?;
+        content.validate()?;
+        s.references.push(ReferenceView {
+            turn_index,
+            content,
+        });
+    }
+
+    let mut stmt=c.prepare("SELECT role,text,created_at,ai_assisted FROM interview_turns WHERE session_id=?1 ORDER BY turn_index").map_err(err)?;
     s.turns = stmt
         .query_map([id], |r| {
             Ok(Turn {
+                ai_assisted: r.get(3)?,
                 role: r.get(0)?,
                 text: r.get(1)?,
                 timestamp: r.get(2)?,
@@ -155,11 +191,25 @@ pub fn save_draft(c: &Connection, id: &str, draft: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn add_turn(c: &Connection, id: &str, role: &str, text: &str) -> Result<(), String> {
-    c.execute("INSERT INTO interview_turns(session_id,role,text,turn_index) SELECT ?1,?2,?3,COALESCE(MAX(turn_index),-1)+1 FROM interview_turns WHERE session_id=?1",params![id,role,text]).map_err(err)?;
+fn add_turn(
+    c: &Connection,
+    id: &str,
+    role: &str,
+    text: &str,
+    ai_assisted: bool,
+) -> Result<(), String> {
+    c.execute("INSERT INTO interview_turns(session_id,role,text,ai_assisted,turn_index) SELECT ?1,?2,?3,?4,COALESCE(MAX(turn_index),-1)+1 FROM interview_turns WHERE session_id=?1",params![id,role,text,ai_assisted]).map_err(err)?;
     Ok(())
 }
 pub fn begin_answer(c: &Connection, id: &str, answer: &str) -> Result<(), String> {
+    begin_answer_kind(c, id, answer, false)
+}
+fn begin_answer_kind(
+    c: &Connection,
+    id: &str,
+    answer: &str,
+    ai_assisted: bool,
+) -> Result<(), String> {
     if answer.trim().is_empty() || answer.chars().count() > 6000 {
         return Err("回答需要 1–6000 字符".into());
     }
@@ -171,7 +221,10 @@ pub fn begin_answer(c: &Connection, id: &str, answer: &str) -> Result<(), String
     if s.turns.iter().filter(|t| t.role == "candidate").count() >= 20 {
         return Err("已达 20 轮上限，请结束并生成反馈".into());
     }
-    add_turn(&tx, id, "candidate", answer)?;
+    if ai_assisted && !s.draft.trim().is_empty() {
+        return Err("请先提交或清空当前草稿，再使用 AI 代答".into());
+    }
+    add_turn(&tx, id, "candidate", answer, ai_assisted)?;
     tx.execute("UPDATE interview_sessions SET status='awaiting_reply',draft=?2,last_error=NULL WHERE id=?1",params![id,answer]).map_err(err)?;
     tx.commit().map_err(err)
 }
@@ -207,7 +260,7 @@ pub fn retry_pending(
                 let next = provider.next_turn(&q, &s.turns)?;
                 next.validate()?;
                 let tx = c.unchecked_transaction().map_err(err)?;
-                add_turn(&tx, id, "interviewer", &next.follow_up_question)?;
+                add_turn(&tx, id, "interviewer", &next.follow_up_question, false)?;
                 tx.execute("UPDATE interview_sessions SET status='active',draft='',last_error=NULL,should_end=?2 WHERE id=?1",params![id,next.should_end]).map_err(err)?;
                 tx.commit().map_err(err)?;
             }
@@ -240,6 +293,84 @@ pub fn retry_pending(
         return Err(e);
     }
     session(c, id)
+}
+// 0 identifies the original question; n > 0 identifies turns[n - 1].
+fn reference_target(s: &SessionView, index: usize) -> Result<String, String> {
+    if index == 0 {
+        return Ok(s.question.question.clone());
+    }
+    s.turns
+        .get(index - 1)
+        .filter(|t| t.role == "interviewer")
+        .map(|t| t.text.clone())
+        .ok_or_else(|| "只能为原题或已存在的面试官追问生成参考答案".into())
+}
+pub fn reference(
+    c: &Connection,
+    id: &str,
+    index: usize,
+) -> Result<Option<ReferenceAnswer>, String> {
+    let s = session(c, id)?;
+    reference_target(&s, index)?;
+    Ok(s.references
+        .into_iter()
+        .find(|r| r.turn_index == index)
+        .map(|r| r.content))
+}
+pub fn generate_reference(
+    c: &Connection,
+    id: &str,
+    index: usize,
+    provider: &impl LlmProvider,
+) -> Result<ReferenceAnswer, String> {
+    if let Some(cached) = reference(c, id, index)? {
+        return Ok(cached);
+    }
+    let s = session(c, id)?;
+    if s.status != "active" && s.status != "finished" {
+        return Err("请先完成待处理的追问或反馈，再生成参考答案".into());
+    }
+    let target = reference_target(&s, index)?;
+    // Later answers, unsubmitted drafts, and other reference answers never enter this context.
+    let turns = &s.turns[..index];
+    let content = provider.reference_answer(&question(c, &s.question.id)?.1, &target, turns)?;
+    content.validate()?;
+    c.execute(
+        "INSERT INTO interview_references(session_id,turn_index,content_json) VALUES(?1,?2,?3)",
+        params![
+            id,
+            index as i64,
+            serde_json::to_string(&content).map_err(err)?
+        ],
+    )
+    .map_err(err)?;
+    Ok(content)
+}
+pub fn submit_reference(
+    c: &Connection,
+    id: &str,
+    expected_index: usize,
+    provider: &impl LlmProvider,
+) -> Result<SessionView, String> {
+    let s = session(c, id)?;
+    if s.status != "active" {
+        return Err("请先重试待处理请求；已结束的会话不能继续作答".into());
+    }
+    if !s.draft.trim().is_empty() {
+        return Err("请先提交或清空当前草稿，再使用 AI 代答".into());
+    }
+    if s.turns.iter().filter(|t| t.role == "candidate").count() >= 20 {
+        return Err("已达20轮上限，请结束并生成反馈".into());
+    }
+    if s.turns.len() != expected_index {
+        return Err("当前问题已变化，请刷新会话后再使用 AI 代答".into());
+    }
+    reference_target(&s, expected_index)?;
+    let reference = generate_reference(c, id, expected_index, provider)?;
+    // Persist the AI answer and pending state BEFORE asking the interviewer for the next turn.
+    // A retry after failure resumes that request without generating/submitting another answer.
+    begin_answer_kind(c, id, &reference.answer, true)?;
+    retry_pending(c, id, provider)
 }
 pub fn delete_session(c: &Connection, id: &str) -> Result<(), String> {
     c.execute("DELETE FROM interview_sessions WHERE id=?1", [id])

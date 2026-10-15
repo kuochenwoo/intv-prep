@@ -208,3 +208,19 @@
     border-bottom: 1px solid #2b374a;
   }
 }
+
+.reference-content {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #656044;
+  border-radius: 7px;
+  background: #29291f;
+}
+.reference-content p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+}
+.reference-content li {
+  margin: 6px 0;
+}
