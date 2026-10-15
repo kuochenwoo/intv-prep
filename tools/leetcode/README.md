@@ -44,7 +44,20 @@ INTV_CONTENT_DIR=content/leetcode src-tauri/target/debug/examples/verify_problem
 
 ## The `io` spec
 
-See the README section "Adding a problem" for the full field list. Summary:
+Each problem JSON has an `io` block that drives Function-mode wrapping, ACM stdin and checking:
+
+```json
+"io": {
+  "method": "twoSum",
+  "params": [{ "name": "nums", "type": "int[]" }, { "name": "target", "type": "int" }],
+  "returns": "int[]",
+  "stdin": ["nums.length target", "nums"],
+  "checker": "valid_pair"
+}
+```
+
+- `output`: `"return"` (default), or a parameter name checked after an in-place call, e.g. `"returns": "void", "output": "nums"`.
+- `harness` / `prelude`: see "Custom harnesses" below.
 
 - Types: `int`, `long`, `double`, `bool`, `string` (one raw line), `int[]`, `long[]`, `string[]`, `int[][]`, `char[][]`, `string[][]`, `ListNode`, `TreeNode`; `returns` may be `void` with `output` naming the in-place parameter. `int` values must fit in 32 bits.
 - `logicalInput`: the bare value for one parameter, otherwise an object keyed by parameter name.

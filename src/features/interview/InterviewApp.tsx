@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { Button } from "@astryxdesign/core/Button";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { TextArea } from "@astryxdesign/core/TextArea";
+import { NumberInput } from "@astryxdesign/core/NumberInput";
+import { Selector } from "@astryxdesign/core/Selector";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Collapsible } from "@astryxdesign/core/Collapsible";
+import { lookup, useI18n } from "../../i18n";
 import { readablePartialJson } from "./stream";
 import "./interview.css";
 type Config = { provider: string; model: string; timeoutSeconds: number };
@@ -69,27 +78,29 @@ type Overview = {
   sessions: Summary[];
   settings: Settings;
 };
-const states: Record<string, string> = {
-  active: "进行中",
-  awaiting_reply: "等待追问 / 可重试",
-  feedback_pending: "等待反馈 / 可重试",
-  finished: "已结束",
+type Connection =
+  | { kind: "unverified" }
+  | { kind: "requesting"; provider: string }
+  | { kind: "ok" }
+  | { kind: "failed" };
+const ratingBadge: Record<
+  string,
+  "success" | "warning" | "error" | "info" | "neutral"
+> = {
+  good: "success",
+  partial: "warning",
+  missing: "neutral",
+  incorrect: "error",
+  uncertain: "info",
 };
-const ratings: Record<string, string> = {
-  good: "良好",
-  partial: "部分具备",
-  missing: "遗漏",
-  incorrect: "有误",
-  uncertain: "待确认",
-};
-const dimensions: Record<string, string> = {
-  principles: "原理理解",
-  selection_rationale: "技术选型依据",
-  tradeoffs: "替代方案权衡",
-  failure_and_correctness: "故障边界与正确性",
-  communication: "沟通清晰度",
+const stateBadge: Record<string, "info" | "warning" | "success"> = {
+  active: "info",
+  awaiting_reply: "warning",
+  feedback_pending: "warning",
+  finished: "success",
 };
 export default function InterviewApp() {
+  const { t, lang } = useI18n();
   const [data, setData] = useState<Overview | null>(null),
     [topicId, setTopicId] = useState("cache-selection"),
     [questionId, setQuestionId] = useState("");
@@ -104,7 +115,9 @@ export default function InterviewApp() {
   const [busy, setBusy] = useState(false),
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
-    [connection, setConnection] = useState("API 尚未验证"),
+    [connection, setConnection] = useState<Connection>({
+      kind: "unverified",
+    }),
     [live, setLive] = useState("");
   const [online, setOnline] = useState(navigator.onLine),
     [confirm, setConfirm] = useState<"key" | "history" | "session" | null>(
@@ -113,6 +126,7 @@ export default function InterviewApp() {
   const queue = useRef(Promise.resolve()),
     saveError = useRef(""),
     revision = useRef(0);
+  const locale = lang === "zh" ? "zh-CN" : "en";
   function show(s: Session) {
     setSession(s);
     setDraft(s.draft);
@@ -169,7 +183,7 @@ export default function InterviewApp() {
       })
       .catch((e) => {
         saveError.current = String(e);
-        setError(`回答草稿保存失败：${e}`);
+        setError(t("draftSaveFailed", { e: String(e) }));
       })
       .then(() => {
         if (revision.current === version) setSaving(false);
@@ -184,15 +198,18 @@ export default function InterviewApp() {
     setError("");
     setLive("");
     if (network)
-      setConnection(`正在请求 ${session?.provider ?? config.provider}…`);
+      setConnection({
+        kind: "requesting",
+        provider: session?.provider ?? config.provider,
+      });
     try {
       await flush();
       await task();
       await overview();
-      if (network) setConnection("上次 API 请求成功");
+      if (network) setConnection({ kind: "ok" });
     } catch (e) {
       setError(String(e));
-      if (network) setConnection("上次联网操作失败，可重试");
+      if (network) setConnection({ kind: "failed" });
       if (session && !saveError.current) {
         try {
           show(
@@ -209,261 +226,306 @@ export default function InterviewApp() {
       setLive("");
     }
   }
-  const topic = data?.topics.find((t) => t.id === topicId),
+  const topic = data?.topics.find((x) => x.id === topicId),
     cached = data?.questions.filter((q) => q.seedId === topicId) ?? [];
   const preview = cached.find((q) => q.id === questionId) ?? cached[0];
   const pending =
     session?.status === "awaiting_reply" ||
     session?.status === "feedback_pending";
+  const answered =
+    session?.turns.filter((turn) => turn.role === "candidate").length ?? 0;
+  const stateLabel = (s: string) => lookup(t, "state_", s);
   // A reference shown for question k (0 = original question, i + 1 = follow-up
   // turns[i]) without being submitted as an answer.
   function shownReference(k: number) {
     if (!session || session.turns[k]?.aiAssisted) return null;
-    const r = session.references.find((r) => r.turnIndex === k);
+    const r = session.references.find((x) => x.turnIndex === k);
     return (
       r && (
-        <details className="reference-content shown-reference" open>
-          <summary>AI 参考回答（未提交，仅供参考）</summary>
-          <p>{r.answer}</p>
-          <ul>
-            {r.keyPoints.map((point, n) => (
-              <li key={n}>{point}</li>
-            ))}
-          </ul>
-          {session.status === "active" && k === session.turns.length && (
-            <div className="actions">
-              <button disabled={busy} onClick={() => save(r.answer)}>
-                复制到我的回答（可修改后提交）
-              </button>
-              <button
-                disabled={busy || !!draft.trim()}
-                title={draft.trim() ? "请先清空回答草稿" : undefined}
-                onClick={() =>
-                  perform(
-                    async () =>
-                      show(
-                        await invoke<Session>("submit_interview_reference", {
-                          sessionId: session.id,
-                          turnIndex: k,
-                        }),
-                      ),
-                    true,
-                  )
-                }
-              >
-                直接提交此回答并追问（联网）
-              </button>
-            </div>
-          )}
-        </details>
+        <div className="shown-reference">
+          <Collapsible trigger={<strong>{t("refShown")}</strong>} defaultIsOpen>
+            <p>{r.answer}</p>
+            <ul>
+              {r.keyPoints.map((point, n) => (
+                <li key={n}>{point}</li>
+              ))}
+            </ul>
+            {session.status === "active" && k === session.turns.length && (
+              <div className="actions">
+                <Button
+                  label={t("copyToAnswer")}
+                  size="sm"
+                  isDisabled={busy}
+                  onClick={() => save(r.answer)}
+                />
+                <Button
+                  label={t("submitRef")}
+                  size="sm"
+                  isDisabled={busy || !!draft.trim()}
+                  tooltip={draft.trim() ? t("clearDraftFirst") : undefined}
+                  onClick={() =>
+                    perform(
+                      async () =>
+                        show(
+                          await invoke<Session>("submit_interview_reference", {
+                            sessionId: session.id,
+                            turnIndex: k,
+                          }),
+                        ),
+                      true,
+                    )
+                  }
+                />
+              </div>
+            )}
+          </Collapsible>
+        </div>
       )
     );
   }
+  const keyStatus =
+    data && config.provider !== data.settings.config.provider
+      ? t("providerUnsaved")
+      : data?.settings.keyStatus === "saved"
+        ? t("keySaved")
+        : data?.settings.keyStatus === "unavailable"
+          ? t("keyUnavailable")
+          : t("keyMissing");
+  const connectionText =
+    connection.kind === "requesting"
+      ? t("requesting", { p: connection.provider })
+      : connection.kind === "ok"
+        ? t("lastOk")
+        : connection.kind === "failed"
+          ? t("lastFailed")
+          : t("apiUnverified");
+  const referenceReady = !!session?.references.some(
+    (r) => r.turnIndex === session.turns.length,
+  );
   return (
     <div className="interview-app">
-      <header>
+      <section className="dd-hero">
         <div>
-          <strong>Technical Deep Dive</strong>
-          <span>具体场景 → 方案 → 追问 → 反馈</span>
+          <h1>{t("moduleDeepDive")}</h1>
+          <p className="muted">{t("ddTagline")}</p>
         </div>
-        <span className="badge">P1 · {config.provider}</span>
-      </header>
-      <details
-        className="provider-settings"
-        open={!data || data.settings.keyStatus !== "saved"}
-      >
-        <summary>
-          模型与密钥设置 · {config.model} ·{" "}
-          {data && config.provider !== data.settings.config.provider
-            ? "Provider 更改尚未保存"
-            : data?.settings.keyStatus === "saved"
-              ? "密钥已保存至临时 .env"
-              : data?.settings.keyStatus === "unavailable"
-                ? ".env 暂不可读取或配置不完整"
-                : "尚未保存密钥"}
-        </summary>
-        <div className="provider-fields">
-          <label>
-            Provider
-            <select
-              aria-label="AI Provider"
+        <div className="dd-status" aria-live="polite">
+          <Badge
+            variant={online ? "success" : "error"}
+            label={online ? t("online") : t("offline")}
+          />
+          <Badge
+            variant={
+              connection.kind === "failed"
+                ? "error"
+                : connection.kind === "ok"
+                  ? "success"
+                  : "neutral"
+            }
+            label={busy ? t("busyNote") : connectionText}
+          />
+          <Badge
+            variant="purple"
+            label={`${config.provider} · ${config.model}`}
+          />
+        </div>
+      </section>
+      <div className="provider-settings">
+        <Collapsible
+          trigger={
+            <span>
+              <strong>{t("settingsTitle")}</strong>{" "}
+              <span className="muted">· {keyStatus}</span>
+            </span>
+          }
+          defaultIsOpen={!data || data.settings.keyStatus !== "saved"}
+        >
+          <div className="provider-fields">
+            <Selector
+              label="Provider"
+              size="sm"
+              width={160}
               value={config.provider}
-              disabled={busy}
-              onChange={(e) => {
+              isDisabled={busy}
+              onChange={(v) => {
                 setApiKey("");
                 setConfig({
                   ...config,
-                  provider: e.target.value,
-                  model:
-                    e.target.value === "claude"
-                      ? "claude-haiku-5-5"
-                      : "deepseek-flash",
+                  provider: v,
+                  model: v === "claude" ? "claude-haiku-5-5" : "deepseek-flash",
                 });
               }}
-            >
-              <option value="claude">Claude</option>
-              <option value="deepseek">DeepSeek</option>
-            </select>
-          </label>
-          <label>
-            模型名称
-            <input
-              aria-label="AI 模型名称"
-              value={config.model}
-              disabled={busy}
-              onChange={(e) => setConfig({ ...config, model: e.target.value })}
+              options={[
+                { value: "claude", label: "Claude" },
+                { value: "deepseek", label: "DeepSeek" },
+              ]}
             />
-          </label>
-          <label>
-            请求超时（秒）
-            <input
-              aria-label="API 超时秒数"
-              type="number"
+            <TextInput
+              label={t("modelName")}
+              size="sm"
+              width={220}
+              value={config.model}
+              isDisabled={busy}
+              onChange={(v) => setConfig({ ...config, model: v })}
+            />
+            <NumberInput
+              label={t("timeoutSeconds")}
+              size="sm"
               min={15}
               max={120}
               value={config.timeoutSeconds}
-              disabled={busy}
-              onChange={(e) =>
-                setConfig({ ...config, timeoutSeconds: Number(e.target.value) })
-              }
+              isDisabled={busy}
+              onChange={(v) => setConfig({ ...config, timeoutSeconds: v })}
             />
-          </label>
-          <label>
-            API Key
-            <input
-              aria-label={`${config.provider} API Key`}
+            <TextInput
+              label={`${config.provider} API Key`}
               type="password"
               autoComplete="off"
-              placeholder="留空保留已存 Key"
+              size="sm"
+              width={240}
+              placeholder={t("apiKeyPlaceholder")}
               value={apiKey}
-              disabled={busy}
-              onChange={(e) => setApiKey(e.target.value)}
+              isDisabled={busy}
+              onChange={setApiKey}
             />
-          </label>
-          <button
-            disabled={busy || !data}
-            onClick={() =>
-              perform(async () => {
-                await invoke("save_llm_settings", {
-                  config,
-                  apiKey: apiKey.trim() || null,
-                });
-                setApiKey("");
-              })
-            }
-          >
-            保存设置与密钥
-          </button>
-          <button disabled={busy || !data} onClick={() => setConfirm("key")}>
-            删除当前 Provider 密钥
-          </button>
-        </div>
-        <p className="muted">
-          当前按要求仅使用项目 .env 测试，留空不删除，测试通过后再迁移
-          Keychain。Claude 和 DeepSeek
-          的凭据独立保留。新模型设置用于新会话，已有会话继续使用创建时的模型。
-        </p>
-      </details>
-      <div className="privacy-note">
-        生成题目、提交回答和生成反馈会将所选主题、题目及必要会话内容发送给
-        当前会话的 Provider（新会话使用所保存设置），可能产生 API
-        费用。缓存查看、复用和草稿保存不联网。AI 反馈仅作训练辅助。
+            <Button
+              label={t("saveSettings")}
+              variant="primary"
+              size="sm"
+              isDisabled={busy || !data}
+              onClick={() =>
+                perform(async () => {
+                  await invoke("save_llm_settings", {
+                    config,
+                    apiKey: apiKey.trim() || null,
+                  });
+                  setApiKey("");
+                })
+              }
+            />
+            <Button
+              label={t("deleteKey")}
+              variant="ghost"
+              size="sm"
+              isDisabled={busy || !data}
+              onClick={() => setConfirm("key")}
+            />
+          </div>
+          <p className="muted">{t("settingsNote")}</p>
+        </Collapsible>
       </div>
-      <div className="connection-status" aria-live="polite">
-        {online ? "系统报告网络可用" : "系统报告离线"} · {connection}
-        {busy ? " · 处理中，请等待请求超时或完成" : ""}
-      </div>
+      <p className="privacy-note">{t("privacyNote")}</p>
       {busy && live && (
         <div className="live-response" aria-live="polite">
-          <strong>AI 正在生成…</strong>
+          <strong>{t("aiWriting")}</strong>
           {readablePartialJson(live).map((s, i) => (
             <section key={i}>
-              <span>{s.label}</span>
+              <span>{lookup(t, "stream_", s.field)}</span>
               <p>{s.text}</p>
             </section>
           ))}
         </div>
       )}
       {error && (
-        <div role="alert" className="error">
-          {error}
+        <div className="page-banner">
+          <Banner
+            status="error"
+            title={error}
+            isDismissable
+            onDismiss={() => setError("")}
+          />
         </div>
       )}
       {confirm && (
-        <div className="confirm-panel" role="alert">
-          <span>
-            {confirm === "key"
-              ? `确认从 .env 清除 ${config.provider} Key？历史及其他 Provider 的 Key 会保留。`
-              : confirm === "history"
-                ? "确认清空全部 Deep Dive 会话、反馈和缓存题目？LC 数据和密钥会保留。"
-                : "确认删除当前面试及反馈？缓存题目会保留。"}
-          </span>
-          <button
-            disabled={busy}
-            onClick={() =>
-              perform(async () => {
-                if (confirm === "key") {
-                  await invoke("delete_llm_key", { provider: config.provider });
-                  setApiKey("");
-                } else if (confirm === "history") {
-                  await invoke("clear_interview_history");
-                  setSession(null);
-                  setDraft("");
-                  setQuestionId("");
-                } else if (session) {
-                  await invoke("delete_interview_session", {
-                    sessionId: session.id,
-                  });
-                  setSession(null);
-                  setDraft("");
-                }
-                setConfirm(null);
-              })
+        <div className="page-banner">
+          <Banner
+            status="warning"
+            title={
+              confirm === "key"
+                ? t("confirmKey", { p: config.provider })
+                : confirm === "history"
+                  ? t("confirmHistory")
+                  : t("confirmSession")
             }
-          >
-            确认删除
-          </button>
-          <button disabled={busy} onClick={() => setConfirm(null)}>
-            取消
-          </button>
+            endContent={
+              <span className="actions">
+                <Button
+                  label={t("confirmDelete")}
+                  variant="destructive"
+                  size="sm"
+                  isDisabled={busy}
+                  onClick={() =>
+                    perform(async () => {
+                      if (confirm === "key") {
+                        await invoke("delete_llm_key", {
+                          provider: config.provider,
+                        });
+                        setApiKey("");
+                      } else if (confirm === "history") {
+                        await invoke("clear_interview_history");
+                        setSession(null);
+                        setDraft("");
+                        setQuestionId("");
+                      } else if (session) {
+                        await invoke("delete_interview_session", {
+                          sessionId: session.id,
+                        });
+                        setSession(null);
+                        setDraft("");
+                      }
+                      setConfirm(null);
+                    })
+                  }
+                />
+                <Button
+                  label={t("cancel")}
+                  size="sm"
+                  isDisabled={busy}
+                  onClick={() => setConfirm(null)}
+                />
+              </span>
+            }
+          />
         </div>
       )}
       <main className="interview-main">
         <aside>
-          <h2>
-            训练主题 <small>{data?.topics.length ?? 0} 个</small>
-          </h2>
-          <button
-            disabled={busy || !data}
+          <div className="list-head">
+            <h2>{t("topics")}</h2>
+            <Badge label={t("topicCount", { n: data?.topics.length ?? 0 })} />
+          </div>
+          <Button
+            label={t("randomTopic")}
+            size="sm"
+            width="100%"
+            isDisabled={busy || !data}
             onClick={() => {
               const topics = data!.topics;
               setTopicId(topics[Math.floor(Math.random() * topics.length)].id);
               setQuestionId("");
             }}
-          >
-            随机选题主题
-          </button>
-          {data?.topics.map((t) => (
+          />
+          {data?.topics.map((x) => (
             <button
-              className={`problem ${t.id === topicId ? "active" : ""}`}
-              key={t.id}
+              className={`problem ${x.id === topicId ? "active" : ""}`}
+              key={x.id}
               disabled={busy}
               onClick={() => {
-                setTopicId(t.id);
+                setTopicId(x.id);
                 setQuestionId("");
               }}
             >
-              <small>{t.category}</small>
-              <strong>{t.title}</strong>
+              <small>{x.category}</small>
+              <strong>{x.title}</strong>
             </button>
           ))}
-          <h3>面试历史（本地）</h3>
+          <h3>{t("history")}</h3>
           {data?.sessions.length === 0 && (
-            <p className="muted">还没有面试会话。</p>
+            <p className="muted">{t("noSessions")}</p>
           )}
           {data?.sessions.map((s) => (
             <button
-              className={`history-item ${s.id === session?.id ? "active" : ""}`}
+              className={`problem ${s.id === session?.id ? "active" : ""}`}
               key={s.id}
               disabled={busy}
               onClick={() =>
@@ -481,64 +543,72 @@ export default function InterviewApp() {
                 {s.title.length > 50 ? "…" : ""}
               </strong>
               <small>
-                {states[s.status]} · {new Date(s.createdAt).toLocaleString()}
+                {stateLabel(s.status)} ·{" "}
+                {new Date(s.createdAt).toLocaleString(locale)}
               </small>
             </button>
           ))}
-          <button
-            disabled={busy || !data}
+          <Button
+            label={t("clearHistory")}
+            variant="ghost"
+            size="sm"
+            width="100%"
+            isDisabled={busy || !data}
             onClick={() => setConfirm("history")}
-          >
-            清空面试历史与题目缓存
-          </button>
+          />
         </aside>
         <section className="interview-workspace">
-          <section className="topic-panel">
+          <section className="topic-panel card">
             {topic && (
               <>
-                <h1>{topic.title}</h1>
+                <h2>{topic.title}</h2>
                 <p>{topic.focus.join(" / ")}</p>
                 <p className="muted">
-                  种子约束：{topic.scenarioConstraints.join("；")}
+                  {t("seedConstraints", {
+                    c: topic.scenarioConstraints.join(
+                      lang === "zh" ? "；" : "; ",
+                    ),
+                  })}
                 </p>
-                <button
-                  className="primary"
-                  disabled={busy || !data}
-                  onClick={() =>
-                    perform(async () => {
-                      const q = await invoke<Question>(
-                        "generate_interview_question",
-                        { topicId },
-                      );
-                      setQuestionId(q.id);
-                      show(
-                        await invoke<Session>("start_interview", {
-                          questionId: q.id,
-                        }),
-                      );
-                    }, true)
-                  }
-                >
-                  {busy ? "处理中…" : "生成新题并开始（联网）"}
-                </button>
-                <h3>已缓存问题 · {cached.length}</h3>
+                <div className="actions">
+                  <Button
+                    label={t("generateStart")}
+                    variant="primary"
+                    isDisabled={!data}
+                    isLoading={busy}
+                    onClick={() =>
+                      perform(async () => {
+                        const q = await invoke<Question>(
+                          "generate_interview_question",
+                          { topicId },
+                        );
+                        setQuestionId(q.id);
+                        show(
+                          await invoke<Session>("start_interview", {
+                            questionId: q.id,
+                          }),
+                        );
+                      }, true)
+                    }
+                  />
+                </div>
+                <h3>{t("cachedQuestions", { n: cached.length })}</h3>
                 {cached.length > 0 ? (
                   <>
-                    <select
-                      aria-label="选择已缓存问题"
+                    <Selector
+                      label={t("pickCached")}
+                      isLabelHidden
+                      width="100%"
                       value={preview?.id ?? ""}
-                      disabled={busy}
-                      onChange={(e) => setQuestionId(e.target.value)}
-                    >
-                      {cached.map((q) => (
-                        <option value={q.id} key={q.id}>
-                          {new Date(q.createdAt).toLocaleDateString()} ·{" "}
-                          {q.question.slice(0, 90)}
-                        </option>
-                      ))}
-                    </select>
+                      isDisabled={busy}
+                      onChange={setQuestionId}
+                      options={cached.map((q) => ({
+                        value: q.id,
+                        label: `${new Date(q.createdAt).toLocaleDateString(locale)} · ${q.question.slice(0, 90)}`,
+                      }))}
+                    />
                     {preview && (
-                      <>
+                      <div className="question-preview">
                         <h3>{preview.question}</h3>
                         <p>{preview.background}</p>
                         <ul>
@@ -547,12 +617,17 @@ export default function InterviewApp() {
                           ))}
                         </ul>
                         <small className="muted">
-                          生成于 {new Date(preview.createdAt).toLocaleString()}{" "}
-                          · {preview.model}
+                          {t("generatedAt", {
+                            d: new Date(preview.createdAt).toLocaleString(
+                              locale,
+                            ),
+                            m: preview.model,
+                          })}
                         </small>
-                        <p>
-                          <button
-                            disabled={busy}
+                        <div className="actions">
+                          <Button
+                            label={t("reuseStart")}
+                            isDisabled={busy}
                             onClick={() =>
                               perform(async () =>
                                 show(
@@ -562,36 +637,39 @@ export default function InterviewApp() {
                                 ),
                               )
                             }
-                          >
-                            复用此题开始新面试（离线）
-                          </button>
-                        </p>
-                      </>
+                          />
+                        </div>
+                      </div>
                     )}
                   </>
                 ) : (
-                  <p className="muted">
-                    首次生成后保存在本地。再次练习同一题不必重复生成。
-                  </p>
+                  <p className="muted">{t("cacheHint")}</p>
                 )}
               </>
             )}
           </section>
-          <section className="conversation-panel">
+          <section className="conversation-panel card">
             {!session ? (
-              <p className="muted">
-                生成新题、复用缓存题目，或从历史恢复面试。
-              </p>
+              <p className="muted">{t("noSession")}</p>
             ) : (
               <>
                 <div className="session-heading">
-                  <h2>当前面试 · {states[session.status]}</h2>
-                  <small>
+                  <h2>{t("interviewTitle")}</h2>
+                  <Badge
+                    variant={stateBadge[session.status] ?? "neutral"}
+                    label={stateLabel(session.status)}
+                  />
+                  <small className="muted">
                     {session.provider} / {session.model}
                   </small>
-                  <button disabled={busy} onClick={() => setConfirm("session")}>
-                    删除此会话
-                  </button>
+                  <span className="spacer" />
+                  <Button
+                    label={t("deleteSession")}
+                    variant="ghost"
+                    size="sm"
+                    isDisabled={busy}
+                    onClick={() => setConfirm("session")}
+                  />
                 </div>
                 <div className="question-context">
                   <h3>{session.question.question}</h3>
@@ -604,19 +682,19 @@ export default function InterviewApp() {
                   {shownReference(0)}
                 </div>
                 <div className="turns">
-                  {session.turns.map((t, i) => (
-                    <section className={`turn ${t.role}`} key={i}>
+                  {session.turns.map((turn, i) => (
+                    <section className={`turn ${turn.role}`} key={i}>
                       <strong>
-                        {t.role === "candidate"
-                          ? t.aiAssisted
-                            ? "AI 参考代答"
-                            : "你的回答"
-                          : "面试官追问"}
+                        {turn.role === "candidate"
+                          ? turn.aiAssisted
+                            ? t("roleAiAnswer")
+                            : t("roleYou")
+                          : t("roleInterviewer")}
                       </strong>
-                      <p>{t.text}</p>
-                      {t.aiAssisted && (
+                      <p>{turn.text}</p>
+                      {turn.aiAssisted && (
                         <details className="reference-content">
-                          <summary>参考作答要点</summary>
+                          <summary>{t("refKeyPoints")}</summary>
                           <ul>
                             {session.references
                               .find((r) => r.turnIndex === i)
@@ -626,25 +704,27 @@ export default function InterviewApp() {
                           </ul>
                         </details>
                       )}
-                      {t.role === "interviewer" && shownReference(i + 1)}
+                      {turn.role === "interviewer" && shownReference(i + 1)}
                     </section>
                   ))}
                 </div>
                 {session.lastError && (
-                  <div role="alert" className="error">
-                    {session.lastError} · 内容已保存在本地。
-                  </div>
+                  <Banner
+                    status="error"
+                    title={t("savedLocally", { e: session.lastError })}
+                  />
                 )}
                 {pending && (
                   <div className="pending-request">
                     <p>
                       {session.status === "awaiting_reply"
-                        ? "回答已保存，等待本轮追问。重试不会重复追加回答。"
-                        : "已保存结束请求，等待生成反馈。重试不会新建会话。"}
+                        ? t("pendingReply")
+                        : t("pendingFeedback")}
                     </p>
-                    <button
-                      className="primary"
-                      disabled={busy}
+                    <Button
+                      label={t("retryPending")}
+                      variant="primary"
+                      isLoading={busy}
                       onClick={() =>
                         perform(
                           async () =>
@@ -656,53 +736,43 @@ export default function InterviewApp() {
                           true,
                         )
                       }
-                    >
-                      重试待处理请求（联网）
-                    </button>
+                    />
                   </div>
                 )}
                 {session.status === "active" && (
                   <>
-                    <label className="answer-label" htmlFor="interview-answer">
-                      你的回答（自动保存，最多 6000 字符）
-                    </label>
-                    <textarea
-                      id="interview-answer"
-                      aria-label="技术深挖回答"
+                    <TextArea
+                      label={t("yourAnswer")}
                       maxLength={6000}
                       rows={8}
                       value={draft}
-                      disabled={busy}
-                      onChange={(e) => save(e.target.value)}
-                      placeholder="说明你的方案、依据、替代方案与失败场景…"
+                      isDisabled={busy}
+                      onChange={(v) => save(v)}
+                      placeholder={t("answerPlaceholder")}
+                      width="100%"
                     />
-                    <div className="answer-status">
+                    <div className="answer-status muted">
                       {saving
-                        ? "正在保存草稿…"
+                        ? t("saving")
                         : saveError.current
-                          ? "草稿保存失败，请重试"
-                          : "草稿已保存"}{" "}
-                      · {draft.length}/6000 · 已回答{" "}
-                      {
-                        session.turns.filter((t) => t.role === "candidate")
-                          .length
-                      }
-                      /20 轮
+                          ? t("draftFailed")
+                          : t("saved")}{" "}
+                      · {t("rounds", { n: answered })}
                     </div>
                     {saveError.current && (
-                      <button disabled={busy} onClick={() => save(draft)}>
-                        重试保存草稿
-                      </button>
+                      <Button
+                        label={t("retrySave")}
+                        size="sm"
+                        isDisabled={busy}
+                        onClick={() => save(draft)}
+                      />
                     )}
                     <div className="actions">
-                      <button
-                        className="primary"
-                        disabled={
-                          busy ||
-                          !draft.trim() ||
-                          session.turns.filter((t) => t.role === "candidate")
-                            .length >= 20
-                        }
+                      <Button
+                        label={t("submitAnswer")}
+                        variant="primary"
+                        isDisabled={!draft.trim() || answered >= 20}
+                        isLoading={busy}
                         onClick={() =>
                           perform(
                             async () =>
@@ -715,16 +785,10 @@ export default function InterviewApp() {
                             true,
                           )
                         }
-                      >
-                        提交回答并追问（联网）
-                      </button>
-                      <button
-                        disabled={
-                          busy ||
-                          session.references.some(
-                            (r) => r.turnIndex === session.turns.length,
-                          )
-                        }
+                      />
+                      <Button
+                        label={referenceReady ? t("refReady") : t("aiReference")}
+                        isDisabled={busy || referenceReady}
                         onClick={() =>
                           perform(
                             async () =>
@@ -740,19 +804,11 @@ export default function InterviewApp() {
                             true,
                           )
                         }
-                      >
-                        {session.references.some(
-                          (r) => r.turnIndex === session.turns.length,
-                        )
-                          ? "已生成参考回答（见上方）"
-                          : "AI 参考回答（联网）"}
-                      </button>
-                      <button
-                        disabled={
-                          busy ||
-                          !!draft.trim() ||
-                          !session.turns.some((t) => t.role === "candidate")
-                        }
+                      />
+                      <Button
+                        label={t("finishFeedback")}
+                        variant="ghost"
+                        isDisabled={busy || !!draft.trim() || answered === 0}
                         onClick={() =>
                           perform(
                             async () =>
@@ -764,55 +820,53 @@ export default function InterviewApp() {
                             true,
                           )
                         }
-                      >
-                        结束并生成反馈（联网）
-                      </button>
+                      />
                     </div>
-                    <p className="muted">
-                      AI 参考作答会自动回答当前问题并继续追问，在记录中标注为 AI
-                      代答。
-                    </p>
+                    <p className="muted">{t("refHint")}</p>
                     {draft.trim() && (
-                      <p className="muted">
-                        使用 AI 代答或结束前，请先提交或清空当前草稿。
-                      </p>
+                      <p className="muted">{t("finishNeedsClear")}</p>
                     )}
                     {session.shouldEnd && (
-                      <p className="muted">
-                        面试官建议可以结束并查看反馈，你也可以继续回答。
-                      </p>
+                      <p className="muted">{t("suggestEnd")}</p>
                     )}
                   </>
                 )}
                 {session.feedback && (
                   <section className="feedback">
-                    <h2>面试反馈 · 定性评估</h2>
+                    <h2>{t("feedbackTitle")}</h2>
                     <p>{session.feedback.summary}</p>
-                    {session.feedback.dimensions.map((d) => (
-                      <div className="feedback-dimension" key={d.name}>
-                        <h3>
-                          {dimensions[d.name] ?? d.name} ·{" "}
-                          {ratings[d.rating] ?? d.rating}
-                        </h3>
-                        <p>
-                          <strong>依据：</strong>
-                          {d.evidence}
-                        </p>
-                        <p>
-                          <strong>建议：</strong>
-                          {d.improvement}
-                        </p>
-                      </div>
-                    ))}
-                    {[
-                      ["做得好的方面", session.feedback.strengths],
-                      ["遗漏与风险", session.feedback.gaps],
-                      ["后续训练方向", session.feedback.nextPracticeTopics],
-                    ].map(([name, items]) => (
-                      <section key={name as string}>
+                    <div className="feedback-grid">
+                      {session.feedback.dimensions.map((d) => (
+                        <div className="feedback-dimension" key={d.name}>
+                          <div className="dimension-head">
+                            <strong>{lookup(t, "dim_", d.name)}</strong>
+                            <Badge
+                              variant={ratingBadge[d.rating] ?? "neutral"}
+                              label={lookup(t, "rating_", d.rating)}
+                            />
+                          </div>
+                          <p>
+                            <strong>{t("evidence")}</strong>
+                            {d.evidence}
+                          </p>
+                          <p>
+                            <strong>{t("advice")}</strong>
+                            {d.improvement}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    {(
+                      [
+                        [t("strengths"), session.feedback.strengths],
+                        [t("gaps"), session.feedback.gaps],
+                        [t("nextTopics"), session.feedback.nextPracticeTopics],
+                      ] as const
+                    ).map(([name, items]) => (
+                      <section key={name}>
                         <h3>{name}</h3>
                         <ul>
-                          {(items as string[]).map((s, i) => (
+                          {items.map((s, i) => (
                             <li key={i}>{s}</li>
                           ))}
                         </ul>

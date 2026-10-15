@@ -10,7 +10,7 @@ Follow `SWE_Interview_Prep_Requirements.md` and the user's currently authorized 
 - Every problem must provide `limits.timeLimitMs`, `limits.memoryLimitMb`, and `limits.outputLimitKb`; the Judge must read and enforce them. Choose budgets using the problem's input scale and real execution results rather than mechanically copying existing values.
 - Do not invent unverified official millisecond/MiB quotas. Clearly label local budgets. Measured execution time, process RSS, and asymptotic complexity are different metrics; finite tests cannot automatically prove arbitrary code's Big-O or in-place behavior.
 - Function and ACM modes must share semantic tests, including maximum-size or representative worst-case inputs and necessary resource-limit regression tests. Expected answers must be verifiable. Never mock successful compilation, execution, or judging.
-- Integrate new problems into the problem library and common policy checks. Verify complexity metadata, resource settings, the `io` spec (it generates the Function-mode wrapper, ACM stdin, and checking; see README "Adding a problem"), and correct solutions in both modes before considering a problem complete.
+- Integrate new problems into the problem library and common policy checks. Verify complexity metadata, resource settings, the `io` spec (it generates the Function-mode wrapper, ACM stdin, and checking; see `tools/leetcode/README.md`), and correct solutions in both modes before considering a problem complete.
 
 ## Current phase status
 
@@ -18,8 +18,12 @@ P0 is complete. Preserve all LC complexity and resource-limit requirements. The 
 
 The user explicitly requested storing keys in a Git-ignored `.env` with mode 0600 for testing, before migrating to the system Keychain after tests pass. The current runtime only reads/writes `.env`; do not automatically fall back to system storage or migrate early. Preserve separate keys for each provider. Never commit `.env`, print real keys, or write keys to SQLite.
 
-The user clarified the P1 reference-answer feature: clicking the AI-assisted answer and follow-up button must make the model answer the current original question or follow-up, automatically submit that answer, and continue the interview. Mark these turns with `aiAssisted`; feedback must not treat them as evidence of the user's independent understanding. Preserve draft protection. If the follow-up fails after submission, retries must not regenerate or append another AI answer. Do not implement this button as a read-only reference panel.
+The user later changed the reference-answer feature (2026-10-15): the "AI 参考回答" button makes one request and shows one concise answer (150–300 characters, 3–5 key points) under the current question, without submitting it or asking a follow-up. Under that answer, the user can copy it into their draft, or explicitly submit it as an `aiAssisted` turn and continue. Feedback must not treat `aiAssisted` turns as evidence of the user's independent understanding. Retrying a failed follow-up must not regenerate or append another AI answer.
 
 ## Language conventions
 
-Write project documentation, developer descriptions, and code comments in English. Keep user-facing UI text, problem statements, interview content, and user-facing error messages in Chinese. Code comments inside starter templates follow the English-comment convention.
+Write project documentation, developer descriptions, and code comments in English. The UI is bilingual: every user-facing UI string lives in `src/i18n.tsx` with a Chinese and an English version, and the header button switches language. Problem statements, interview content and backend error messages remain in Chinese. Code comments inside starter templates follow the English-comment convention.
+
+## UI
+
+The frontend uses Meta's Astryx design system (`@astryxdesign/core`, neutral theme, pinned to 0.7.0) with a violet accent and light/dark modes. Use Astryx components and its CSS tokens (`var(--color-...)`) instead of hard-coded colors.

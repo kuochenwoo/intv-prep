@@ -1,21 +1,21 @@
 // Turns the partial JSON a model is streaming into readable text for the UI.
 // Only candidate-facing fields are shown: followUpDirections, evaluationChecklist
 // and other interviewer-only fields stay hidden, as they do in the finished view.
-const LABELS: Record<string, string> = {
-  question: "题目",
-  background: "背景",
-  constraints: "约束",
-  observation: "面试官观察",
-  followUpQuestion: "追问",
-  answer: "参考回答",
-  keyPoints: "要点",
-  summary: "总结",
-  evidence: "依据",
-  improvement: "改进建议",
-  strengths: "优势",
-  gaps: "不足",
-  nextPracticeTopics: "后续练习",
-};
+const SHOWN = new Set([
+  "question",
+  "background",
+  "constraints",
+  "observation",
+  "followUpQuestion",
+  "answer",
+  "keyPoints",
+  "summary",
+  "evidence",
+  "improvement",
+  "strengths",
+  "gaps",
+  "nextPracticeTopics",
+]);
 
 function unescape(raw: string): string {
   // Drop an escape cut off at the end of the chunk, then let JSON decode the rest.
@@ -27,7 +27,8 @@ function unescape(raw: string): string {
   }
 }
 
-export type StreamSection = { label: string; text: string };
+/** `field` is the JSON key; the UI translates it for display. */
+export type StreamSection = { field: string; text: string };
 
 export function readablePartialJson(partial: string): StreamSection[] {
   const sections: StreamSection[] = [];
@@ -58,13 +59,12 @@ export function readablePartialJson(partial: string): StreamSection[] {
         (partial[p] === "{" || partial[p] === ","));
     if (isKey) {
       if (complete) key = value;
-    } else if (LABELS[key] && value.trim()) {
+    } else if (SHOWN.has(key) && value.trim()) {
       const item =
         partial[p] === "[" || partial[p] === "," ? `• ${value}` : value;
-      const label = LABELS[key];
       const last = sections[sections.length - 1];
-      if (last && last.label === label) last.text += `\n${item}`;
-      else sections.push({ label, text: item });
+      if (last && last.field === key) last.text += `\n${item}`;
+      else sections.push({ field: key, text: item });
     }
     i = j + 1;
   }

@@ -4,14 +4,35 @@ import { invoke, isTauri } from "@tauri-apps/api/core";
 import Editor, { loader } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import EditorWorker from "monaco-editor/editor/editor.worker.js?worker";
+import "@fontsource-variable/figtree";
+import "@astryxdesign/core/reset.css";
+import "@astryxdesign/core/astryx.css";
+import "@astryxdesign/theme-neutral/theme.css";
+import { Theme } from "@astryxdesign/core/theme";
+import { neutralTheme } from "@astryxdesign/theme-neutral/built";
+import { InternationalizationProvider } from "@astryxdesign/core/i18n";
+import zhCN from "@astryxdesign/core/locales/zh-CN.generated.js";
+import { TopNav } from "@astryxdesign/core/TopNav";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@astryxdesign/core/SegmentedControl";
+import { Button } from "@astryxdesign/core/Button";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { Selector } from "@astryxdesign/core/Selector";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Banner } from "@astryxdesign/core/Banner";
 import "./style.css";
+import logo from "./assets/logo.png";
 import InterviewApp from "./features/interview/InterviewApp";
+import { LangProvider, lookup, useI18n } from "./i18n";
 // Bundle Monaco locally: editing works without a CDN or network connection.
 (self as unknown as { MonacoEnvironment: unknown }).MonacoEnvironment = {
   getWorker: () => new EditorWorker(),
 };
 loader.config({ monaco });
 type Mode = "function" | "acm";
+type Scheme = "light" | "dark";
 type JudgeLimits = {
   timeLimitMs: number;
   memoryLimitMb: number;
@@ -61,19 +82,10 @@ type Result = {
     peakMemoryBytes?: number | null;
   }[];
 };
-const labels: Record<string, string> = {
-  accepted: "通过",
-  wrong_answer: "答案错误",
-  compile_error: "编译错误",
-  runtime_error: "运行错误",
-  timeout: "运行超时",
-  output_limit: "输出超限",
-  memory_limit: "記憶體超限",
-  compile_timeout: "编译超时",
-  compile_output_limit: "编译输出超限",
-};
 const keyOf = (id: string, mode: Mode) => `${id}:${mode}`;
-function CodingApp() {
+const difficultyBadge = { easy: "green", medium: "orange", hard: "red" } as const;
+function CodingApp({ scheme }: { scheme: Scheme }) {
+  const { t } = useI18n();
   const [problems, setProblems] = useState<Problem[]>([]),
     [selected, setSelected] = useState("lc-1"),
     [mode, setMode] = useState<Mode>("function");
@@ -93,9 +105,7 @@ function CodingApp() {
     version = useRef(0);
   useEffect(() => {
     if (!isTauri()) {
-      setError(
-        "请通过 npm run tauri dev 打开桌面应用。浏览器预览无法调用本地编译器。",
-      );
+      setError(t("needDesktop"));
       return;
     }
     Promise.all([
@@ -123,6 +133,7 @@ function CodingApp() {
         setReady(true);
       })
       .catch((e) => setError(String(e)));
+    // Loads once; switching language later does not reload data.
   }, []);
   const problem = problems.find((p) => p.id === selected),
     key = keyOf(selected, mode),
@@ -157,7 +168,7 @@ function CodingApp() {
       })
       .catch((e) => {
         saveError.current = String(e);
-        setError(`草稿保存失败：${e}`);
+        setError(t("draftSaveFailed", { e: String(e) }));
       })
       .then(() => {
         if (version.current === n) setSaving(false);
@@ -193,9 +204,7 @@ function CodingApp() {
     try {
       const path = await invoke<string>("set_compiler", { path: compiler });
       setCompiler(path);
-      setCompilerInfo(
-        `可执行文件已检测：${path}；判题时使用 -std=c++20 实际编译。`,
-      );
+      setCompilerInfo(t("compilerDetected", { path }));
     } catch (e) {
       setError(String(e));
     } finally {
@@ -203,302 +212,407 @@ function CodingApp() {
     }
   }
   const result = results[key];
+  const status = (s: string) => lookup(t, "status_", s);
+  const visible = problems.filter(
+    (p) =>
+      (difficulty === "all" || difficulty === p.difficulty) &&
+      (tag === "all" || p.tags.includes(tag)) &&
+      `${p.id} ${p.title} ${p.tags.join(" ")}`
+        .toLowerCase()
+        .includes(query.toLowerCase()),
+  );
+  const progressLabel = (p: Problem, m: Mode) => {
+    const r = progress[keyOf(p.id, m)];
+    return r?.status === "completed"
+      ? "done"
+      : r
+        ? "doing"
+        : "todo";
+  };
   return (
-    <>
-      <header>
-        <div>
-          <strong>SWE Interview Prep</strong>
-          <span>本地 Coding</span>
-        </div>
-        <span className="badge">C++20 · 离线判题</span>
-      </header>
-      <section className="settings">
-        <label>
-          编译器{" "}
-          <input
-            aria-label="编译器路径"
-            placeholder="自动探测 clang++ / g++，或填写完整路径"
-            value={compiler}
-            onChange={(e) => setCompiler(e.target.value)}
-            disabled={busy}
-          />
-        </label>
-        <button disabled={!ready || busy} onClick={configure}>
-          检测并保存
-        </button>
-        <small>{compilerInfo}</small>
+    <div className="coding-app">
+      <section className="toolbar-row">
+        <TextInput
+          label={t("compiler")}
+          value={compiler}
+          placeholder={t("compilerPlaceholder")}
+          onChange={setCompiler}
+          isDisabled={busy}
+          size="sm"
+          width={420}
+        />
+        <Button
+          label={t("detectSave")}
+          size="sm"
+          isDisabled={!ready || busy}
+          onClick={configure}
+        />
+        <Badge variant="purple" label={t("offlineJudge")} />
+        {compilerInfo && <small className="muted">{compilerInfo}</small>}
       </section>
       {error && (
-        <div role="alert" className="error">
-          {error}
+        <div className="page-banner">
+          <Banner
+            status="error"
+            title={error}
+            isDismissable
+            onDismiss={() => setError("")}
+          />
         </div>
       )}
-      <main>
-        <aside>
-          <h2>
-            练习题 <small>{problems.length} 道已适配</small>
-          </h2>
-          <input
-            aria-label="搜索题目"
-            placeholder="搜索标题 / 编号 / 标签"
+      <main className="coding-main">
+        <aside className="problem-list">
+          <div className="list-head">
+            <h2>{t("problems")}</h2>
+            <Badge label={t("problemCount", { n: visible.length })} />
+          </div>
+          <TextInput
+            label={t("searchProblems")}
+            isLabelHidden
+            placeholder={t("searchPlaceholder")}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={setQuery}
+            hasClear
+            size="sm"
+            width="100%"
           />
           <div className="filters">
-            <select
-              aria-label="难度"
+            <Selector
+              label={t("difficulty")}
+              isLabelHidden
+              size="sm"
+              width="100%"
               value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value)}
-            >
-              <option value="all">全部难度</option>
-              <option value="easy">简单</option>
-              <option value="medium">中等</option>
-              <option value="hard">困难</option>
-            </select>
-            <select
-              aria-label="标签"
+              onChange={setDifficulty}
+              options={[
+                { value: "all", label: t("allDifficulty") },
+                { value: "easy", label: t("easy") },
+                { value: "medium", label: t("medium") },
+                { value: "hard", label: t("hard") },
+              ]}
+            />
+            <Selector
+              label={t("tag")}
+              isLabelHidden
+              size="sm"
+              width="100%"
+              hasSearch
               value={tag}
-              onChange={(e) => setTag(e.target.value)}
-            >
-              <option value="all">全部标签</option>
-              {[...new Set(problems.flatMap((p) => p.tags))].map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
+              onChange={setTag}
+              options={[
+                { value: "all", label: t("allTags") },
+                ...[...new Set(problems.flatMap((p) => p.tags))].map((x) => ({
+                  value: x,
+                  label: x,
+                })),
+              ]}
+            />
           </div>
-          {problems
-            .filter(
-              (p) =>
-                (difficulty === "all" || difficulty === p.difficulty) &&
-                (tag === "all" || p.tags.includes(tag)) &&
-                `${p.id} ${p.title} ${p.tags.join(" ")}`
-                  .toLowerCase()
-                  .includes(query.toLowerCase()),
-            )
-            .map((p) => (
+          <div className="problem-scroll">
+            {visible.map((p) => (
               <button
                 className={`problem ${selected === p.id ? "active" : ""}`}
                 key={p.id}
                 disabled={busy}
                 onClick={() => setSelected(p.id)}
               >
-                <small>
-                  {p.id} ·{" "}
-                  {p.difficulty === "easy"
-                    ? "简单"
-                    : p.difficulty === "medium"
-                      ? "中等"
-                      : "困难"}
-                </small>
+                <span className="problem-meta">
+                  <span>{p.id.replace("lc-", "#")}</span>
+                  <Badge
+                    variant={
+                      difficultyBadge[
+                        p.difficulty as keyof typeof difficultyBadge
+                      ] ?? "neutral"
+                    }
+                    label={lookup(t, "", p.difficulty)}
+                  />
+                </span>
                 <strong>{p.title}</strong>
-                <small>
-                  {(["function", "acm"] as Mode[])
-                    .map(
-                      (m) =>
-                        `${m === "function" ? "函数" : "ACM"} ${progress[keyOf(p.id, m)]?.status === "completed" ? "✓ 完成" : progress[keyOf(p.id, m)] ? "在做" : "未做"}`,
-                    )
-                    .join(" · ")}
-                </small>
+                <span className="progress-dots">
+                  {(["function", "acm"] as Mode[]).map((m) => (
+                    <span key={m} className={`dot ${progressLabel(p, m)}`}>
+                      {m === "function" ? t("modeFunction") : t("modeAcm")}
+                    </span>
+                  ))}
+                </span>
               </button>
             ))}
-          <p className="muted">
-            仅包含 4 道自行整理的题面和本地测试，尚未覆盖 Hot 100。
-          </p>
+            {visible.length === 0 && ready && (
+              <p className="muted">{t("noMatch")}</p>
+            )}
+          </div>
         </aside>
-        <article>
+        <article className="statement">
           {problem && (
             <>
               <h1>{problem.title}</h1>
               <div className="tags">
-                {problem.tags.map((t) => (
-                  <span key={t}>{t}</span>
+                <Badge
+                  variant={
+                    difficultyBadge[
+                      problem.difficulty as keyof typeof difficultyBadge
+                    ] ?? "neutral"
+                  }
+                  label={lookup(t, "", problem.difficulty)}
+                />
+                {problem.tags.map((x) => (
+                  <Badge key={x} label={x} />
                 ))}
               </div>
-              <p>{problem.statement}</p>
-              <h3>约束</h3>
+              <p className="prose">{problem.statement}</p>
+              <h3>{t("constraints")}</h3>
               <ul>
                 {problem.constraints.map((c) => (
                   <li key={c}>{c}</li>
                 ))}
               </ul>
-              <h3>時間／空間複雜度要求</h3>
-              <p>
-                時間：{problem.complexity.time}
-                <br />
-                額外空間：{problem.complexity.space}
-              </p>
-              <p>{problem.complexity.officialRequirement}</p>
-              <p className="muted">{problem.complexity.notes}</p>
-              <p>
-                <button
-                  className="source-link"
-                  title={problem.complexity.sourceUrl}
+              <section className="complexity-card">
+                <h3>{t("complexity")}</h3>
+                <div className="complexity-grid">
+                  <span>{t("timeLabel")}</span>
+                  <code>{problem.complexity.time}</code>
+                  <span>{t("spaceLabel")}</span>
+                  <code>{problem.complexity.space}</code>
+                </div>
+                <p>{problem.complexity.officialRequirement}</p>
+                <p className="muted">{problem.complexity.notes}</p>
+                <Button
+                  label={t("officialSource")}
+                  variant="ghost"
+                  size="sm"
+                  tooltip={problem.complexity.sourceUrl}
                   onClick={() => {
                     void invoke("open_problem_source", {
                       problemId: problem.id,
                     }).catch((e) => setError(String(e)));
                   }}
-                >
-                  官方題面參考（需聯網）
-                </button>
-              </p>
-              <h3>本地執行上限</h3>
+                />
+              </section>
+              <h3>{t("localLimits")}</h3>
               <p>
-                每例 {problem.limits.timeLimitMs} ms · 主進程記憶體{" "}
-                {problem.limits.memoryLimitMb} MiB · 輸出{" "}
-                {problem.limits.outputLimitKb} KiB
+                {t("limitsLine", {
+                  t: problem.limits.timeLimitMs,
+                  m: problem.limits.memoryLimitMb,
+                  o: problem.limits.outputLimitKb,
+                })}
               </p>
-              <p className="muted">
-                此為本地設定，非 LeetCode
-                官方資源限額。記憶體包含輸入、包裝器及執行期，每 5 ms
-                採樣，可能漏計短暫峰值；不等同演算法額外空間。
-              </p>
-              <p className="muted">
-                通過本地測試不會自動證明 Big-O
-                或原地要求已滿足，仍需檢查程式的複雜度。
-              </p>
-              <h3>示例（逻辑数据）</h3>
+              <p className="muted">{t("limitsNote")}</p>
+              <p className="muted">{t("bigONote")}</p>
+              <h3>{t("examples")}</h3>
               {problem.examples.map((ex, i) => (
                 <pre key={i}>
-                  输入：{ex.input}
-                  {"\n"}输出：{ex.output}
+                  {t("exampleIO", { i: ex.input, o: ex.output })}
                 </pre>
               ))}
-              <h3>ACM 输入输出协议</h3>
-              <p>{problem.cpp.acmIoSpec}</p>
-              {selected === "lc-206" && (
-                <pre>
-                  struct ListNode {"{"} int val; ListNode* next;{"\n"}{" "}
-                  ListNode(int x=0, ListNode* n=nullptr); {"}"};
-                </pre>
-              )}
-              <p className="muted">
-                此程序以当前用户权限执行本人可信代码，不是安全沙箱。
-              </p>
+              <h3>{t("acmProtocol")}</h3>
+              <p className="prose">{problem.cpp.acmIoSpec}</p>
+              <p className="muted">{t("notSandbox")}</p>
             </>
           )}
         </article>
         <section className="workspace">
-          <div className="toolbar">
-            <select
-              aria-label="编程模式"
-              disabled={busy}
+          <div className="editor-toolbar">
+            <SegmentedControl
+              label={t("codingMode")}
+              size="sm"
               value={mode}
-              onChange={(e) => setMode(e.target.value as Mode)}
+              isDisabled={busy}
+              onChange={(v) => setMode(v as Mode)}
             >
-              <option value="function">LeetCode 核心函数</option>
-              <option value="acm">ACM 完整程序</option>
-            </select>
-            <small>
-              {saving ? "正在保存…" : "草稿已保存"} ·{" "}
-              {mode === "function" ? "系统提供 main()" : "自行实现 main()"}
+              <SegmentedControlItem
+                value="function"
+                label={t("modeFunctionFull")}
+              />
+              <SegmentedControlItem value="acm" label={t("modeAcmFull")} />
+            </SegmentedControl>
+            <small className="muted">
+              {saving ? t("saving") : t("saved")} ·{" "}
+              {mode === "function" ? t("mainProvided") : t("mainYours")}
             </small>
           </div>
-          <Editor
-            height="390px"
-            language="cpp"
-            theme="vs-dark"
-            value={code}
-            path={key + ".cpp"}
-            onChange={edit}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-              readOnly: busy || !ready,
-            }}
-          />
+          <div className="editor-frame">
+            <Editor
+              height="400px"
+              language="cpp"
+              theme={scheme === "dark" ? "vs-dark" : "vs"}
+              value={code}
+              path={key + ".cpp"}
+              onChange={edit}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                readOnly: busy || !ready,
+              }}
+            />
+          </div>
           <div className="actions">
-            <button disabled={busy || !ready} onClick={() => run(true)}>
-              运行样例
-            </button>
-            <button
-              className="primary"
-              disabled={busy || !ready}
+            <Button
+              label={t("runSamples")}
+              isDisabled={busy || !ready}
+              onClick={() => run(true)}
+            />
+            <Button
+              label={t("submitTests")}
+              variant="primary"
+              isDisabled={!ready}
+              isLoading={busy}
               onClick={() => run(false)}
-            >
-              {busy ? "处理中…" : "提交本地测试"}
-            </button>
+            />
           </div>
           <section className="results" aria-live="polite">
             {!result ? (
-              <p className="muted">编译和运行结果将显示在这里。</p>
+              <p className="muted">{t("resultsPlaceholder")}</p>
             ) : (
               <>
-                <h3 className={result.status === "accepted" ? "pass" : "fail"}>
-                  {labels[result.status] ?? result.status} · {result.passed}/
-                  {result.total} 通过
-                </h3>
-                <small>
-                  {result.compiler} ·
-                  上次执行结果（样例或提交）；代码修改后不会自动重判
+                <div className="result-head">
+                  <Badge
+                    variant={result.status === "accepted" ? "success" : "error"}
+                    label={status(result.status)}
+                  />
+                  <strong>
+                    {t("passedOf", { p: result.passed, t: result.total })}
+                  </strong>
+                </div>
+                <small className="muted">
+                  {result.compiler} · {t("lastRunNote")}
                   {result.limits &&
-                    ` · 當次上限 ${result.limits.timeLimitMs} ms / ${result.limits.memoryLimitMb} MiB`}
+                    ` · ${t("runLimits", { t: result.limits.timeLimitMs, m: result.limits.memoryLimitMb })}`}
                 </small>
                 {result.diagnostics && <pre>{result.diagnostics}</pre>}
                 {result.cases.map((c) => (
-                  <details key={c.id} open={c.status !== "accepted"}>
+                  <details
+                    key={c.id}
+                    className={`case ${c.status === "accepted" ? "ok" : "bad"}`}
+                    open={c.status !== "accepted"}
+                  >
                     <summary>
-                      {c.id} · {labels[c.status] ?? c.status} · {c.durationMs}{" "}
-                      ms · exit {c.exitCode ?? "signal / killed"}
+                      {c.id} · {status(c.status)} · {c.durationMs} ms · exit{" "}
+                      {c.exitCode ?? t("killed")} ·{" "}
                       {c.peakMemoryBytes != null
-                        ? ` · 採樣峰值 ${(c.peakMemoryBytes / 1024 / 1024).toFixed(1)} MiB`
-                        : " · 記憶體未取得（短程式或舊記錄）"}
+                        ? t("peakMemory", {
+                            m: (c.peakMemoryBytes / 1024 / 1024).toFixed(1),
+                          })
+                        : t("noMemory")}
                     </summary>
                     <pre>
-                      stdin：{"\n"}
+                      {t("caseStdin")}
+                      {"\n"}
                       {c.input}
-                      {"\n"}预期（任意合法答案亦可）：
+                      {"\n"}
+                      {t("caseExpected")}
                       {JSON.stringify(c.expected)}
-                      {"\n"}实际：{c.actual || "（空输出）"}
-                      {c.stderr && `\nstderr：${c.stderr}`}
+                      {"\n"}
+                      {t("caseActual")}
+                      {c.actual || t("emptyOutput")}
+                      {c.stderr && `\nstderr: ${c.stderr}`}
                     </pre>
                   </details>
                 ))}
                 {result.cases.length > 0 &&
                   result.cases.length < result.total && (
-                    <p>超出時間、記憶體或輸出限制後已停止後續測試。</p>
+                    <p className="muted">{t("stoppedEarly")}</p>
                   )}
               </>
             )}
           </section>
         </section>
       </main>
-    </>
+    </div>
   );
+}
+function storedScheme(): Scheme {
+  try {
+    const s = localStorage.getItem("scheme");
+    if (s === "light" || s === "dark") return s;
+  } catch {
+    /* fall through to the system setting */
+  }
+  return matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 function App() {
+  const { lang, setLang, t } = useI18n();
   const [view, setView] = useState<"lc" | "deep_dive">("lc");
   const [visited, setVisited] = useState(false);
+  const [scheme, setScheme] = useState<Scheme>(storedScheme);
+  useEffect(() => {
+    document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  }, [lang]);
+  const changeScheme = (s: Scheme) => {
+    setScheme(s);
+    try {
+      localStorage.setItem("scheme", s);
+    } catch {
+      /* not remembered */
+    }
+  };
   return (
-    <>
-      <nav className="module-nav" aria-label="训练模块">
-        <button
-          className={view === "lc" ? "selected" : ""}
-          onClick={() => setView("lc")}
-        >
-          LC 本地判题
-        </button>
-        <button
-          className={view === "deep_dive" ? "selected" : ""}
-          onClick={() => {
-            setVisited(true);
-            setView("deep_dive");
-          }}
-        >
-          Technical Deep Dive
-        </button>
-      </nav>
-      <div hidden={view !== "lc"}>
-        <CodingApp />
-      </div>
-      {visited && (
-        <div hidden={view !== "deep_dive"}>
-          <InterviewApp />
+    <Theme theme={neutralTheme} mode={scheme}>
+      <InternationalizationProvider
+        locale={lang === "zh" ? "zh-CN" : "en"}
+        messages={{ "zh-CN": zhCN }}
+      >
+        <div className="app">
+          <TopNav
+            label={t("moduleNav")}
+            heading={
+              <span className="brand">
+                <img src={logo} alt="" width={32} height={32} />
+                <strong>{t("appTitle")}</strong>
+              </span>
+            }
+            centerContent={
+              <SegmentedControl
+                label={t("moduleNav")}
+                value={view}
+                onChange={(v) => {
+                  if (v === "deep_dive") setVisited(true);
+                  setView(v as "lc" | "deep_dive");
+                }}
+              >
+                <SegmentedControlItem value="lc" label={t("moduleLc")} />
+                <SegmentedControlItem
+                  value="deep_dive"
+                  label={t("moduleDeepDive")}
+                />
+              </SegmentedControl>
+            }
+            endContent={
+              <span className="nav-actions">
+                <SegmentedControl
+                  label={t("themeMode")}
+                  size="sm"
+                  value={scheme}
+                  onChange={(v) => changeScheme(v as Scheme)}
+                >
+                  <SegmentedControlItem value="light" label={t("themeLight")} />
+                  <SegmentedControlItem value="dark" label={t("themeDark")} />
+                </SegmentedControl>
+                <Button
+                  label={t("switchLang")}
+                  tooltip={t("switchLangTip")}
+                  size="sm"
+                  onClick={() => setLang(lang === "zh" ? "en" : "zh")}
+                />
+              </span>
+            }
+          />
+          <div hidden={view !== "lc"}>
+            <CodingApp scheme={scheme} />
+          </div>
+          {visited && (
+            <div hidden={view !== "deep_dive"}>
+              <InterviewApp />
+            </div>
+          )}
         </div>
-      )}
-    </>
+      </InternationalizationProvider>
+    </Theme>
   );
 }
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <LangProvider>
+    <App />
+  </LangProvider>,
+);
