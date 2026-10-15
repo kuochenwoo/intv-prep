@@ -97,11 +97,11 @@ export default function SettingsPage({
           }
           defaultIsOpen={!data || data.settings.keyStatus !== "saved"}
         >
-          <div className="provider-fields">
+          <div className="provider-fields settings-provider-row">
             <Selector
               label={t("providerLabel")}
               size="sm"
-              width={160}
+              width={140}
               value={config.provider}
               isDisabled={busy}
               onChange={(v) => {
@@ -120,7 +120,7 @@ export default function SettingsPage({
             <TextInput
               label={t("modelName")}
               size="sm"
-              width={220}
+              width={200}
               value={config.model}
               isDisabled={busy}
               onChange={(v) => setConfig({ ...config, model: v })}
@@ -128,6 +128,7 @@ export default function SettingsPage({
             <NumberInput
               label={t("timeoutSeconds")}
               size="sm"
+              width={120}
               min={15}
               max={120}
               value={config.timeoutSeconds}
@@ -139,14 +140,14 @@ export default function SettingsPage({
               type="password"
               autoComplete="off"
               size="sm"
-              width={240}
+              width={220}
               placeholder={t("apiKeyPlaceholder")}
               value={apiKey}
               isDisabled={busy}
               onChange={setApiKey}
             />
             <Button
-              label={t("saveSettings")}
+              label={t("saveSettingsShort")}
               variant="primary"
               size="sm"
               isDisabled={busy || !data}
@@ -161,7 +162,7 @@ export default function SettingsPage({
               }
             />
             <Button
-              label={t("deleteKey")}
+              label={t("deleteKeyShort")}
               variant="destructive"
               size="sm"
               isDisabled={busy || !data}
@@ -185,6 +186,8 @@ export default function SettingsPage({
           />
           <Button
             label={t("detectSave")}
+            variant="secondary"
+            className="tint-btn tint-green"
             isDisabled={!data || busy}
             onClick={() =>
               perform(async () => {

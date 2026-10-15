@@ -387,3 +387,126 @@ details.case summary {
 .usage-table th, .usage-table td { padding: 8px; border-bottom: 1px solid var(--color-border); vertical-align: top; }
 .usage-table th { position: sticky; top: 0; background: var(--color-background-card); }
 .usage-rates { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 10px; margin-bottom: 12px; }
+
+/* Tinted buttons and pills: one hue per meaning, readable in light and dark themes. */
+.tint-blue { --tint-bg: var(--color-background-blue); --tint-fg: var(--color-text-blue); --tint-border: var(--color-border-blue); }
+.tint-teal { --tint-bg: var(--color-background-teal); --tint-fg: var(--color-text-teal); --tint-border: var(--color-border-teal); }
+.tint-green { --tint-bg: var(--color-background-green); --tint-fg: var(--color-text-green); --tint-border: var(--color-border-green); }
+.tint-purple { --tint-bg: var(--color-background-purple); --tint-fg: var(--color-text-purple); --tint-border: var(--color-border-purple); }
+.tint-orange { --tint-bg: var(--color-background-orange); --tint-fg: var(--color-text-orange); --tint-border: var(--color-border-orange); }
+.tint-red { --tint-bg: var(--color-background-red); --tint-fg: var(--color-text-red); --tint-border: var(--color-border-red); }
+.tint-gray { --tint-bg: var(--color-background-gray); --tint-fg: var(--color-text-secondary); --tint-border: var(--color-border-gray); }
+button.tint-btn.tint-btn {
+  background: var(--tint-bg);
+  color: var(--tint-fg);
+  border: 1px solid var(--tint-border);
+  font-weight: var(--font-weight-semibold);
+}
+button.tint-btn.tint-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--tint-fg) 18%, var(--tint-bg));
+}
+button.tint-btn.tint-btn:disabled { opacity: 0.55; }
+.usage-pill {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--tint-border);
+  background: var(--tint-bg);
+  color: var(--tint-fg);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+/* Session tools: timer label, selector and Start share one baseline. */
+.timer-label { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.session-timer-right { align-items: center; }
+
+/* API usage: summary tiles, tinted table header, rate card. */
+.usage-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-block: 12px; }
+.usage-stat {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 10px 14px;
+  border-radius: var(--radius-element);
+  border: 1px solid var(--tint-border);
+  background: var(--tint-bg);
+}
+.usage-stat span { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.usage-stat strong { color: var(--tint-fg); font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.usage-table-wrap { border: 1px solid var(--color-border); border-radius: var(--radius-element); }
+.usage-table th { background: var(--color-background-purple); color: var(--color-text-purple); font-weight: var(--font-weight-semibold); }
+.usage-table tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--color-background-muted) 55%, transparent); }
+.usage-table tbody tr:hover td { background: var(--color-accent-muted); }
+.usage-table td.usage-cost { color: var(--color-text-green); font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums; }
+.usage-prices-trigger { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.usage-rates-card {
+  margin-top: 8px;
+  padding: 14px 16px;
+  border-radius: var(--radius-element);
+  border: 1px solid var(--color-border-purple);
+  background: color-mix(in srgb, var(--color-background-purple) 45%, transparent);
+}
+.usage-rates-card .usage-rates { margin-block: 10px 14px; }
+.usage-saved { color: var(--color-text-green); font-weight: var(--font-weight-semibold); }
+
+/* Settings: the provider fields and both buttons fit one row on desktop widths. */
+@media (min-width: 1000px) {
+  .settings-provider-row { flex-wrap: nowrap; }
+}
+/* Separate the rate settings from the usage table above. */
+.usage-prices { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-border); }
+
+/* More tints used by stage colors and action buttons. */
+.tint-cyan { --tint-bg: var(--color-background-cyan); --tint-fg: var(--color-text-cyan); --tint-border: var(--color-border-cyan); }
+.tint-pink { --tint-bg: var(--color-background-pink); --tint-fg: var(--color-text-pink); --tint-border: var(--color-border-pink); }
+
+/* Judge results: a colored header and per-case tint. */
+.result-banner {
+  padding: 8px 12px;
+  border-radius: var(--radius-element);
+  border: 1px solid var(--tint-border);
+  background: var(--tint-bg);
+}
+.result-banner strong { color: var(--tint-fg); }
+details.case.ok { border-color: var(--color-border-green); background: color-mix(in srgb, var(--color-background-green) 45%, transparent); }
+details.case.bad { background: color-mix(in srgb, var(--tint-bg) 45%, transparent); border-color: var(--tint-border); }
+details.case summary { color: var(--tint-fg); font-weight: var(--font-weight-semibold); }
+
+/* System Design: each stage has its own hue; the current stage is filled. */
+button.tint-btn.stage-chip { font-weight: var(--font-weight-normal, 400); }
+button.tint-btn.stage-chip.current {
+  background: var(--tint-fg);
+  color: var(--color-background-card);
+  border-color: var(--tint-fg);
+  font-weight: var(--font-weight-semibold);
+}
+button.tint-btn.stage-chip.current:hover:not(:disabled) { background: var(--tint-fg); }
+.turn.stage-turn.interviewer { border-inline-start: 3px solid var(--tint-fg); }
+.turn.stage-turn.candidate { border-inline-end: 3px solid var(--tint-fg); }
+.turn.stage-turn > strong { color: var(--tint-fg); }
+
+/* Feedback lists as colored cards. */
+.feedback-lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 16px; }
+.feedback-list-card {
+  padding: 12px 16px;
+  border-radius: var(--radius-element);
+  border: 1px solid var(--tint-border);
+  background: color-mix(in srgb, var(--tint-bg) 60%, transparent);
+}
+.feedback-list-card h3 { margin: 0 0 6px; color: var(--tint-fg); }
+.feedback-list-card ul { margin: 0; }
+
+/* Empty states. */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  margin: 24px auto; padding: 24px 20px; max-width: 420px;
+  text-align: center;
+  border: 1px dashed var(--color-border-emphasized);
+  border-radius: var(--radius-container);
+  background: var(--color-background-muted);
+  color: var(--color-text-secondary);
+}
+.empty-state p { margin: 0; line-height: var(--line-height-reading); }
+.empty-state .empty-icon { font-size: 28px; line-height: 1; }
+.empty-state.compact { margin: 12px 0; padding: 14px 16px; max-width: none; flex-direction: row; text-align: start; }
+.empty-state.compact .empty-icon { font-size: 20px; }

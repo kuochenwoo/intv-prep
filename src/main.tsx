@@ -29,6 +29,7 @@ import InterviewApp from "./features/interview/InterviewApp";
 import SystemDesignApp from "./features/system-design/SystemDesignApp";
 import { LangProvider, lookup, useI18n } from "./i18n";
 import { Timer } from "./Timer";
+import { EmptyState } from "./EmptyState";
 import { localizeError } from "./errors";
 // Bundle Monaco locally: editing works without a CDN or network connection.
 (self as unknown as { MonacoEnvironment: unknown }).MonacoEnvironment = {
@@ -106,6 +107,17 @@ type Result = {
   }[];
 };
 const keyOf = (id: string, mode: Mode) => `${id}:${mode}`;
+// Judge outcomes: green when accepted, orange for resource limits, red for wrong or broken code.
+function resultTint(status: string) {
+  if (status === "accepted") return "tint-green";
+  if (
+    ["timeout", "memory_limit", "output_limit", "compile_timeout"].includes(
+      status,
+    )
+  )
+    return "tint-orange";
+  return "tint-red";
+}
 const difficultyBadge = {
   easy: "green",
   medium: "orange",
@@ -447,6 +459,8 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
           <div className="actions">
             <Button
               label={t("runSamples")}
+              variant="secondary"
+              className="tint-btn tint-blue"
               isDisabled={busy || !ready}
               onClick={() => run(true)}
             />
@@ -460,10 +474,12 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
           </div>
           <section className="results" aria-live="polite">
             {!result ? (
-              <p className="muted">{t("resultsPlaceholder")}</p>
+              <EmptyState icon="▶" text={t("resultsPlaceholder")} />
             ) : (
               <>
-                <div className="result-head">
+                <div
+                  className={`result-head result-banner ${resultTint(result.status)}`}
+                >
                   <Badge
                     variant={result.status === "accepted" ? "success" : "error"}
                     label={status(result.status)}
@@ -481,7 +497,7 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
                 {result.cases.map((c) => (
                   <details
                     key={c.id}
-                    className={`case ${c.status === "accepted" ? "ok" : "bad"}`}
+                    className={`case ${c.status === "accepted" ? "ok" : "bad"} ${resultTint(c.status)}`}
                     open={c.status !== "accepted"}
                   >
                     <summary>

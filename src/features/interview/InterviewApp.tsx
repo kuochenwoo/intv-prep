@@ -15,6 +15,7 @@ import { localizeError } from "../../errors";
 import { LiveResponse } from "./LiveResponse";
 import "./interview.css";
 import { SessionTools } from "./SessionTools";
+import { EmptyState, FeedbackLists } from "../../EmptyState";
 type Config = { provider: string; model: string; timeoutSeconds: number };
 type Settings = { config: Config; keyStatus: string; credentialSource: string };
 type Topic = {
@@ -465,6 +466,8 @@ export default function InterviewApp({
           )}
           <Button
             label={t("randomTopic")}
+            variant="secondary"
+            className="tint-btn tint-cyan"
             size="sm"
             width="100%"
             isDisabled={busy || !visibleTopics.length}
@@ -511,7 +514,7 @@ export default function InterviewApp({
             <Banner status="error" title={localizeError(error, lang)} />
           )}
           {data?.sessions.length === 0 && (
-            <p className="muted">{t("noSessions")}</p>
+            <EmptyState icon="🗂" text={t("noSessions")} />
           )}
           {data?.sessions.map((s) => (
             <button
@@ -636,9 +639,7 @@ export default function InterviewApp({
           </section>
           <section className="conversation-panel card">
             {!session ? (
-              <>
-                <p className="muted">{t("noSession")}</p>
-              </>
+              <EmptyState icon="💬" text={t("noSession")} />
             ) : (
               <>
                 <div className="session-heading">
@@ -793,6 +794,8 @@ export default function InterviewApp({
                         label={
                           referenceReady ? t("refReady") : t("aiReference")
                         }
+                        variant="secondary"
+                        className="tint-btn tint-purple"
                         isDisabled={busy || referenceReady}
                         onClick={() =>
                           perform(
@@ -813,7 +816,8 @@ export default function InterviewApp({
                       />
                       <Button
                         label={t("finishFeedback")}
-                        variant="ghost"
+                        variant="secondary"
+                        className="tint-btn tint-orange"
                         isDisabled={busy || !!draft.trim() || answered === 0}
                         onClick={() =>
                           perform(
@@ -863,22 +867,11 @@ export default function InterviewApp({
                         </div>
                       ))}
                     </div>
-                    {(
-                      [
-                        [t("strengths"), session.feedback.strengths],
-                        [t("gaps"), session.feedback.gaps],
-                        [t("nextTopics"), session.feedback.nextPracticeTopics],
-                      ] as const
-                    ).map(([name, items]) => (
-                      <section key={name}>
-                        <h3>{name}</h3>
-                        <ul>
-                          {items.map((s, i) => (
-                            <li key={i}>{s}</li>
-                          ))}
-                        </ul>
-                      </section>
-                    ))}
+                    <FeedbackLists
+                      strengths={session.feedback.strengths}
+                      gaps={session.feedback.gaps}
+                      next={session.feedback.nextPracticeTopics}
+                    />
                   </section>
                 )}
               </>

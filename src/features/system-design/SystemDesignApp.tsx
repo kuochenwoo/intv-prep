@@ -7,6 +7,7 @@ import { HistoryDrawer } from "../interview/HistoryDrawer";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { Selector } from "@astryxdesign/core/Selector";
 import { Badge } from "@astryxdesign/core/Badge";
+import { EmptyState, FeedbackLists } from "../../EmptyState";
 import { Banner } from "@astryxdesign/core/Banner";
 import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { AlertDialog } from "@astryxdesign/core/AlertDialog";
@@ -26,6 +27,15 @@ const stages = [
   "tradeoffs",
 ] as const;
 type Stage = (typeof stages)[number] | "feedback";
+// One soft hue per stage; the stage buttons and that stage's turns share it.
+const stageTint: Record<string, string> = {
+  requirements: "tint-blue",
+  estimation: "tint-teal",
+  high_level: "tint-purple",
+  deep_dive: "tint-orange",
+  tradeoffs: "tint-pink",
+  feedback: "tint-green",
+};
 type ScenarioText = {
   title: string;
   description: string;
@@ -500,6 +510,8 @@ export default function SystemDesignApp({
           )}
           <Button
             label={t("randomTopic")}
+            variant="secondary"
+            className="tint-btn tint-cyan"
             size="sm"
             width="100%"
             isDisabled={busy || !visibleScenarios.length}
@@ -549,7 +561,7 @@ export default function SystemDesignApp({
             <Banner status="error" title={localizeError(error, lang)} />
           )}
           {data?.sessions.length === 0 && (
-            <p className="muted">{t("noSessions")}</p>
+            <EmptyState icon="🗂" text={t("noSessions")} />
           )}
           {data?.sessions.map((s) => (
             <button
@@ -650,14 +662,12 @@ export default function SystemDesignApp({
                   />
                 </div>
               ) : (
-                <p className="muted">{t("sdNoCache")}</p>
+                <EmptyState icon="📦" text={t("sdNoCache")} compact />
               )}
             </section>
           )}
           {!session ? (
-            <>
-              <p>{t("sdEmpty")}</p>
-            </>
+            <EmptyState icon="🧭" text={t("sdEmpty")} />
           ) : (
             <section className="conversation-panel card">
               <div className="session-heading">
@@ -713,7 +723,8 @@ export default function SystemDesignApp({
                   <Button
                     key={stage}
                     label={`${i + 1}. ${stageLabel(stage)}`}
-                    variant={session.stage === stage ? "primary" : "secondary"}
+                    variant="secondary"
+                    className={`tint-btn stage-chip ${stageTint[stage] ?? "tint-gray"} ${session.stage === stage ? "current" : ""}`}
                     size="sm"
                     aria-pressed={session.stage === stage}
                     isDisabled={busy || !active}
@@ -787,7 +798,10 @@ export default function SystemDesignApp({
               <h3>{t("sdThread")}</h3>
               <div className="turns">
                 {session.turns.map((turn, i) => (
-                  <article className={`turn ${turn.role}`} key={i}>
+                  <article
+                    className={`turn ${turn.role} stage-turn ${stageTint[turn.stage] ?? "tint-gray"}`}
+                    key={i}
+                  >
                     <strong>
                       {turn.role === "candidate"
                         ? turn.aiAssisted
@@ -865,6 +879,8 @@ export default function SystemDesignApp({
                     />
                     <Button
                       label={referenceReady ? t("refReady") : t("aiReference")}
+                      variant="secondary"
+                      className="tint-btn tint-purple"
                       isDisabled={busy || !online || referenceReady}
                       onClick={() =>
                         perform(
@@ -880,6 +896,8 @@ export default function SystemDesignApp({
                     />
                     <Button
                       label={t("sdFinish")}
+                      variant="secondary"
+                      className="tint-btn tint-orange"
                       isDisabled={
                         busy ||
                         !online ||
@@ -930,12 +948,11 @@ export default function SystemDesignApp({
                       </article>
                     ))}
                   </div>
-                  <h3>{t("strengths")}</h3>
-                  {list(session.feedback.strengths)}
-                  <h3>{t("gaps")}</h3>
-                  {list(session.feedback.gaps)}
-                  <h3>{t("nextTopics")}</h3>
-                  {list(session.feedback.nextPracticeTopics)}
+                  <FeedbackLists
+                    strengths={session.feedback.strengths}
+                    gaps={session.feedback.gaps}
+                    next={session.feedback.nextPracticeTopics}
+                  />
                 </section>
               )}
             </section>

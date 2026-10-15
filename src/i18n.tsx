@@ -53,6 +53,9 @@ const strings = {
     "{n} 次请求 · 已知费用合计 {cost} · {unknown} 次费用未知",
     "{n} requests · Known estimates total {cost} · {unknown} with unknown cost",
   ],
+  usageStatRequests: ["请求次数", "Requests"],
+  usageStatCost: ["已知费用合计", "Known cost"],
+  usageStatUnknown: ["费用未知", "Unknown cost"],
   usageWhen: ["时间", "Time"],
   usageModel: ["模块 / 模型", "Module / model"],
   usageTask: ["用途", "Purpose"],
@@ -421,6 +424,8 @@ const strings = {
   ],
   saveSettings: ["保存设置与密钥", "Save settings and key"],
   deleteKey: ["删除当前 Provider 密钥", "Delete this provider's key"],
+  saveSettingsShort: ["保存设置", "Save settings"],
+  deleteKeyShort: ["删除密钥", "Delete key"],
   settingsNote: [
     "密钥只保存在项目 .env 中。Claude 和 DeepSeek 的密钥分开保存。新设置用于新会话，已有会话继续使用创建时的模型。",
     "Keys are stored only in the project's .env, separately for Claude and DeepSeek. New settings apply to new sessions; existing sessions keep their original model.",
@@ -495,6 +500,7 @@ const strings = {
   randomTopic: ["随机选主题", "Random topic"],
   history: ["面试历史（本地）", "Interview history (local)"],
   noSessions: ["还没有面试会话。", "No interviews yet."],
+  feedbackListEmpty: ["本次没有。", "None this time."],
   clearHistory: [
     "清空面试历史与题目缓存",
     "Clear history and cached questions",

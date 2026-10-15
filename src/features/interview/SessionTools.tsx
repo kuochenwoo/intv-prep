@@ -8,6 +8,7 @@ import { AlertDialog } from "@astryxdesign/core/AlertDialog";
 import { Banner } from "@astryxdesign/core/Banner";
 import { useI18n } from "../../i18n";
 import { localizeError } from "../../errors";
+import { EmptyState } from "../../EmptyState";
 
 type Clock = {
   budgetMs: number;
@@ -41,6 +42,12 @@ type Usage = {
 type Accounting = {
   records: Usage[];
   prices: { provider: string; model: string; rates: Rates }[];
+};
+const statusTint: Record<string, string> = {
+  success: "tint-green",
+  content_error: "tint-orange",
+  transport_error: "tint-red",
+  interrupted: "tint-gray",
 };
 const clockText = (ms: number) => {
   const n = Math.ceil(ms / 1000);
@@ -161,13 +168,16 @@ export function SessionTools({
           </span>
           <Button
             size="sm"
+            variant="secondary"
+            className="tint-btn tint-blue"
             label={t("exportMarkdown")}
             isDisabled={busy || working}
             onClick={() => setExportFormat("md")}
           />
           <Button
             size="sm"
-            variant="ghost"
+            variant="secondary"
+            className="tint-btn tint-teal"
             label={t("exportJson")}
             isDisabled={busy || working}
             onClick={() => setExportFormat("json")}
@@ -176,9 +186,11 @@ export function SessionTools({
         <div className="session-timer-right">
           {!clock ? (
             <>
+              <span className="timer-label">{t("timer")}</span>
               <Selector
                 size="sm"
                 label={t("timer")}
+                isLabelHidden
                 value={minutes}
                 isDisabled={!loaded || working || busy || status !== "active"}
                 onChange={setMinutes}
@@ -353,13 +365,36 @@ export function UsagePanel({
       <div className="actions">
         <Button
           size="sm"
-          variant="ghost"
+          variant="secondary"
+          className="tint-btn tint-blue"
           label={t("usageRefresh")}
           isDisabled={working}
           onClick={() => void load().catch((e) => setError(String(e)))}
         />
       </div>
-      <p>{t("usageTotals", { n: rows.length, cost: usd(sum), unknown })}</p>
+      <div
+        className="usage-stats"
+        aria-label={t("usageTotals", {
+          n: rows.length,
+          cost: usd(sum),
+          unknown,
+        })}
+      >
+        <div className="usage-stat tint-blue">
+          <span>{t("usageStatRequests")}</span>
+          <strong>{rows.length}</strong>
+        </div>
+        <div className="usage-stat tint-green">
+          <span>{t("usageStatCost")}</span>
+          <strong>{usd(sum)}</strong>
+        </div>
+        <div
+          className={`usage-stat ${unknown > 0 ? "tint-orange" : "tint-gray"}`}
+        >
+          <span>{t("usageStatUnknown")}</span>
+          <strong>{unknown}</strong>
+        </div>
+      </div>
       <div className="usage-table-wrap">
         <table className="usage-table">
           <thead>
@@ -385,9 +420,14 @@ export function UsagePanel({
                   )}
                 </td>
                 <td>
-                  {r.module.toUpperCase()} · {r.provider}
+                  <span
+                    className={`usage-pill ${r.module === "p2" ? "tint-teal" : "tint-purple"}`}
+                  >
+                    {r.module.toUpperCase()}
+                  </span>{" "}
+                  {r.provider}
                   <br />
-                  {r.model}
+                  <span className="muted">{r.model}</span>
                 </td>
                 <td>
                   {t(`usageOp_${r.operation}` as Parameters<typeof t>[0])}
@@ -402,70 +442,91 @@ export function UsagePanel({
                     / {r.cacheWriteTokens ?? t("usageUnknown")}
                   </small>
                 </td>
-                <td>
+                <td
+                  className={r.estimatedUsd === null ? "muted" : "usage-cost"}
+                >
                   {r.estimatedUsd === null
                     ? t("usageUnknown")
                     : usd(r.estimatedUsd)}
                 </td>
                 <td>
-                  {t(`usageState_${r.status}` as Parameters<typeof t>[0])}
+                  <span
+                    className={`usage-pill ${statusTint[r.status] ?? "tint-gray"}`}
+                  >
+                    {t(`usageState_${r.status}` as Parameters<typeof t>[0])}
+                  </span>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      {rows.length === 0 && <p>{t("usageEmpty")}</p>}
+      {rows.length === 0 && (
+        <EmptyState icon="📊" text={t("usageEmpty")} compact />
+      )}
       {rows.length > 100 && <p>{t("usageRecent")}</p>}
-      <Collapsible
-        trigger={
-          <span>
-            {t("usagePrices")} · {provider} / {model}
-          </span>
-        }
-        defaultIsOpen={false}
-      >
-        <p className="muted">{t("usagePriceHelp")}</p>
-        <div className="usage-rates">
-          {(["input", "output", "cacheRead", "cacheWrite"] as const).map(
-            (key) => (
-              <NumberInput
-                key={key}
-                label={t(`usageRate_${key}` as Parameters<typeof t>[0])}
-                value={rates[key]}
-                min={0}
-                max={1000000}
-                step={0.01}
-                onChange={(v) => {
-                  setSaved(false);
-                  setDirtyRates(true);
-                  setRates({ ...rates, [key]: v ?? 0 });
-                }}
-              />
-            ),
-          )}
-        </div>
-        <Button
-          label={t("usageSavePrices")}
-          size="sm"
-          isDisabled={working}
-          onClick={async () => {
-            setWorking(true);
-            setError("");
-            try {
-              await invoke("save_api_prices", { provider, model, rates });
-              await load();
-              setDirtyRates(false);
-              setSaved(true);
-            } catch (e) {
-              setError(String(e));
-            } finally {
-              setWorking(false);
-            }
-          }}
-        />
-        {saved && <p role="status">{t("usagePricesSaved")}</p>}
-      </Collapsible>
+      <div className="usage-prices">
+        <Collapsible
+          trigger={
+            <span className="usage-prices-trigger">
+              <strong>{t("usagePrices")}</strong>
+              <span className="usage-pill tint-purple">
+                {provider} / {model}
+              </span>
+            </span>
+          }
+          defaultIsOpen={false}
+        >
+          <div className="usage-rates-card">
+            <p className="muted">{t("usagePriceHelp")}</p>
+            <div className="usage-rates">
+              {(["input", "output", "cacheRead", "cacheWrite"] as const).map(
+                (key) => (
+                  <NumberInput
+                    key={key}
+                    label={t(`usageRate_${key}` as Parameters<typeof t>[0])}
+                    value={rates[key]}
+                    min={0}
+                    max={1000000}
+                    step={0.01}
+                    onChange={(v) => {
+                      setSaved(false);
+                      setDirtyRates(true);
+                      setRates({ ...rates, [key]: v ?? 0 });
+                    }}
+                  />
+                ),
+              )}
+            </div>
+            <Button
+              label={t("usageSavePrices")}
+              size="sm"
+              variant="secondary"
+              className="tint-btn tint-green"
+              isDisabled={working}
+              onClick={async () => {
+                setWorking(true);
+                setError("");
+                try {
+                  await invoke("save_api_prices", { provider, model, rates });
+                  await load();
+                  setDirtyRates(false);
+                  setSaved(true);
+                } catch (e) {
+                  setError(String(e));
+                } finally {
+                  setWorking(false);
+                }
+              }}
+            />
+            {saved && (
+              <p role="status" className="usage-saved">
+                {t("usagePricesSaved")}
+              </p>
+            )}
+          </div>
+        </Collapsible>
+      </div>
       {error && <Banner status="error" title={localizeError(error, lang)} />}
     </section>
   );
