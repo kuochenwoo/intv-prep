@@ -14,16 +14,24 @@ This list records the agreed next step and future feature ideas. Recording an it
 
 These completed workflows do not imply that every model-generated question or judgement is correct.
 
-## Next: calibrate AI against the expanded libraries
+## AI calibration: implemented, with live-review findings
 
 - [ ] Improve P1 question generation: assess one core mechanism in a concrete scenario, avoid giving away the answer in visible constraints, and keep optional extensions out of mandatory opening-question criteria.
-- [ ] Improve follow-ups in both modules: respond to the actual answer, acknowledge what is already explained, avoid repetitive demands, and explicitly identify changed assumptions. Keep P1 at mechanism/local-boundary depth and P2 at its selected architecture stage.
+- [x] Improve follow-ups in both modules: respond to the actual answer, acknowledge what is already explained, avoid repetitive demands, and explicitly identify changed assumptions. Keep P1 at mechanism/local-boundary depth and P2 at its selected architecture stage.
 - [ ] Improve evidence-based feedback: do not count unasked material or unanswered interviewer questions as demonstrated weaknesses. Accept equivalent explanations rather than requiring keywords or a prescribed phrasing.
-- [ ] Reliably exclude AI-assisted answers from evidence of independent understanding. AI-only evidence must not receive independent-ability credit; disclose assistance and use `missing` for dimensions with no independent evidence.
-- [ ] Calibrate P2 estimates: recognize explicitly stated illustrative or alternative assumptions, distinguish them from task defaults, verify formulas/units, and explain when task figures should be substituted. Do not invent benchmark results or demand unsupported precision.
-- [ ] Calibrate P2 architecture feedback: accept defensible alternatives, evaluate end-to-end data flow and cross-component trade-offs, and distinguish genuine contradictions from an interviewer silently changing the failure window.
-- [ ] Build regression samples from new P1 topics and P2 scenarios using correct, partially correct, incorrect and "I do not know" answers. Include AI-assisted and mixed independent/assisted histories, bilingual cases and the failures already observed in live probes.
-- [ ] Add necessary automated checks and review real-provider samples. Record provider/model, input assumptions, expected behavior and observed defects. Report transport/schema success separately from semantic-quality acceptance; never mock a successful live request or judgement.
+- [x] Reliably exclude AI-assisted answers from evidence of independent understanding. AI-only evidence must not receive independent-ability credit; disclose assistance and use `missing` for dimensions with no independent evidence.
+- [x] Calibrate P2 estimates: recognize explicitly stated illustrative or alternative assumptions, distinguish them from task defaults, verify formulas/units, and explain when task figures should be substituted. Do not invent benchmark results or demand unsupported precision.
+- [x] Calibrate P2 architecture feedback: accept defensible alternatives, evaluate end-to-end data flow and cross-component trade-offs, and distinguish genuine contradictions from an interviewer silently changing the failure window.
+- [x] Build regression samples from new P1 topics and P2 scenarios using correct, partially correct, incorrect and "I do not know" answers. Include AI-assisted and mixed independent/assisted histories, bilingual cases and the failures already observed in live probes.
+- [x] Add necessary automated checks and review real-provider samples. Record provider/model, input assumptions, expected behavior and observed defects. Report transport/schema success separately from semantic-quality acceptance; never mock a successful live request or judgement.
+
+Both approved DeepSeek batches completed: 16 initial plus 8 focused logical requests. Targeted refinements pass 44 local checks (one Keychain test intentionally ignored); the focused samples fixed visible MVCC result leakage, event-loop follow-up repetition and unasked material in P2 gaps. The remaining unchecked goals reflect actual residual findings, not pending execution.
+
+Remaining quality work:
+
+- [ ] Remove mechanism hints from generated opening backgrounds and optional comparisons from opening evaluation checklists.
+- [ ] Improve feedback summary/assessment consistency: preserve all actually discussed stages, count assessed dimensions correctly and avoid broader unasked omissions in evidence text.
+- [ ] Validate these refined semantics with Claude when a separate real-provider run is scheduled; this round called only DeepSeek. See [AI quality calibration](docs/AI_QUALITY_CALIBRATION.md) for exact findings and the limits of acceptance.
 
 Existing evidence and defects:
 

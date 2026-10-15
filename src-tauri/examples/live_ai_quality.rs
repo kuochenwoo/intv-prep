@@ -10,7 +10,11 @@ use swe_interview_prep::{
 
 fn save(report: &[Value]) -> Result<(), String> {
     std::fs::write(
-        "/tmp/intv-ai-quality-live.json",
+        if std::env::var_os("INTERVIEW_QUALITY_FOCUS").is_some() {
+            "/tmp/intv-ai-quality-focused-live.json"
+        } else {
+            "/tmp/intv-ai-quality-live.json"
+        },
         serde_json::to_string_pretty(report).unwrap(),
     )
     .map_err(|e| e.to_string())
@@ -32,8 +36,10 @@ fn main() -> Result<(), String> {
     };
     let cases: Value =
         serde_json::from_str(include_str!("../../content/evals/interview-quality.json")).unwrap();
+    let focused = std::env::var_os("INTERVIEW_QUALITY_FOCUS").is_some();
+    let planned = if focused { 8 } else { 16 };
     let mut report = vec![json!({"provider":config.provider,"model":config.model,
-        "description":cases["description"],"logicalRequestsPlanned":16})];
+        "description":cases["description"],"logicalRequestsPlanned":planned,"focused":focused})];
     for case in cases["generations"].as_array().unwrap() {
         let lang: Lang = serde_json::from_value(case["lang"].clone()).unwrap();
         let api =
@@ -49,6 +55,14 @@ fn main() -> Result<(), String> {
         );
     }
     for case in cases["p1Cases"].as_array().unwrap() {
+        if focused
+            && !matches!(
+                case["id"].as_str(),
+                Some("p1-correct-event-en" | "p1-partial-mvcc-zh")
+            )
+        {
+            continue;
+        }
         let lang: Lang = serde_json::from_value(case["lang"].clone()).unwrap();
         let api =
             InterviewProvider::new(&config, credentials::read_key(&config.provider)?)?.lang(lang);
@@ -104,12 +118,16 @@ fn main() -> Result<(), String> {
             feedback: None,
             references: vec![],
         };
-        let follow = api.design_follow_up(&session)?;
+        let follow = if focused {
+            None
+        } else {
+            Some(api.design_follow_up(&session)?)
+        };
         let feedback = api.design_feedback(&session)?;
         report.push(json!({"kind":"p2","input":case,"followUp":follow,"feedback":feedback}));
         save(&report)?;
         println!("Completed real P2 case: {}", case["id"]);
     }
-    println!("Completed 16 logical real requests; semantic review remains manual. Report /tmp/intv-ai-quality-live.json");
+    println!("Completed {planned} logical real requests; semantic review remains manual. Focused batch: {focused}");
     Ok(())
 }
