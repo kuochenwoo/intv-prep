@@ -232,5 +232,739 @@
         "C keeps timing out; a client timeout does not automatically undo work already started at C"
       ]
     }
+  },
+  {
+    "id": "mvcc-snapshots",
+    "category": "Database",
+    "title": "事务快照与重复读取",
+    "focus": ["语句快照与事务快照", "已提交版本的可见性", "隔离级别的实现差异"],
+    "scenarioConstraints": [
+      "PostgreSQL 18 READ COMMITTED；T1 首次 SELECT 余额为 100",
+      "T2 将余额更新为 80 并提交，随后 T1 在同一事务中再次普通 SELECT；无其他写入"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Transaction Snapshots and Repeated Reads",
+      "focus": [
+        "Statement vs transaction snapshots",
+        "Visibility of committed versions",
+        "Implementation-specific isolation semantics"
+      ],
+      "scenarioConstraints": [
+        "PostgreSQL 18 READ COMMITTED; T1 first SELECTs a balance of 100",
+        "T2 updates the balance to 80 and commits; T1 then performs another plain SELECT in the same transaction; no other writes"
+      ]
+    }
+  },
+  {
+    "id": "composite-index",
+    "category": "Database",
+    "title": "联合索引与扫描范围",
+    "focus": ["B-tree 字典序", "等值前缀与范围条件", "执行计划与数据分布"],
+    "scenarioConstraints": [
+      "PostgreSQL 18 表 orders 的 B-tree 索引为 (tenant_id, created_at)",
+      "查询 WHERE tenant_id = 7 AND created_at >= 指定时间；只分析该索引可缩小的扫描范围，不预设优化器必选它"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Composite Indexes and Scan Ranges",
+      "focus": [
+        "B-tree lexicographic ordering",
+        "Equality prefixes and range predicates",
+        "Plans and data distribution"
+      ],
+      "scenarioConstraints": [
+        "PostgreSQL 18 orders has a B-tree index on (tenant_id, created_at)",
+        "Query WHERE tenant_id = 7 AND created_at >= a given timestamp; examine the index scan range without assuming the planner must choose it"
+      ]
+    }
+  },
+  {
+    "id": "covering-index",
+    "category": "Database",
+    "title": "覆盖索引与可见性检查",
+    "focus": ["INCLUDE 列与查询覆盖", "MVCC 可见性位图", "索引体积与更新代价"],
+    "scenarioConstraints": [
+      "PostgreSQL 18 索引为 ON users(id) INCLUDE (name)，查询 SELECT name FROM users WHERE id = 7",
+      "计划使用 Index Only Scan，但目标堆页的 all-visible 位未设置"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Covering Indexes and Visibility Checks",
+      "focus": [
+        "INCLUDE columns and query coverage",
+        "MVCC visibility map",
+        "Index size and write costs"
+      ],
+      "scenarioConstraints": [
+        "PostgreSQL 18 index ON users(id) INCLUDE (name); query SELECT name FROM users WHERE id = 7",
+        "The plan uses Index Only Scan, but the target heap page has no all-visible bit set"
+      ]
+    }
+  },
+  {
+    "id": "database-deadlock",
+    "category": "Database",
+    "title": "行锁顺序与死锁",
+    "focus": ["循环等待", "死锁检测与事务回滚", "统一加锁顺序"],
+    "scenarioConstraints": [
+      "PostgreSQL 18 中 T1 已更新行 A，T2 已更新行 B，均未提交",
+      "T1 随后更新 B，T2 随后更新 A；两行不同，无其他事务"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Row Lock Ordering and Deadlocks",
+      "focus": [
+        "Circular waits",
+        "Deadlock detection and transaction abort",
+        "Consistent lock ordering"
+      ],
+      "scenarioConstraints": [
+        "In PostgreSQL 18, T1 has updated row A and T2 row B; neither has committed",
+        "T1 next updates B and T2 next updates A; the rows are distinct and no other transactions exist"
+      ]
+    }
+  },
+  {
+    "id": "pagination-offset",
+    "category": "Database",
+    "title": "分页偏移与并发插入",
+    "focus": ["稳定排序与唯一键", "OFFSET 的位置语义", "游标分页的边界"],
+    "scenarioConstraints": [
+      "按不可变且唯一的 id 升序分页，已读取 id 10、20 的第一页，每页 2 行",
+      "下一次查询前插入 id 15；第二页使用 ORDER BY id LIMIT 2 OFFSET 2，两次查询采用独立快照"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Offset Pagination and Concurrent Inserts",
+      "focus": [
+        "Stable ordering and unique keys",
+        "Positional meaning of OFFSET",
+        "Keyset pagination boundaries"
+      ],
+      "scenarioConstraints": [
+        "Paginate by immutable unique id ascending; page one returned ids 10 and 20 with page size 2",
+        "Insert id 15 before fetching page two using ORDER BY id LIMIT 2 OFFSET 2; each query has a separate snapshot"
+      ]
+    }
+  },
+  {
+    "id": "transaction-rollback",
+    "category": "Database",
+    "title": "事务回滚与序列空洞",
+    "focus": [
+      "序列与事务数据的边界",
+      "回滚后的编号空洞",
+      "唯一编号不等于连续编号"
+    ],
+    "scenarioConstraints": [
+      "PostgreSQL 18 表使用序列生成主键，事务 T1 获取序列值 42 后回滚",
+      "随后 T2 获取同一序列的下一个值；无并发调用、重置或序列缓存丢失"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Transaction Rollback and Sequence Gaps",
+      "focus": [
+        "Sequences vs transactional row data",
+        "Gaps after rollback",
+        "Unique numbering vs gapless numbering"
+      ],
+      "scenarioConstraints": [
+        "A PostgreSQL 18 table uses a sequence for primary keys; T1 obtains sequence value 42 and rolls back",
+        "T2 then obtains the next value from that sequence; there are no concurrent calls, resets or lost sequence caches"
+      ]
+    }
+  },
+  {
+    "id": "tcp-framing",
+    "category": "Networking",
+    "title": "TCP 字节流与消息边界",
+    "focus": ["字节流与应用消息", "部分读取与接收缓冲", "长度前缀的解析状态"],
+    "scenarioConstraints": [
+      "客户端在同一 TCP 连接上依次 send 两条消息，每条均为 4 字节长度前缀加消息体",
+      "服务端使用普通 recv，每次缓冲区最多 1024 字节；无应用层分隔符或其他协议"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "TCP Byte Streams and Message Framing",
+      "focus": [
+        "Byte streams vs application messages",
+        "Partial reads and receive buffers",
+        "Length-prefixed parser state"
+      ],
+      "scenarioConstraints": [
+        "A client sends two messages over one TCP connection, each with a four-byte length prefix followed by a body",
+        "The server uses ordinary recv with a buffer of at most 1024 bytes; there are no delimiters or other protocols"
+      ]
+    }
+  },
+  {
+    "id": "tcp-half-close",
+    "category": "Networking",
+    "title": "TCP 半关闭与 EOF",
+    "focus": ["FIN 与单向关闭", "recv 返回 0 的含义", "协议完成与连接资源释放"],
+    "scenarioConstraints": [
+      "Linux 上客户端发完请求后 shutdown(SHUT_WR)，仍保持读方向开启",
+      "服务端读完全部请求字节后 recv 返回 0，尚未发送响应；无 RST 或网络错误"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "TCP Half-Close and EOF",
+      "focus": [
+        "FIN and one-way shutdown",
+        "Meaning of recv returning zero",
+        "Protocol completion and resource release"
+      ],
+      "scenarioConstraints": [
+        "On Linux a client sends its request then calls shutdown(SHUT_WR), keeping its read direction open",
+        "After consuming all request bytes, server recv returns zero before the response is sent; no RST or network error occurs"
+      ]
+    }
+  },
+  {
+    "id": "http-conditional",
+    "category": "Networking",
+    "title": "HTTP 条件请求与 304",
+    "focus": ["ETag 与 If-None-Match", "缓存重验证", "304 与响应体复用"],
+    "scenarioConstraints": [
+      "客户端已缓存 GET /profile 的响应体和 ETag \"v1\"，缓存现已过期",
+      "再次 GET 携带 If-None-Match: \"v1\"；源站表示未改变并返回 304，无响应体"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "HTTP Conditional Requests and 304",
+      "focus": [
+        "ETag and If-None-Match",
+        "Cache revalidation",
+        "304 and reuse of a stored body"
+      ],
+      "scenarioConstraints": [
+        "A client cached a GET /profile body with ETag \"v1\"; that cached response is now stale",
+        "A new GET carries If-None-Match: \"v1\"; the origin reports no change with a bodyless 304 response"
+      ]
+    }
+  },
+  {
+    "id": "http-cache-control",
+    "category": "Networking",
+    "title": "HTTP no-cache 与 no-store",
+    "focus": ["存储许可与复用条件", "重验证与新鲜度", "私有响应的缓存边界"],
+    "scenarioConstraints": [
+      "浏览器收到 Cache-Control: no-cache 和 ETag 的可缓存 GET 响应；无其他缓存限制",
+      "用户随后再次请求同一资源，网络可用；只分析浏览器私有缓存，不涉及共享代理"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "HTTP no-cache and no-store",
+      "focus": [
+        "Storage permission vs reuse conditions",
+        "Validation vs freshness",
+        "Caching boundaries for private responses"
+      ],
+      "scenarioConstraints": [
+        "A browser receives an otherwise cacheable GET response with Cache-Control: no-cache and an ETag; no other caching restrictions apply",
+        "The user requests the same resource again with network available; consider only the browser private cache, not shared proxies"
+      ]
+    }
+  },
+  {
+    "id": "tls-identity",
+    "category": "Networking",
+    "title": "TLS 加密与服务端身份",
+    "focus": ["证书链与信任锚", "主机名与证书身份匹配", "加密不等于认证正确"],
+    "scenarioConstraints": [
+      "HTTPS 客户端连接 api.example.com，服务端证书链受信任，但证书只包含 other.example.com 的身份",
+      "无代理、自定义信任策略或其他匹配名称；客户端拟通过关闭主机名校验解决连接错误"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "TLS Encryption and Server Identity",
+      "focus": [
+        "Certificate chains and trust anchors",
+        "Matching hostnames to certificate identities",
+        "Encryption vs correct authentication"
+      ],
+      "scenarioConstraints": [
+        "An HTTPS client connects to api.example.com; the certificate chain is trusted but its only identity is other.example.com",
+        "There is no proxy, custom trust policy or other matching name; the client proposes disabling hostname verification to resolve the error"
+      ]
+    }
+  },
+  {
+    "id": "file-descriptor-offset",
+    "category": "Operating Systems",
+    "title": "文件描述符与共享偏移",
+    "focus": ["描述符与打开文件描述", "dup 的共享状态", "独立 open 的区别"],
+    "scenarioConstraints": [
+      "Linux 上 open 普通文件内容 abcdef，得到 fd1，再用 dup(fd1) 得到 fd2",
+      "依次 read(fd1, 2) 与 read(fd2, 2)；初始偏移为 0，无并发、seek 或其他读取"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "File Descriptors and Shared Offsets",
+      "focus": [
+        "Descriptors vs open file descriptions",
+        "State shared by dup",
+        "Difference from an independent open"
+      ],
+      "scenarioConstraints": [
+        "On Linux open a regular file containing abcdef as fd1, then obtain fd2 with dup(fd1)",
+        "Sequentially read two bytes from fd1 then two from fd2; initial offset is zero with no concurrent access, seeks or other reads"
+      ]
+    }
+  },
+  {
+    "id": "unlink-open-file",
+    "category": "Operating Systems",
+    "title": "删除文件与磁盘占用",
+    "focus": [
+      "目录项与 inode 生命周期",
+      "打开引用与空间回收",
+      "日志轮转的句柄边界"
+    ],
+    "scenarioConstraints": [
+      "Linux 本地文件系统上，一个日志文件仅有一个硬链接，进程仍持有它的打开描述符",
+      "管理员 unlink 该路径后目录中已看不到文件，但描述符仍未关闭；无其他链接或映射"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Unlinking Open Files and Disk Usage",
+      "focus": [
+        "Directory entries and inode lifetime",
+        "Open references and space reclamation",
+        "Open handles during log rotation"
+      ],
+      "scenarioConstraints": [
+        "On a local Linux filesystem a log file has one hard link and a process still holds its open descriptor",
+        "After unlink removes the path, the file is absent from the directory but its descriptor remains open; no other links or mappings exist"
+      ]
+    }
+  },
+  {
+    "id": "epoll-edge-trigger",
+    "category": "Operating Systems",
+    "title": "epoll 边缘触发与未读数据",
+    "focus": [
+      "边缘触发与水平触发",
+      "非阻塞读取至 EAGAIN",
+      "就绪通知不是完整请求"
+    ],
+    "scenarioConstraints": [
+      "Linux 非阻塞管道读端注册 EPOLLIN | EPOLLET，写端一次写入 100 字节后保持开启且不再写入",
+      "读端收到通知后只读 10 字节，再次 epoll_wait；无其他读取者、关闭或错误事件"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Edge-Triggered epoll and Unread Data",
+      "focus": [
+        "Edge vs level triggering",
+        "Nonblocking reads until EAGAIN",
+        "Readiness is not a complete request"
+      ],
+      "scenarioConstraints": [
+        "A nonblocking Linux pipe read end uses EPOLLIN | EPOLLET; its writer writes 100 bytes once and stays open without further writes",
+        "After receiving readiness the reader consumes only ten bytes and calls epoll_wait again; there are no other readers, closes or error events"
+      ]
+    }
+  },
+  {
+    "id": "volatile-counter",
+    "category": "Concurrency",
+    "title": "volatile 可见性与计数原子性",
+    "focus": ["读改写的执行步骤", "可见性与原子性的区别", "原子计数与互斥"],
+    "scenarioConstraints": [
+      "Java 21 中 volatile int count = 0，两个线程分别执行一次 count++",
+      "主线程 start 两个线程并 join 后读取 count；无其他写入或同步保护"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "volatile Visibility and Counter Atomicity",
+      "focus": [
+        "Read-modify-write steps",
+        "Visibility vs atomicity",
+        "Atomic counters vs mutual exclusion"
+      ],
+      "scenarioConstraints": [
+        "In Java 21, volatile int count = 0 and two threads each execute count++ once",
+        "The main thread starts both, joins them and reads count; no other writes or synchronization protect the increments"
+      ]
+    }
+  },
+  {
+    "id": "safe-publication",
+    "category": "Concurrency",
+    "title": "安全发布与 happens-before",
+    "focus": ["发布标志与先行发生", "普通字段的可见性", "发布后继续修改的边界"],
+    "scenarioConstraints": [
+      "Java 21 共享普通字段 data 初值为 0，volatile boolean ready 初值为 false",
+      "写线程依次 data = 42、ready = true；读线程读 ready 为 true 后读取 data；发布后无其他修改"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Safe Publication and Happens-Before",
+      "focus": [
+        "Publication flags and happens-before",
+        "Visibility of ordinary fields",
+        "Mutations after publication"
+      ],
+      "scenarioConstraints": [
+        "In Java 21 shared ordinary field data starts at zero and volatile boolean ready starts false",
+        "The writer sets data = 42 then ready = true; the reader observes ready true then reads data; no mutations follow publication"
+      ]
+    }
+  },
+  {
+    "id": "condition-wait",
+    "category": "Concurrency",
+    "title": "条件等待与唤醒后重检",
+    "focus": ["监视器与 wait 释放锁", "虚假唤醒与竞争消费", "while 条件重检"],
+    "scenarioConstraints": [
+      "Java 21 消费者在 synchronized(lock) 内用 if (queue.isEmpty()) lock.wait()，随后 remove；生产者使用同一锁并 notifyAll",
+      "有两个消费者等待，生产者只加入一个元素；被唤醒线程需重新竞争同一监视器"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Condition Waiting and Predicate Rechecks",
+      "focus": [
+        "Monitors and releasing locks in wait",
+        "Spurious wakeups and competing consumers",
+        "Rechecking predicates in a while loop"
+      ],
+      "scenarioConstraints": [
+        "A Java 21 consumer uses if (queue.isEmpty()) lock.wait() then remove inside synchronized(lock); the producer uses the same lock and notifyAll",
+        "Two consumers are waiting and the producer adds only one item; awakened threads must compete for the same monitor again"
+      ]
+    }
+  },
+  {
+    "id": "thread-pool-starvation",
+    "category": "Concurrency",
+    "title": "线程池中的嵌套等待",
+    "focus": ["工作线程与任务队列", "Future.get 的阻塞", "线程饥饿与等待依赖"],
+    "scenarioConstraints": [
+      "Java 21 ThreadPoolExecutor 固定为 2 个工作线程，使用无界队列且不启用超时",
+      "两个正在运行的父任务各向同一池提交一个子任务，并调用 Future.get 无限等待；子任务本身可立即完成"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Nested Waiting in Thread Pools",
+      "focus": [
+        "Worker threads and task queues",
+        "Blocking in Future.get",
+        "Thread starvation and wait dependencies"
+      ],
+      "scenarioConstraints": [
+        "A Java 21 ThreadPoolExecutor has exactly two workers, an unbounded queue and no timeouts",
+        "Both running parent tasks submit a child to that same pool then wait indefinitely in Future.get; each child could finish immediately if scheduled"
+      ]
+    }
+  },
+  {
+    "id": "cas-aba",
+    "category": "Concurrency",
+    "title": "CAS 与 ABA 变化",
+    "focus": ["值比较与变化历史", "版本戳与引用一起比较", "CAS 成功的语义边界"],
+    "scenarioConstraints": [
+      "Java 21 AtomicReference 初值指向对象 A；T1 读取 A 后暂停，期间对象均保持存活",
+      "T2 将引用从 A 改为 B 再改回同一个 A；T1 恢复后 compareAndSet(A, C)；无后续写入"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "CAS and ABA Changes",
+      "focus": [
+        "Value comparisons vs change history",
+        "Comparing a stamp with a reference",
+        "What successful CAS guarantees"
+      ],
+      "scenarioConstraints": [
+        "A Java 21 AtomicReference initially holds object A; T1 reads A then pauses, and all objects remain alive",
+        "T2 changes the reference A to B then back to the identical A; T1 resumes with compareAndSet(A, C); no later writes occur"
+      ]
+    }
+  },
+  {
+    "id": "javascript-event-loop",
+    "category": "Runtime",
+    "title": "JavaScript 微任务与定时器",
+    "focus": [
+      "当前任务的执行",
+      "Promise 微任务检查点",
+      "定时器不是精确执行时刻"
+    ],
+    "scenarioConstraints": [
+      "浏览器同一脚本依次执行 console.log(\"A\")、setTimeout(() => console.log(\"B\"), 0)、Promise.resolve().then(() => console.log(\"C\"))、console.log(\"D\")",
+      "无其他任务或异常；只比较这四条输出顺序，不推断实际毫秒延迟，也不涉及 Node.js"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "JavaScript Microtasks and Timers",
+      "focus": [
+        "Execution of the current task",
+        "Promise microtask checkpoints",
+        "Timers do not specify exact execution times"
+      ],
+      "scenarioConstraints": [
+        "One browser script executes console.log(\"A\"), setTimeout(() => console.log(\"B\"), 0), Promise.resolve().then(() => console.log(\"C\")), then console.log(\"D\")",
+        "There are no other tasks or exceptions; compare only these four logs, not actual millisecond delays or Node.js behavior"
+      ]
+    }
+  },
+  {
+    "id": "mutable-hash-key",
+    "category": "Runtime",
+    "title": "HashMap 可变键与查找失败",
+    "focus": [
+      "equals 与 hashCode 契约",
+      "插入后的键状态变化",
+      "不可变键的局部取舍"
+    ],
+    "scenarioConstraints": [
+      "Java 21 HashMap 的键 User 以可变 id 字段实现 equals 与 hashCode；插入时 id = 1",
+      "随后同一对象 id 改为 2；两次 hashCode 不同，且没有重插入、扩容或并发操作，再用该对象 get"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Mutable HashMap Keys and Failed Lookups",
+      "focus": [
+        "The equals and hashCode contract",
+        "Changing keys after insertion",
+        "Local trade-offs of immutable keys"
+      ],
+      "scenarioConstraints": [
+        "A Java 21 HashMap key User implements equals and hashCode using mutable id; it is inserted with id = 1",
+        "The same object changes id to 2 with a different hashCode; get uses that object without reinsertion, resizing or concurrent operations"
+      ]
+    }
+  },
+  {
+    "id": "resource-cleanup",
+    "category": "Runtime",
+    "title": "异常路径与资源关闭",
+    "focus": [
+      "try-with-resources 的关闭时机",
+      "主异常与 suppressed 异常",
+      "确定性关闭与垃圾回收"
+    ],
+    "scenarioConstraints": [
+      "Java 21 try-with-resources 成功创建一个 AutoCloseable 资源，try 主体抛出异常 E1",
+      "该资源 close() 也抛出异常 E2；无其他资源、catch、finally 或异常包装"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Exception Paths and Resource Cleanup",
+      "focus": [
+        "When try-with-resources closes resources",
+        "Primary vs suppressed exceptions",
+        "Deterministic cleanup vs garbage collection"
+      ],
+      "scenarioConstraints": [
+        "Java 21 try-with-resources successfully creates one AutoCloseable resource and its body throws E1",
+        "That resource close() also throws E2; there are no other resources, catch/finally blocks or exception wrappers"
+      ]
+    }
+  },
+  {
+    "id": "redis-pipeline",
+    "category": "Redis",
+    "title": "Redis Pipeline 与命令原子性",
+    "focus": ["批量发送与往返等待", "Pipeline 与事务边界", "多客户端命令交错"],
+    "scenarioConstraints": [
+      "单个 Redis 实例中客户端 A 用普通 Pipeline 发送 SET x 1 与 GET x，不使用 MULTI 或 Lua",
+      "客户端 B 也可执行 SET x 2；各连接内命令保持顺序，但不假定跨连接调度顺序"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Redis Pipelining and Command Atomicity",
+      "focus": [
+        "Batching and round-trip waits",
+        "Pipelining vs transaction boundaries",
+        "Interleaving commands from multiple clients"
+      ],
+      "scenarioConstraints": [
+        "On one Redis instance client A pipelines SET x 1 and GET x without MULTI or Lua",
+        "Client B may execute SET x 2; command order is preserved within each connection with no assumed scheduling order across connections"
+      ]
+    }
+  },
+  {
+    "id": "redis-lock-lease",
+    "category": "Redis",
+    "title": "锁租约过期与旧持有者",
+    "focus": [
+      "租约过期与进程暂停",
+      "唯一令牌与安全释放",
+      "租约无法撤销已开始的操作"
+    ],
+    "scenarioConstraints": [
+      "单个 Redis 实例中 A 通过 SET lock tokenA NX PX 1000 获取锁，随后暂停超过 1 秒",
+      "租约到期后 B 以 tokenB 获取同名锁；A 恢复后打算直接 DEL lock；无 Redis 故障或时钟跳变"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Lock Lease Expiry and Stale Owners",
+      "focus": [
+        "Lease expiry and process pauses",
+        "Unique tokens and safe release",
+        "Leases cannot revoke already-started operations"
+      ],
+      "scenarioConstraints": [
+        "On one Redis instance A acquires a lock with SET lock tokenA NX PX 1000 then pauses for over one second",
+        "After expiry B acquires the same lock with tokenB; A resumes intending to DEL lock directly; no Redis failure or clock jump occurs"
+      ]
+    }
+  },
+  {
+    "id": "redis-eviction",
+    "category": "Redis",
+    "title": "Redis 过期与内存淘汰",
+    "focus": [
+      "TTL 与淘汰是不同机制",
+      "allkeys-lru 的候选范围",
+      "缓存数据不可作为唯一事实"
+    ],
+    "scenarioConstraints": [
+      "Redis 配置 maxmemory 并采用 allkeys-lru；key K 没有 TTL，且近期很少被访问",
+      "新增写入触发内存淘汰；无显式删除、重启或过期操作"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Redis Expiration and Memory Eviction",
+      "focus": [
+        "Expiration vs eviction",
+        "Candidate keys under allkeys-lru",
+        "Cached data vs authoritative storage"
+      ],
+      "scenarioConstraints": [
+        "Redis uses maxmemory with allkeys-lru; key K has no TTL and has rarely been accessed recently",
+        "New writes trigger memory eviction; there are no explicit deletes, restarts or expiration operations"
+      ]
+    }
+  },
+  {
+    "id": "sql-parameters",
+    "category": "Security",
+    "title": "SQL 参数与查询结构",
+    "focus": [
+      "数据与 SQL 语法分离",
+      "参数绑定的保护边界",
+      "动态标识符的允许列表"
+    ],
+    "scenarioConstraints": [
+      "Java JDBC 用 PreparedStatement 执行 SELECT id FROM users WHERE name = ?，输入通过 setString 绑定",
+      "用户输入包含引号和 SQL 片段；不拼接输入，也不进行动态表名、列名或排序字段替换"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "SQL Parameters and Query Structure",
+      "focus": [
+        "Separating data from SQL syntax",
+        "Boundaries of parameter binding",
+        "Allow-lists for dynamic identifiers"
+      ],
+      "scenarioConstraints": [
+        "Java JDBC uses PreparedStatement for SELECT id FROM users WHERE name = ? with setString binding",
+        "Input contains quotes and SQL fragments; there is no input concatenation or dynamic substitution of table, column or sort identifiers"
+      ]
+    }
+  },
+  {
+    "id": "csrf-cors",
+    "category": "Security",
+    "title": "CORS 与跨站请求伪造",
+    "focus": [
+      "发送请求与读取响应的区别",
+      "浏览器自动携带 Cookie",
+      "CSRF 令牌与来源检查"
+    ],
+    "scenarioConstraints": [
+      "受害者登录站点使用 Secure; SameSite=None 会话 Cookie；跨站 Cookie 未被浏览器策略阻止",
+      "攻击站点用 HTML form 发起 application/x-www-form-urlencoded POST 修改昵称；服务端无 CSRF 令牌或来源检查，也不允许跨站读取响应"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "CORS and Cross-Site Request Forgery",
+      "focus": [
+        "Sending requests vs reading responses",
+        "Cookies attached automatically by browsers",
+        "CSRF tokens and origin checks"
+      ],
+      "scenarioConstraints": [
+        "The victim site uses a Secure; SameSite=None session cookie; browser policy does not block cross-site cookies",
+        "An attacker submits an HTML form POST with application/x-www-form-urlencoded to change a nickname; the server has no CSRF token or origin check and does not permit cross-origin response reads"
+      ]
+    }
+  },
+  {
+    "id": "sql-null",
+    "category": "Database",
+    "title": "SQL NULL 与三值逻辑",
+    "focus": ["NULL 与未知值", "WHERE 过滤条件", "IS NULL 与普通比较"],
+    "scenarioConstraints": [
+      "PostgreSQL 18 users 表只有两行，age 分别为 NULL 和 20",
+      "查询 SELECT age FROM users WHERE age <> 18；无其他条件或类型转换"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "SQL NULL and Three-Valued Logic",
+      "focus": [
+        "NULL and unknown values",
+        "WHERE filtering",
+        "IS NULL vs ordinary comparison"
+      ],
+      "scenarioConstraints": [
+        "A PostgreSQL 18 users table has only two rows, with age NULL and 20",
+        "Query SELECT age FROM users WHERE age <> 18; there are no other predicates or casts"
+      ]
+    }
+  },
+  {
+    "id": "fork-copy-on-write",
+    "category": "Operating Systems",
+    "title": "fork 与进程内存隔离",
+    "focus": ["独立地址空间", "写时复制与私有页", "私有内存与共享映射"],
+    "scenarioConstraints": [
+      "Linux 单线程父进程的普通私有堆变量 x = 1，随后 fork 成功",
+      "子进程将自己的 x 改为 2 后退出；父进程 waitpid 后读取 x；无共享内存或其他写入"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "fork and Process Memory Isolation",
+      "focus": [
+        "Separate address spaces",
+        "Copy-on-write and private pages",
+        "Private memory vs shared mappings"
+      ],
+      "scenarioConstraints": [
+        "A single-threaded Linux parent has ordinary private heap variable x = 1 and successfully forks",
+        "The child sets its x to 2 then exits; the parent reads x after waitpid; there is no shared memory or other writer"
+      ]
+    }
+  },
+  {
+    "id": "async-exceptions",
+    "category": "Runtime",
+    "title": "异步函数的异常传播",
+    "focus": [
+      "async 返回 Promise",
+      "同步 catch 与异步拒绝",
+      "await 的异常传播"
+    ],
+    "scenarioConstraints": [
+      "浏览器 JavaScript 中 async function f() { throw new Error(\"E\"); }",
+      "调用代码为 try { f(); console.log(\"after\"); } catch { console.log(\"caught\"); }；不 await 或附加 catch，也无其他错误处理"
+    ],
+    "level": "mid-to-senior",
+    "en": {
+      "title": "Exception Propagation in Async Functions",
+      "focus": [
+        "Promises returned by async functions",
+        "Synchronous catch vs asynchronous rejection",
+        "Exception propagation through await"
+      ],
+      "scenarioConstraints": [
+        "In browser JavaScript, async function f() { throw new Error(\"E\"); }",
+        "Caller executes try { f(); console.log(\"after\"); } catch { console.log(\"caught\"); }; it neither awaits nor attaches catch, with no other error handling"
+      ]
+    }
   }
 ]

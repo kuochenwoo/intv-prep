@@ -26,7 +26,16 @@ fn every_problem_passes_reference_solutions_in_both_modes() {
                 let p = problem(id).unwrap();
                 for mode in ["function", "acm"] {
                     // Independently written full programs verify the documented IO protocol.
-                    let r = judge(&p, mode, &solution(id, mode), false, "").unwrap();
+                    let r = match judge(&p, mode, &solution(id, mode), false, "") {
+                        Ok(result) => result,
+                        Err(error) => {
+                            failures
+                                .lock()
+                                .unwrap()
+                                .push(format!("{id} {mode}: judge error: {error}"));
+                            continue;
+                        }
+                    };
                     if r.status != "accepted" || r.passed != p.tests.len() || p.tests.is_empty() {
                         let case = r.cases.iter().find(|c| c.status != "accepted");
                         failures.lock().unwrap().push(format!(

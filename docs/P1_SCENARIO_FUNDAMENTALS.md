@@ -1,6 +1,6 @@
 # P1 scenario-based fundamentals
 
-P1 now examines one underlying mechanism in a small concrete scenario. P2 remains unimplemented. The ten existing topic IDs stay stable; their Chinese and English titles, focus areas, and scenario seeds now use concrete operations instead of combined throughput, availability, and scaling goals.
+P1 examines one underlying mechanism in a small concrete scenario. P2 is implemented separately for complete architectures. This document records the initial ten-topic policy revision; the subsequent [40-topic expansion](P1_CONTENT_EXPANSION.md) preserves it. The ten original topic IDs stay stable; their Chinese and English titles, focus areas, and scenario seeds now use concrete operations instead of combined throughput, availability, and scaling goals.
 
 ## Interview behavior
 

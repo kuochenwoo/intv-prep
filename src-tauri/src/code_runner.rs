@@ -41,7 +41,13 @@ fn resident_bytes(pid: u32) -> Option<u64> {
     if read == size {
         Some(unsafe { info.assume_init() }.pti_resident_size)
     } else {
-        None
+        // The task-info endpoint can be unavailable during exec/exit transitions.
+        // Ask the independent resource-usage endpoint before reporting monitoring loss.
+        let mut usage = std::mem::MaybeUninit::<libc::rusage_info_v2>::zeroed();
+        let result = unsafe {
+            libc::proc_pid_rusage(pid as i32, libc::RUSAGE_INFO_V2, usage.as_mut_ptr().cast())
+        };
+        (result == 0).then(|| unsafe { usage.assume_init() }.ri_resident_size)
     }
 }
 #[cfg(target_os = "linux")]
@@ -59,12 +65,73 @@ fn resident_bytes(pid: u32) -> Option<u64> {
 fn resident_bytes(_pid: u32) -> Option<u64> {
     None
 }
-fn kill_group(child: &mut std::process::Child) {
+// On macOS, collect terminal RSS and exit status together. A reaped task no
+// longer supports proc_pidinfo, and a fast executable can finish between samples.
+// Linux retains its existing /proc sampler; terminal RSS semantics and units are
+// platform-specific and have not been validated for that platform here.
+#[derive(Default)]
+struct ProcessWait {
+    status: Option<std::process::ExitStatus>,
+    peak: Option<u64>,
+}
+impl ProcessWait {
+    fn poll(
+        &mut self,
+        child: &mut std::process::Child,
+        blocking: bool,
+    ) -> std::io::Result<Option<std::process::ExitStatus>> {
+        if self.status.is_some() {
+            return Ok(self.status);
+        }
+        #[cfg(target_os = "macos")]
+        {
+            use std::os::unix::process::ExitStatusExt;
+            loop {
+                let mut status = 0;
+                let mut usage = std::mem::MaybeUninit::<libc::rusage>::zeroed();
+                let result = unsafe {
+                    libc::wait4(
+                        child.id() as i32,
+                        &mut status,
+                        if blocking { 0 } else { libc::WNOHANG },
+                        usage.as_mut_ptr(),
+                    )
+                };
+                if result == 0 {
+                    return Ok(None);
+                }
+                if result < 0 {
+                    let error = std::io::Error::last_os_error();
+                    if error.kind() == std::io::ErrorKind::Interrupted {
+                        continue;
+                    }
+                    return Err(error);
+                }
+                let bytes = unsafe { usage.assume_init() }.ru_maxrss;
+                self.peak = u64::try_from(bytes).ok().filter(|n| *n > 0);
+                self.status = Some(std::process::ExitStatus::from_raw(status));
+                return Ok(self.status);
+            }
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            self.status = if blocking {
+                Some(child.wait()?)
+            } else {
+                child.try_wait()?
+            };
+            Ok(self.status)
+        }
+    }
+}
+fn kill_group(child: &mut std::process::Child, exited: bool) {
     #[cfg(unix)]
     unsafe {
         libc::kill(-(child.id() as i32), libc::SIGKILL);
     }
-    let _ = child.kill();
+    if !exited {
+        let _ = child.kill();
+    }
 }
 fn capture(mut pipe: impl Read, count: Arc<AtomicUsize>, cap: usize) -> String {
     let mut kept = Vec::new();
@@ -100,6 +167,27 @@ pub fn execute_with_memory(
     timeout: Duration,
     cap: usize,
     memory_limit_bytes: Option<u64>,
+) -> Result<ProcessResult, String> {
+    execute_monitored(
+        program,
+        args,
+        cwd,
+        input,
+        timeout,
+        cap,
+        memory_limit_bytes,
+        resident_bytes,
+    )
+}
+fn execute_monitored(
+    program: &str,
+    args: &[&str],
+    cwd: &std::path::Path,
+    input: String,
+    timeout: Duration,
+    cap: usize,
+    memory_limit_bytes: Option<u64>,
+    mut sample: impl FnMut(u32) -> Option<u64>,
 ) -> Result<ProcessResult, String> {
     if memory_limit_bytes.is_some() && !cfg!(any(target_os = "macos", target_os = "linux")) {
         return Err("此平台尚未支援記憶體監測，無法按題目限制判題".into());
@@ -150,9 +238,16 @@ pub fn execute_with_memory(
     let stderr = thread::spawn(move || capture(err, c, cap));
     let mut peak_memory_bytes: Option<u64> = None;
     let mut memory_read_failures = 0;
+    let mut reaper = ProcessWait::default();
     let status = loop {
+        // Check for exit first: disappearing live task information is normal after exit.
+        match reaper.poll(&mut child, false) {
+            Ok(Some(s)) => break if s.success() { "ok" } else { "runtime_error" },
+            Ok(None) => {}
+            Err(_) => break "memory_monitor_error",
+        }
         if let Some(limit) = memory_limit_bytes {
-            match resident_bytes(child.id()) {
+            match sample(child.id()) {
                 Some(bytes) => {
                     memory_read_failures = 0;
                     peak_memory_bytes = Some(peak_memory_bytes.unwrap_or(0).max(bytes));
@@ -162,7 +257,7 @@ pub fn execute_with_memory(
                 }
                 None => {
                     // An already-exited process may no longer expose memory data.
-                    match child.try_wait() {
+                    match reaper.poll(&mut child, false) {
                         Ok(Some(s)) => break if s.success() { "ok" } else { "runtime_error" },
                         Ok(None) => {
                             // On macOS task info can disappear just before the
@@ -183,14 +278,21 @@ pub fn execute_with_memory(
         if start.elapsed() > timeout {
             break "timeout";
         }
-        match child.try_wait() {
+        match reaper.poll(&mut child, false) {
             Ok(Some(s)) => break if s.success() { "ok" } else { "runtime_error" },
             Ok(None) => thread::sleep(Duration::from_millis(5)),
             Err(_) => break "runtime_error",
         }
     };
-    kill_group(&mut child);
-    let exit_code = child.wait().ok().and_then(|s| s.code());
+    kill_group(&mut child, reaper.status.is_some());
+    let exit_code = reaper
+        .poll(&mut child, true)
+        .ok()
+        .flatten()
+        .and_then(|s| s.code());
+    if let Some(bytes) = reaper.peak {
+        peak_memory_bytes = Some(peak_memory_bytes.unwrap_or(0).max(bytes));
+    }
     let _ = writer.join();
     let out = stdout.join().unwrap_or_default();
     let err = stderr.join().unwrap_or_default();
@@ -199,6 +301,12 @@ pub fn execute_with_memory(
     }
     let status = if count.load(Ordering::SeqCst) > cap {
         "output_limit"
+    } else if memory_limit_bytes
+        .zip(peak_memory_bytes)
+        .is_some_and(|(limit, peak)| peak > limit)
+        && ["ok", "runtime_error"].contains(&status)
+    {
+        "memory_limit"
     } else {
         status
     };
@@ -367,4 +475,40 @@ pub fn judge(
         }
     }
     Ok(result)
+}
+
+#[cfg(all(test, target_os = "macos"))]
+mod monitor_failure_tests {
+    use super::*;
+    #[test]
+    fn unavailable_live_samples_stop_a_real_process_instead_of_bypassing_limits() {
+        // Only OS sample failure is injected. The child really runs and must be killed;
+        // no compilation, execution result, RSS value or judge success is fabricated.
+        let dir = tempfile::tempdir().unwrap();
+        let mut pid = 0;
+        let result = execute_monitored(
+            "/bin/sleep",
+            &["5"],
+            dir.path(),
+            String::new(),
+            Duration::from_secs(2),
+            4096,
+            Some(64 * 1024 * 1024),
+            |child| {
+                pid = child;
+                None
+            },
+        );
+        assert!(result.unwrap_err().contains("未繞過記憶體限制"));
+        assert!(pid > 0);
+        assert_eq!(
+            unsafe { libc::kill(pid as i32, 0) },
+            -1,
+            "child must be reaped"
+        );
+        assert_eq!(
+            std::io::Error::last_os_error().raw_os_error(),
+            Some(libc::ESRCH)
+        );
+    }
 }

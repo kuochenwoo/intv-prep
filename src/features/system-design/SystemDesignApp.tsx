@@ -483,6 +483,20 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
               label={t("topicCount", { n: data?.scenarios.length ?? 0 })}
             />
           </div>
+          <Button
+            label={t("randomTopic")}
+            size="sm"
+            width="100%"
+            isDisabled={busy || !data}
+            onClick={() => {
+              // Never lands on the scenario already open, so a click always changes it.
+              const others = data!.scenarios.filter((x) => x.id !== scenarioId);
+              setScenarioId(
+                others[Math.floor(Math.random() * others.length)].id,
+              );
+              setQuestionId("");
+            }}
+          />
           {data?.scenarios.map((s) => (
             <button
               className={`problem ${s.id === scenarioId ? "active" : ""}`}

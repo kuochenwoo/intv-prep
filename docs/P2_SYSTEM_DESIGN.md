@@ -55,7 +55,7 @@ The live probe uses clearly scripted candidate inputs, not evidence about a huma
 
 ## Deferred
 
-Further P1/SD content expansion, a drag-and-drop whiteboard, numerical scoring/radar charts, and Keychain migration are outside this change. DeepSeek remains selectable through the existing adapter; its live multi-turn reliability is not certified by the Claude acceptance run. Model judgement quality still benefits from review across more scenarios and candidate answers.
+Further P1/SD content expansion, a drag-and-drop whiteboard, numerical scoring/radar charts, and Keychain migration are outside this change. DeepSeek subsequently passed a real staged interview and recovery checks; see [the reliability follow-up](RELIABILITY_2026-10-15.md). Provider availability can still vary. Model judgement quality still benefits from review across more scenarios and candidate answers.
 
 ### Acceptance results (2026-10-15)
 

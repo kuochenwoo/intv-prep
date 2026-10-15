@@ -39,7 +39,29 @@ async fn probe(key: String) -> Value {
             )
             .send()
             .await
-            .map_err(|_| "transport_error")?;
+            .map_err(|e| {
+                // Classify known causes without printing error text, URLs or headers.
+                let detail = format!("{e:?}").to_ascii_lowercase();
+                report["transport_flags"] = json!({
+                    "connect": e.is_connect(), "timeout": e.is_timeout(),
+                    "certificate": detail.contains("certificate") || detail.contains("unknownissuer"),
+                    "dns": detail.contains("dns"), "proxy": detail.contains("proxy"),
+                    "tls": detail.contains("tls") || detail.contains("handshake"),
+                    "refused": detail.contains("refused"),
+                    "permission": detail.contains("permission") || detail.contains("not permitted"),
+                    "reset": detail.contains("reset")
+                });
+                let mut codes = Vec::new();
+                let mut source = std::error::Error::source(&e);
+                while let Some(cause) = source {
+                    if let Some(io) = cause.downcast_ref::<std::io::Error>() {
+                        if let Some(code) = io.raw_os_error() { codes.push(code); }
+                    }
+                    source = cause.source();
+                }
+                report["transport_os_errors"] = json!(codes);
+                "transport_error"
+            })?;
         report["http_status"] = json!(response.status().as_u16());
         for name in ["content-type", "x-request-id", "x-ds-trace-id", "date"] {
             if let Some(value) = response.headers().get(name).and_then(|v| v.to_str().ok()) {

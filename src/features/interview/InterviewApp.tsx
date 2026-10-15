@@ -113,6 +113,8 @@ export default function InterviewApp() {
     [questionId, setQuestionId] = useState("");
   const [session, setSession] = useState<Session | null>(null),
     [draft, setDraft] = useState("");
+  const [topicSearch, setTopicSearch] = useState(""),
+    [topicCategory, setTopicCategory] = useState("");
   const [config, setConfig] = useState<Config>({
       provider: "claude",
       model: "claude-haiku-5-5",
@@ -134,6 +136,27 @@ export default function InterviewApp() {
     saveError = useRef(""),
     revision = useRef(0);
   const locale = lang === "zh" ? "zh-CN" : "en";
+  const categoryLabel = (category: string) =>
+    lookup(t, "topicCategory_", category);
+  const visibleTopics = (data?.topics ?? []).filter((topic) => {
+    const query = topicSearch.trim().toLocaleLowerCase();
+    const localized = localTopic(topic, lang);
+    return (
+      (!topicCategory || topic.category === topicCategory) &&
+      (!query ||
+        [
+          topic.id,
+          topic.title,
+          topic.en?.title ?? "",
+          categoryLabel(topic.category),
+          ...localized.focus,
+          ...localized.scenarioConstraints,
+        ]
+          .join(" ")
+          .toLocaleLowerCase()
+          .includes(query))
+    );
+  });
   function show(s: Session) {
     setSession(s);
     setDraft(s.draft);
@@ -490,31 +513,85 @@ export default function InterviewApp() {
             <h2>{t("topics")}</h2>
             <Badge label={t("topicCount", { n: data?.topics.length ?? 0 })} />
           </div>
+          <TextInput
+            label={t("topicSearch")}
+            placeholder={t("topicSearchHint")}
+            size="sm"
+            width="100%"
+            value={topicSearch}
+            onChange={setTopicSearch}
+          />
+          <Selector
+            label={t("topicCategory")}
+            size="sm"
+            width="100%"
+            value={topicCategory}
+            onChange={setTopicCategory}
+            options={[
+              { value: "", label: t("topicAllCategories") },
+              ...Array.from(
+                new Set(data?.topics.map((topic) => topic.category) ?? []),
+              ).map((category) => ({
+                value: category,
+                label: categoryLabel(category),
+              })),
+            ]}
+          />
+          <p className="muted topic-match-count" role="status">
+            {t("topicMatches", {
+              n: visibleTopics.length,
+              total: data?.topics.length ?? 0,
+            })}
+          </p>
+          {(topicSearch || topicCategory) && (
+            <Button
+              label={t("topicClearFilters")}
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setTopicSearch("");
+                setTopicCategory("");
+              }}
+            />
+          )}
           <Button
             label={t("randomTopic")}
             size="sm"
             width="100%"
-            isDisabled={busy || !data}
+            isDisabled={busy || !visibleTopics.length}
             onClick={() => {
-              const topics = data!.topics;
-              setTopicId(topics[Math.floor(Math.random() * topics.length)].id);
+              setTopicId(
+                visibleTopics[Math.floor(Math.random() * visibleTopics.length)]
+                  .id,
+              );
               setQuestionId("");
             }}
           />
-          {data?.topics.map((x) => (
-            <button
-              className={`problem ${x.id === topicId ? "active" : ""}`}
-              key={x.id}
-              disabled={busy}
-              onClick={() => {
-                setTopicId(x.id);
-                setQuestionId("");
-              }}
-            >
-              <small>{x.category}</small>
-              <strong>{localTopic(x, lang).title}</strong>
-            </button>
-          ))}
+          <div
+            className="topic-list"
+            role="region"
+            aria-label={t("topics")}
+            tabIndex={0}
+          >
+            {!visibleTopics.length && (
+              <p className="muted">{t("topicNoMatches")}</p>
+            )}
+            {visibleTopics.map((x) => (
+              <button
+                className={`problem ${x.id === topicId ? "active" : ""}`}
+                key={x.id}
+                disabled={busy}
+                aria-pressed={x.id === topicId}
+                onClick={() => {
+                  setTopicId(x.id);
+                  setQuestionId("");
+                }}
+              >
+                <small>{categoryLabel(x.category)}</small>
+                <strong>{localTopic(x, lang).title}</strong>
+              </button>
+            ))}
+          </div>
           <h3>{t("history")}</h3>
           {data?.sessions.length === 0 && (
             <p className="muted">{t("noSessions")}</p>

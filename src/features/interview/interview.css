@@ -107,6 +107,22 @@
   margin: 16px 0 4px;
   font-size: var(--font-size-base);
 }
+.topic-match-count {
+  margin: 4px 0;
+  font-size: var(--font-size-sm);
+}
+.topic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 440px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.topic-list:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
 .interview-workspace {
   display: flex;
   flex-direction: column;

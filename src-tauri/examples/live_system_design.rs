@@ -1,4 +1,4 @@
-//! Explicit P2 live acceptance: real Claude calls, isolated database, no credential writes.
+//! Explicit P2 live acceptance: real provider calls, isolated database, no credential writes.
 use swe_interview_prep::{
     credentials::{self, LlmSettings},
     db,
@@ -8,9 +8,17 @@ use swe_interview_prep::{
     system_design_store as store,
 };
 fn main() -> Result<(), String> {
+    let provider = std::env::var("INTERVIEW_PROVIDER").unwrap_or_else(|_| "claude".into());
+    let model = std::env::var("INTERVIEW_MODEL").unwrap_or_else(|_| {
+        if provider == "deepseek" {
+            "deepseek-flash".into()
+        } else {
+            "claude-haiku-5-5".into()
+        }
+    });
     let config = LlmSettings {
-        provider: "claude".into(),
-        model: "claude-haiku-5-5".into(),
+        provider,
+        model,
         timeout_seconds: 120,
     };
     let lang = if std::env::args().any(|s| s == "--english") {
@@ -18,9 +26,11 @@ fn main() -> Result<(), String> {
     } else {
         Lang::Zh
     };
-    let path = std::path::Path::new("/tmp/intv-p2-live.sqlite3");
+    let db_path =
+        std::env::var("INTERVIEW_DB_PATH").unwrap_or_else(|_| "/tmp/intv-p2-live.sqlite3".into());
+    let path = std::path::Path::new(&db_path);
     let c = db::open(path)?;
-    let api = InterviewProvider::new(&config, credentials::read_key("claude")?)?.lang(lang);
+    let api = InterviewProvider::new(&config, credentials::read_key(&config.provider)?)?.lang(lang);
     if std::env::args().any(|s| s == "--feedback-only") {
         let raw =
             std::fs::read_to_string("/tmp/intv-p2-live-report.json").map_err(|e| e.to_string())?;

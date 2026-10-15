@@ -584,10 +584,26 @@ mod tests {
     #[test]
     fn topic_seeds_have_small_bilingual_scenarios_and_stable_ids() {
         let seeds = topics();
-        assert_eq!(seeds.len(), 10);
+        assert_eq!(seeds.len(), 40);
         let ids: std::collections::HashSet<_> = seeds.iter().map(|s| &s.id).collect();
         assert_eq!(ids.len(), seeds.len());
-        assert!(ids.iter().any(|id| id.as_str() == "cache-selection"));
+        for id in [
+            "cache-selection",
+            "hot-key-protection",
+            "idempotency-retries",
+            "message-delivery",
+            "queue-selection",
+            "rate-limiting",
+            "database-concurrency",
+            "replication-failover",
+            "sharding-growth",
+            "rpc-tail-latency",
+        ] {
+            assert!(
+                ids.iter().any(|seed_id| seed_id.as_str() == id),
+                "missing stable ID: {id}"
+            );
+        }
         for seed in seeds {
             for lang in [Lang::Zh, Lang::En] {
                 let localized = seed.localized(lang);

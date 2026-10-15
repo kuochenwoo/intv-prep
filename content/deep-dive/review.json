@@ -1,0 +1,183 @@
+[
+  {
+    "topicId": "mvcc-snapshots",
+    "sources": ["https://www.postgresql.org/docs/18/transaction-iso.html"],
+    "reviewNote": "READ COMMITTED uses a fresh statement snapshot; do not generalize to every Repeatable Read implementation."
+  },
+  {
+    "topicId": "composite-index",
+    "sources": ["https://www.postgresql.org/docs/18/indexes-multicolumn.html"],
+    "reviewNote": "Equality on the leading key and a range on the next key define a contiguous interval; a usable index is not a promised planner choice. PostgreSQL 18 also supports skip scans, so do not claim every missing leading predicate makes an index unusable."
+  },
+  {
+    "topicId": "covering-index",
+    "sources": [
+      "https://www.postgresql.org/docs/18/indexes-index-only-scans.html"
+    ],
+    "reviewNote": "Covering all requested columns does not eliminate MVCC visibility checks; heap fetches depend on the visibility map."
+  },
+  {
+    "topicId": "database-deadlock",
+    "sources": ["https://www.postgresql.org/docs/18/explicit-locking.html"],
+    "reviewNote": "Trace the circular wait; do not predict which transaction is selected as the victim."
+  },
+  {
+    "topicId": "pagination-offset",
+    "sources": ["https://www.postgresql.org/docs/18/queries-limit.html"],
+    "reviewNote": "Trace the inserted row with unique immutable ordering. Keyset pagination avoids this positional shift but does not create a cross-request snapshot."
+  },
+  {
+    "topicId": "transaction-rollback",
+    "sources": ["https://www.postgresql.org/docs/18/transaction-iso.html"],
+    "reviewNote": "Sequence advancement is not rolled back with row changes; a primary key need not be gapless."
+  },
+  {
+    "topicId": "tcp-framing",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9293.html"],
+    "reviewNote": "TCP preserves an ordered byte stream, not send boundaries; a parser must retain incomplete headers and bodies."
+  },
+  {
+    "topicId": "tcp-half-close",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9293.html"],
+    "reviewNote": "EOF after FIN concerns the receive direction. A server may still send a response on its open send direction."
+  },
+  {
+    "topicId": "http-conditional",
+    "sources": [
+      "https://www.rfc-editor.org/rfc/rfc9110.html#section-15.4.5",
+      "https://www.rfc-editor.org/rfc/rfc9111.html"
+    ],
+    "reviewNote": "304 supports reuse of a matching stored representation and applicable metadata; it is not an empty replacement body."
+  },
+  {
+    "topicId": "http-cache-control",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9111.html#section-5.2.2.4"],
+    "reviewNote": "no-cache requires validation for reuse; no-store prohibits storage. Neither header should be described as equivalent to the other."
+  },
+  {
+    "topicId": "tls-identity",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9110.html#section-4.3.4"],
+    "reviewNote": "A trusted certificate chain does not establish that its identity matches the requested host; do not recommend disabling identity verification."
+  },
+  {
+    "topicId": "file-descriptor-offset",
+    "sources": ["https://man7.org/linux/man-pages/man2/dup.2.html"],
+    "reviewNote": "dup descriptors reference one open file description and share its offset; two independent opens differ."
+  },
+  {
+    "topicId": "unlink-open-file",
+    "sources": ["https://man7.org/linux/man-pages/man2/unlink.2.html"],
+    "reviewNote": "Removing the last link does not free the file while an open reference remains; filesystem/accounting delays are outside the seed."
+  },
+  {
+    "topicId": "epoll-edge-trigger",
+    "sources": ["https://man7.org/linux/man-pages/man7/epoll.7.html"],
+    "reviewNote": "Unread bytes need not produce a new edge; use nonblocking draining to EAGAIN, without assuming readiness equals a complete message."
+  },
+  {
+    "topicId": "volatile-counter",
+    "sources": [
+      "https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html"
+    ],
+    "reviewNote": "A volatile read/write is not an atomic increment; join establishes visibility of completed work but does not repair lost updates."
+  },
+  {
+    "topicId": "safe-publication",
+    "sources": [
+      "https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html"
+    ],
+    "reviewNote": "The observed volatile flag orders preceding writes; the seed deliberately excludes later mutations."
+  },
+  {
+    "topicId": "condition-wait",
+    "sources": [
+      "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait()"
+    ],
+    "reviewNote": "wait releases the monitor and reacquires it before return; notifications do not reserve queue items, and spurious wakeups are permitted."
+  },
+  {
+    "topicId": "thread-pool-starvation",
+    "sources": [
+      "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html"
+    ],
+    "reviewNote": "All workers wait for queued children. Do not claim an unbounded queue causes more workers to be created beyond the configured core count."
+  },
+  {
+    "topicId": "cas-aba",
+    "sources": [
+      "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicStampedReference.html"
+    ],
+    "reviewNote": "Identity-only comparison cannot detect A-B-A history; a stamp helps only when updated consistently. This is not a native-memory reclamation question."
+  },
+  {
+    "topicId": "javascript-event-loop",
+    "sources": [
+      "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model"
+    ],
+    "reviewNote": "Use browser task and microtask semantics; do not import Node.js nextTick ordering or promise exact timer delays."
+  },
+  {
+    "topicId": "mutable-hash-key",
+    "sources": [
+      "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html"
+    ],
+    "reviewNote": "The Map contract leaves behavior unspecified when mutations affect equality; explain why lookup becomes unreliable without promising that every such get must return null."
+  },
+  {
+    "topicId": "resource-cleanup",
+    "sources": [
+      "https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html"
+    ],
+    "reviewNote": "With successful initialization, the body exception remains primary and close failure is suppressed; GC is not deterministic resource closure."
+  },
+  {
+    "topicId": "redis-pipeline",
+    "sources": [
+      "https://redis.io/docs/latest/develop/using-commands/pipelining/"
+    ],
+    "reviewNote": "Pipelining reduces network waits and is not an isolation boundary; permit interleaving without asserting it occurs on every run."
+  },
+  {
+    "topicId": "redis-lock-lease",
+    "sources": [
+      "https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/"
+    ],
+    "reviewNote": "Compare the unique ownership token atomically before release. Safe release alone does not stop a stale owner from modifying an external resource."
+  },
+  {
+    "topicId": "redis-eviction",
+    "sources": ["https://redis.io/docs/latest/develop/reference/eviction/"],
+    "reviewNote": "allkeys-lru can select keys without TTL and is approximate; do not guarantee that K is the exact victim."
+  },
+  {
+    "topicId": "sql-parameters",
+    "sources": [
+      "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html"
+    ],
+    "reviewNote": "Bind values separately from SQL syntax; parameters cannot stand for arbitrary identifiers and do not replace authorization."
+  },
+  {
+    "topicId": "csrf-cors",
+    "sources": [
+      "https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/CSRF"
+    ],
+    "reviewNote": "A simple cross-site form can send a credentialed request under the explicit cookie assumptions; blocking response reads does not prevent the state change."
+  },
+  {
+    "topicId": "sql-null",
+    "sources": ["https://www.postgresql.org/docs/18/functions-comparison.html"],
+    "reviewNote": "Ordinary comparisons with NULL produce unknown; a WHERE clause keeps only true rows."
+  },
+  {
+    "topicId": "fork-copy-on-write",
+    "sources": ["https://man7.org/linux/man-pages/man2/fork.2.html"],
+    "reviewNote": "Private address spaces diverge on writes; copy-on-write is an implementation optimization, not shared-memory synchronization."
+  },
+  {
+    "topicId": "async-exceptions",
+    "sources": [
+      "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function"
+    ],
+    "reviewNote": "An async throw rejects the returned Promise, including before its first await; an outer synchronous catch does not catch that rejection."
+  }
+]

@@ -119,6 +119,79 @@ fn topics_and_contracts_are_valid_and_feedback_has_five_evidence_based_dimension
     assert!(llm::feedback_schema().to_string().contains("uncertain"));
 }
 #[test]
+fn expanded_topics_have_bilingual_content_and_reviewed_sources() {
+    let seeds = topics();
+    let reviews: serde_json::Value =
+        serde_json::from_str(include_str!("../../content/deep-dive/review.json")).unwrap();
+    let reviews = reviews.as_array().unwrap();
+    let mut reviewed = std::collections::HashSet::new();
+    for review in reviews {
+        let id = review["topicId"].as_str().unwrap();
+        assert!(reviewed.insert(id), "duplicate review: {id}");
+        assert!(
+            seeds.iter().any(|seed| seed.id == id),
+            "orphan review: {id}"
+        );
+        assert!(
+            !review["reviewNote"].as_str().unwrap().trim().is_empty(),
+            "{id}"
+        );
+        let sources = review["sources"].as_array().unwrap();
+        assert!(!sources.is_empty(), "{id}");
+        assert!(
+            sources
+                .iter()
+                .all(|url| url.as_str().unwrap().starts_with("https://")),
+            "{id}"
+        );
+    }
+    assert_eq!(reviewed.len(), 30);
+    let mut titles = std::collections::HashSet::new();
+    for (index, seed) in seeds.iter().enumerate() {
+        assert!(titles.insert(&seed.title), "duplicate title: {}", seed.id);
+        assert_eq!(seed.level, "mid-to-senior");
+        assert!(seed.en.is_some(), "missing English content: {}", seed.id);
+        for lang in [Lang::Zh, Lang::En] {
+            let localized = seed.localized(lang);
+            assert!(!localized.title.trim().is_empty(), "{}", seed.id);
+            assert!(
+                localized
+                    .focus
+                    .iter()
+                    .chain(&localized.scenario_constraints)
+                    .all(|value| !value.trim().is_empty()),
+                "{}",
+                seed.id
+            );
+        }
+        if index >= 10 {
+            assert!(
+                reviewed.contains(seed.id.as_str()),
+                "missing source review: {}",
+                seed.id
+            );
+        }
+    }
+    for (category, minimum) in [
+        ("Database", 7),
+        ("Networking", 5),
+        ("Operating Systems", 4),
+        ("Concurrency", 6),
+        ("Runtime", 4),
+        ("Redis", 3),
+        ("Security", 2),
+    ] {
+        assert!(
+            seeds
+                .iter()
+                .filter(|seed| seed.category == category)
+                .count()
+                >= minimum,
+            "missing fundamentals coverage: {category}"
+        );
+    }
+}
+#[test]
 fn cache_reuse_is_offline_and_private_checkpoints_never_enter_candidate_view() {
     let dir = tempfile::tempdir().unwrap();
     let c = db::open(&dir.path().join("prep.sqlite3")).unwrap();
