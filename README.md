@@ -4,6 +4,8 @@ English · [简体中文](README.zh-CN.md)
 
 A local desktop app for software-engineering interview practice, built with Tauri 2 (Rust) and React.
 
+See [the project TODO](TODO.md) for AI-quality calibration and the deferred feature backlog.
+
 - **LeetCode Judge:** all 100 LeetCode Hot 100 problems, in C++20. Each problem can be solved in Function mode (write only `class Solution`) or ACM mode (write the full program). Tests run offline with a real local compiler, with time, memory and output limits. Each problem lists its time and space requirements.
 - **Technical Deep Dive:** an AI interviewer (Claude or DeepSeek) generates a scenario question, asks follow-ups on your answers, and gives five-dimension feedback at the end. Answers stream in as they are written. An optional AI reference answer shows one concise model answer for the current question.
 - **System Design:** five bilingual scenarios, user-controlled interview stages, capacity estimates and architecture discussions, Markdown notes, local Mermaid previews, and eight-dimension feedback. Questions, drafts and history persist locally. See [the P2 guide](docs/P2_SYSTEM_DESIGN.md).
