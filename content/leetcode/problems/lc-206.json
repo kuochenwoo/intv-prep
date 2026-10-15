@@ -4,7 +4,7 @@
   "difficulty": "easy",
   "tags": ["链表"],
   "statement": "给定单向链表的头节点，原地反转链表并返回新的头节点。空链表返回 nullptr。",
-  "constraints": ["0 ≤ 節點數 ≤ 5000；-5000 ≤ 節點值 ≤ 5000"],
+  "constraints": ["0 ≤ 节点数 ≤ 5000；-5000 ≤ 节点值 ≤ 5000"],
   "tests": [
     {
       "id": "t1",
@@ -890,10 +890,10 @@
     "acmIoSpec": "stdin: first line the node count n; then n integers, the list values. stdout: the n reversed values separated by spaces. An empty list prints an empty line."
   },
   "complexity": {
-    "time": "O(n)（本地訓練目標）",
-    "space": "迭代 O(1)；遞迴 O(n) 呼叫堆疊亦允許",
-    "officialRequirement": "官方 follow-up 要求練習迭代及遞迴兩種實作，未要求所有解法皆為 O(1) 空間。",
-    "notes": "n 為節點數，輸入鏈表不計入額外空間。本地訓練原地指標反轉；遞迴解法的呼叫堆疊需計入空間。",
+    "time": "O(n)（本地训练目标）",
+    "space": "迭代 O(1)；递归 O(n) 调用堆栈亦允许",
+    "officialRequirement": "官方 follow-up 要求练习迭代及递归两种实现，未要求所有解法皆为 O(1) 空间。",
+    "notes": "n 为节点数，输入链表不计入额外空间。本地训练原地指针反转；递归解法的调用堆栈需计入空间。",
     "sourceUrl": "https://leetcode.com/problems/reverse-linked-list/"
   },
   "limits": {

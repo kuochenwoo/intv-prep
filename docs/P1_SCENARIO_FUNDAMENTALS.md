@@ -17,7 +17,7 @@ Other seeds cover expired-key request coalescing, idempotency races, acknowledge
 
 ## Compatibility and validation
 
-Newly cached questions record `deep-dive-v3-fundamentals`. Existing cached questions and sessions are preserved, including their original wording. Generate a new question to use the new opening-question policy. Subsequent model requests use the updated follow-up, reference, and feedback policies.
+The initial policy revision recorded `deep-dive-v3-fundamentals`; the subsequent [AI quality calibration](AI_QUALITY_CALIBRATION.md) records `deep-dive-v4-calibrated` for newly cached questions. Existing cached questions and sessions are preserved, including their original wording. Generate a new question to use the new opening-question policy. Subsequent model requests use the updated follow-up, reference, and feedback policies.
 
 Automated policy checks cover both providers' request construction, bilingual isolation, streaming flags, separation of candidate data from system instructions, and concrete bilingual seeds. Existing protocol, persistence, AI-reference, and retry tests remain applicable. These checks protect the prompt contract; they cannot prove every future model response follows it.
 

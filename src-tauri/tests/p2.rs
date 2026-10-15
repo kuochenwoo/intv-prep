@@ -95,6 +95,17 @@ impl DesignProvider for Api {
         }
         Ok(f)
     }
+    fn design_reference(&self, s: &DesignSession) -> Result<ReferenceAnswer, String> {
+        self.calls.set(self.calls.get() + 1);
+        self.seen.borrow_mut().push(s.clone());
+        if self.fail.get() {
+            return Err("fixture reference failure".into());
+        }
+        Ok(ReferenceAnswer {
+            answer: "Clarify read and write paths first, then size for 10x peak.".into(),
+            key_points: vec!["Scope reads and writes".into(), "Size for peak".into()],
+        })
+    }
 }
 fn start(c: &rusqlite::Connection) -> DesignSession {
     let q = store::cache_question(c, "url-shortener", Lang::En, &config(), question()).unwrap();
@@ -438,4 +449,47 @@ fn conversation_limit_still_allows_finishing_without_a_model_followup() {
         store::retry_pending(&c, &s.id, &Api::new()).unwrap().status,
         "finished"
     );
+}
+#[test]
+fn reference_answer_is_generated_once_and_submitted_as_ai_assisted() {
+    let dir = tempfile::tempdir().unwrap();
+    let c = db::open(&dir.path().join("reference.sqlite3")).unwrap();
+    let s = start(&c);
+    let api = Api::new();
+    let shown = store::generate_reference(&c, &s.id, &api).unwrap();
+    assert_eq!(shown.references.len(), 1);
+    assert_eq!(shown.references[0].turn_index, s.turns.len());
+    assert_eq!(shown.status, "active");
+    // Asking again reuses the saved answer instead of calling the model.
+    store::generate_reference(&c, &s.id, &api).unwrap();
+    assert_eq!(api.calls.get(), 1);
+    // A non-empty draft blocks submitting the AI answer.
+    let mut w = shown.workspace.clone();
+    w.drafts.insert(Stage::Requirements, "my own words".into());
+    store::save_workspace(&c, &s.id, w.clone()).unwrap();
+    assert!(store::submit_reference(&c, &s.id, s.turns.len(), &api).is_err());
+    w.drafts.clear();
+    store::save_workspace(&c, &s.id, w).unwrap();
+    let after = store::submit_reference(&c, &s.id, s.turns.len(), &api).unwrap();
+    let answer = &after.turns[s.turns.len()];
+    assert!(answer.ai_assisted && answer.role == "candidate");
+    assert_eq!(after.turns.len(), s.turns.len() + 2);
+    assert!(after.workspace.drafts.is_empty());
+    // The follow-up request saw the AI-assisted flag.
+    let seen = api.seen.borrow();
+    assert!(seen.last().unwrap().turns.last().unwrap().ai_assisted);
+}
+#[test]
+fn failed_reference_request_leaves_the_session_unchanged() {
+    let dir = tempfile::tempdir().unwrap();
+    let c = db::open(&dir.path().join("reference-fail.sqlite3")).unwrap();
+    let s = start(&c);
+    let api = Api::new();
+    api.fail.set(true);
+    assert!(store::generate_reference(&c, &s.id, &api).is_err());
+    let after = store::session(&c, &s.id).unwrap();
+    assert!(after.references.is_empty());
+    assert_eq!(after.status, "active");
+    assert!(after.last_error.is_none());
+    assert!(store::submit_reference(&c, &s.id, s.turns.len(), &api).is_err());
 }

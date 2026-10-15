@@ -6,7 +6,7 @@
   "statement": "原地将数组中的所有 0 移至末尾，保持非零元素相对顺序。核心函数不返回值，系统检查修改后的数组。",
   "constraints": [
     "0 ≤ n ≤ 10000；-2^31 ≤ nums[i] ≤ 2^31 - 1",
-    "官方 n ≥ 1；本地額外保留空陣列作健壯性測試。"
+    "官方 n ≥ 1；本地额外保留空数组作健壮性测试。"
   ],
   "tests": [
     {
@@ -924,10 +924,10 @@
     "acmIoSpec": "stdin: first line the array length n; then n integers. stdout: the n modified integers; an empty array prints an empty line."
   },
   "complexity": {
-    "time": "O(n)（本地訓練目標）",
-    "space": "O(1) 額外空間，必須原地修改",
-    "officialRequirement": "官方要求原地操作，不複製陣列；follow-up 要求盡量減少操作次數。",
-    "notes": "n 為元素數，輸入陣列不計入額外空間。複製陣列後寫回即使輸出正確也不符合原地要求，需檢查程式。",
+    "time": "O(n)（本地训练目标）",
+    "space": "O(1) 额外空间，必须原地修改",
+    "officialRequirement": "官方要求原地操作，不拷贝数组；follow-up 要求尽量减少操作次数。",
+    "notes": "n 为元素数，输入数组不计入额外空间。拷贝数组后写回即使输出正确也不符合原地要求，需检查程序。",
     "sourceUrl": "https://leetcode.com/problems/move-zeroes/"
   },
   "limits": {

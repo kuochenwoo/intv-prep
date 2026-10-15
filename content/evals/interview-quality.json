@@ -1,0 +1,305 @@
+{
+  "description": "Scripted quality-regression inputs, not evidence of a human candidate or pre-approved model outcomes. Expected items require human semantic review; transport/schema checks alone cannot pass them.",
+  "generations": [
+    {
+      "seedId": "javascript-event-loop",
+      "lang": "en"
+    },
+    {
+      "seedId": "mvcc-snapshots",
+      "lang": "zh"
+    }
+  ],
+  "p1Cases": [
+    {
+      "id": "p1-correct-event-en",
+      "seedId": "javascript-event-loop",
+      "lang": "en",
+      "question": {
+        "question": "What is the order of the four logs, and why?",
+        "background": "A browser script executes console.log(\"A\"); setTimeout(() => console.log(\"B\"), 0); Promise.resolve().then(() => console.log(\"C\")); console.log(\"D\");",
+        "constraints": [
+          "One browser script, no other tasks or exceptions",
+          "Compare only relative order, not actual delay or Node.js behavior"
+        ],
+        "followUpDirections": ["One changed boundary only"],
+        "evaluationChecklist": [
+          "Trace synchronous execution and the microtask checkpoint before a timer task"
+        ]
+      },
+      "turns": [
+        {
+          "role": "candidate",
+          "text": "A, D, C, B. The script logs A and D synchronously; after it finishes, pending promise reactions drain as microtasks before the timer task can run.",
+          "aiAssisted": false,
+          "timestamp": ""
+        }
+      ],
+      "feedbackOnly": false,
+      "expected": [
+        "Recognize the correct causal explanation without demanding the term microtask checkpoint",
+        "Ask one related boundary rather than repeating the original trace",
+        "Do not list unasked queue-selection rationale or timer variants as demonstrated gaps"
+      ]
+    },
+    {
+      "id": "p1-partial-mvcc-zh",
+      "seedId": "mvcc-snapshots",
+      "lang": "zh",
+      "question": {
+        "question": "T1 的第二次普通 SELECT 会读到哪个余额，为什么？",
+        "background": "PostgreSQL 18 READ COMMITTED：余额初值100，T1首次读取100；T2更新为80并提交，之后T1在同一事务中再次读取。",
+        "constraints": ["无其他写入", "两次都是普通 SELECT，不加行锁"],
+        "followUpDirections": ["One changed boundary only"],
+        "evaluationChecklist": ["说明每条语句的新快照使第二次读取可见已提交80"]
+      },
+      "turns": [
+        {
+          "role": "candidate",
+          "text": "会读到80，因为只读已提交的数据。",
+          "aiAssisted": false,
+          "timestamp": ""
+        }
+      ],
+      "feedbackOnly": false,
+      "expected": [
+        "Acknowledge the correct result",
+        "Probe when a SELECT snapshot is established",
+        "Do not require Repeatable Read comparison or a full database design"
+      ]
+    },
+    {
+      "id": "p1-incorrect-volatile-zh",
+      "seedId": "volatile-counter",
+      "lang": "zh",
+      "question": {
+        "question": "主线程最终读取的 count 是否一定为2，为什么？",
+        "background": "Java 21：volatile int count = 0；两个线程各执行一次 count++，主线程启动并 join 两者后读取。",
+        "constraints": ["无其他写入", "不使用锁或原子计数类"],
+        "followUpDirections": ["One changed boundary only"],
+        "evaluationChecklist": ["volatile读写的可见性不使复合自增原子化"]
+      },
+      "turns": [
+        {
+          "role": "candidate",
+          "text": "一定是2，volatile保证每次count++都是原子操作，不会丢失更新。",
+          "aiAssisted": false,
+          "timestamp": ""
+        }
+      ],
+      "feedbackOnly": false,
+      "expected": [
+        "Identify the specific false claim that volatile makes increment atomic",
+        "Use one interleaving counterexample as a follow-up, without dumping the full solution",
+        "Feedback distinguishes the actual error from optional locking alternatives"
+      ]
+    },
+    {
+      "id": "p1-unknown-epoll-en",
+      "seedId": "epoll-edge-trigger",
+      "lang": "en",
+      "question": {
+        "question": "Why might epoll_wait wait even though unread data remains?",
+        "background": "A nonblocking Linux pipe uses EPOLLIN | EPOLLET. Its writer writes 100 bytes once and remains open. After readiness, the reader consumes ten bytes and waits again.",
+        "constraints": [
+          "No further writes, closes or other readers",
+          "No error events"
+        ],
+        "followUpDirections": ["One changed boundary only"],
+        "evaluationChecklist": [
+          "Distinguish readiness transitions from unread bytes and draining until EAGAIN"
+        ]
+      },
+      "turns": [
+        {
+          "role": "candidate",
+          "text": "I do not know how edge-triggered epoll works. Please start with one basic step.",
+          "aiAssisted": false,
+          "timestamp": ""
+        }
+      ],
+      "feedbackOnly": false,
+      "expected": [
+        "Narrow to one prerequisite grounded in the given pipe state",
+        "Do not demand a full event-loop implementation",
+        "Mark independent mechanism understanding unassessed, not invented technical mistakes"
+      ]
+    },
+    {
+      "id": "p1-assisted-only-event-en",
+      "seedId": "javascript-event-loop",
+      "lang": "en",
+      "question": {
+        "question": "What is the order of the four logs, and why?",
+        "background": "A browser script executes console.log(\"A\"); setTimeout(() => console.log(\"B\"), 0); Promise.resolve().then(() => console.log(\"C\")); console.log(\"D\");",
+        "constraints": [
+          "One browser script, no other tasks or exceptions",
+          "Compare only relative order, not actual delay or Node.js behavior"
+        ],
+        "followUpDirections": ["One changed boundary only"],
+        "evaluationChecklist": [
+          "Trace synchronous execution and the microtask checkpoint before a timer task"
+        ]
+      },
+      "turns": [
+        {
+          "role": "candidate",
+          "text": "A, D, C, B. Synchronous script first, then the promise microtask, then the timer task.",
+          "aiAssisted": true,
+          "timestamp": ""
+        }
+      ],
+      "feedbackOnly": true,
+      "expected": [
+        "Application enforces all five ratings as missing",
+        "No independent strengths or demonstrated technical gaps",
+        "Summary explicitly discloses AI assistance"
+      ]
+    },
+    {
+      "id": "p1-mixed-mvcc-zh",
+      "seedId": "mvcc-snapshots",
+      "lang": "zh",
+      "question": {
+        "question": "T1 的第二次普通 SELECT 会读到哪个余额，为什么？",
+        "background": "PostgreSQL 18 READ COMMITTED：余额初值100，T1首次读取100；T2更新为80并提交，之后T1在同一事务中再次读取。",
+        "constraints": ["无其他写入", "两次都是普通 SELECT，不加行锁"],
+        "followUpDirections": ["One changed boundary only"],
+        "evaluationChecklist": ["说明每条语句的新快照使第二次读取可见已提交80"]
+      },
+      "turns": [
+        {
+          "role": "candidate",
+          "text": "第二次读80；READ COMMITTED每语句建立新快照，能看到在它开始前已提交的版本。",
+          "aiAssisted": true,
+          "timestamp": ""
+        },
+        {
+          "role": "interviewer",
+          "text": "现在只改变提交时点：T2在第二次SELECT快照建立后才提交，这次会看到哪个版本？",
+          "aiAssisted": false,
+          "timestamp": ""
+        },
+        {
+          "role": "candidate",
+          "text": "我还不知道，不能独立解释这个时点。",
+          "aiAssisted": false,
+          "timestamp": ""
+        }
+      ],
+      "feedbackOnly": true,
+      "expected": [
+        "Exclude the AI answer from grading context",
+        "Disclose assistance and assess only the unsure independent answer",
+        "Do not credit the AI explanation as an independent strength"
+      ]
+    }
+  ],
+  "p2Cases": [
+    {
+      "id": "p2-file-alternative-zh",
+      "seedId": "file-sync",
+      "lang": "zh",
+      "stage": "tradeoffs",
+      "question": {
+        "question": "设计文件存储与多端同步服务，先澄清范围再逐阶段讨论。",
+        "background": "训练场景：分块上传、设备游标、版本历史与分享撤销。",
+        "constraints": [
+          "训练基准为500万日活，每人每日10次变更，平均变更文件5 MB，保留30天",
+          "成功确认版本在单AZ故障后不丢；区域灾难的RPO待澄清",
+          "元数据p99低于300ms，不把它当平均服务时间"
+        ],
+        "followUpDirections": ["One changed boundary only"],
+        "evaluationChecklist": [
+          "按声明假设校验推导与完整数据流，接受合理替代架构"
+        ]
+      },
+      "turns": [
+        {
+          "role": "interviewer",
+          "text": "请说明估算假设、公式与单位。",
+          "stage": "estimation",
+          "observation": null
+        },
+        {
+          "role": "candidate",
+          "text": "先用明确的示例假设：100万日活，每人每天5次变更，每次2 MB，十进制单位。每天500万次变更，平均57.9次/秒，原始数据10 TB/天，30天300 TB，三副本900 TB，不含索引与备份。这是较低规模的演示，不代表满足题设容量；题设值应重新代入。未测压缩率，先按未压缩估算。",
+          "stage": "estimation",
+          "observation": null
+        },
+        {
+          "role": "interviewer",
+          "text": "请说明发布与确认顺序。",
+          "stage": "high_level",
+          "observation": null
+        },
+        {
+          "role": "candidate",
+          "text": "所有块先在对象存储达到持久化条件，然后元数据事务发布manifest和变更日志，成功后才确认；版本条件更新拒绝静默覆盖，另存冲突副本。",
+          "stage": "high_level",
+          "observation": null
+        },
+        {
+          "role": "interviewer",
+          "text": "请选择一个替代架构，说明故障、延迟与一致性的取舍。",
+          "stage": "tradeoffs",
+          "observation": null
+        },
+        {
+          "role": "candidate",
+          "text": "先用关系库事务加对象存储，按租户分片，权限事务简单但需处理大租户热点。分片KV加独立版本协调可扩展写吞吐，但跨对象权限事务与日志提交更复杂。单区域跨AZ满足已定义故障域；跨区异步方案声明非零RPO，若要求区域级RPO为零则同步确认并接受写延迟和分区拒写。切换阈值要实测，不凭空给机器吞吐。",
+          "stage": "tradeoffs",
+          "observation": null
+        }
+      ],
+      "notes": "Scripted probe only. Durable chunks precede metadata commit. No assumed compression savings.",
+      "diagram": "flowchart LR\n Client-->Objects\n Client-->API\n API-->Metadata",
+      "expected": [
+        "Recognize that the lower-scale baseline is explicitly illustrative and its arithmetic is correct",
+        "Accept the explicitly reasoned SQL/object-store and KV alternatives",
+        "Do not invent compression ratios or exact instance counts",
+        "Do not silently reverse chunk durability and metadata-commit order"
+      ]
+    },
+    {
+      "id": "p2-metrics-estimate-en",
+      "seedId": "metrics-platform",
+      "lang": "en",
+      "stage": "estimation",
+      "question": {
+        "question": "Design a multi-tenant metrics ingestion, query and alerting service.",
+        "background": "Local training assumptions, not real production metrics.",
+        "constraints": [
+          "500000 targets, 100 active series/target, one sample every 15 seconds",
+          "16 uncompressed bytes/sample excluding labels/indexes, retain raw data for 15 days",
+          "Last-hour query p95 below two seconds; acknowledged samples survive a node failure"
+        ],
+        "followUpDirections": ["One changed boundary only"],
+        "evaluationChecklist": [
+          "Check explicitly stated baselines, arithmetic and additional overhead"
+        ]
+      },
+      "turns": [
+        {
+          "role": "interviewer",
+          "text": "Estimate sample rate and raw retention storage, stating assumptions.",
+          "stage": "estimation",
+          "observation": null
+        },
+        {
+          "role": "candidate",
+          "text": "For an explicitly illustrative lower baseline of 100000 targets, each with 100 series sampled every 15 seconds: 100000*100/15 = about 666667 samples/s. At 16 bytes/sample for 15 days, raw samples need 13.824 decimal TB. This excludes labels, indexes, WAL, replicas, backups and compression. The task baseline of 500000 targets multiplies these figures by five: about 3333333 samples/s and 69.12 TB raw. Actual peak multiplier, compression and machine throughput need measurement; I am not using p95 latency as mean service time.",
+          "stage": "estimation",
+          "observation": null
+        }
+      ],
+      "notes": "",
+      "diagram": "",
+      "expected": [
+        "Credit correct formulas and explicit baseline alignment",
+        "Do not invent a compression percentage, instance count or measured throughput",
+        "Unasked architecture dimensions stay missing rather than becoming demonstrated gaps"
+      ]
+    }
+  ]
+}

@@ -44,21 +44,30 @@ const EXACT: [string, string][] = [
     "System design session changed; refresh it",
   ],
   ["未知系统设计操作", "Unknown system design operation"],
+  [
+    "系统设计参考答案为空、过长或缺少要点，请重试",
+    "The system design reference answer is empty, too long or missing key points; retry",
+  ],
+  [
+    "只能提交当前问题的参考答案",
+    "Only the current question's reference answer can be submitted",
+  ],
+  ["当前问题还没有参考答案", "This question has no reference answer yet"],
 
   // code_runner.rs
   [
-    "此平台尚未支援記憶體監測，無法按題目限制判題",
+    "此平台尚未支持内存监测，无法按题目限制判题",
     "Memory monitoring is not supported on this platform, so problem limits cannot be enforced",
   ],
   [
-    "無法讀取執行進程的記憶體用量；已終止進程，未繞過記憶體限制",
+    "无法读取运行进程的内存用量；已终止进程，未绕过内存限制",
     "Could not read the process's memory usage; it was stopped so the memory limit is not bypassed",
   ],
   [
     "未找到可用的 clang++ / g++，请指定编译器可执行文件的完整路径（不含参数）",
     "No usable clang++ / g++ found. Enter the full path of the compiler executable (without arguments)",
   ],
-  ["無效的題目執行限制", "Invalid problem limits"],
+  ["无效的题目运行限制", "Invalid problem limits"],
   ["代码长度超过 256 KiB", "Code is longer than 256 KiB"],
   // content.rs, db.rs
   ["未知题目", "Unknown problem"],
@@ -303,10 +312,10 @@ const EXACT: [string, string][] = [
   ["无法初始化请求执行器", "Could not initialize the request runtime"],
   // main.rs
   [
-    "此平台尚未支援開啟官方連結",
+    "此平台尚未支持打开官方链接",
     "Opening the official link is not supported on this platform",
   ],
-  ["無法開啟官方題面", "Could not open the official problem page"],
+  ["无法打开官方题面", "Could not open the official problem page"],
   ["已有判题任务正在运行", "A judge run is already in progress"],
   [
     "后台面试任务意外终止，请重试",

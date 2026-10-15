@@ -62,6 +62,13 @@ type Session = {
     text: string;
     stage: Stage;
     observation: string | null;
+    aiAssisted?: boolean;
+  }[];
+  references?: {
+    turnIndex: number;
+    stage: Stage;
+    answer: string;
+    keyPoints: string[];
   }[];
   suggestedStage: Stage | null;
   lastError: string | null;
@@ -313,6 +320,64 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
         : connection.kind === "failed"
           ? t("lastFailed")
           : t("apiUnverified");
+  const referenceReady = !!session?.references?.some(
+    (r) => r.turnIndex === session.turns.length,
+  );
+  // The AI reference answer for the question before turn k, while it is still unanswered.
+  function shownReference(k: number) {
+    if (!session || session.turns[k]?.aiAssisted) return null;
+    const r = session.references?.find((x) => x.turnIndex === k);
+    if (!r) return null;
+    const current = active && k === session.turns.length;
+    return (
+      <div className="shown-reference">
+        <Collapsible trigger={<strong>{t("refShown")}</strong>} defaultIsOpen>
+          <Markdown text={r.answer} />
+          <ul>
+            {r.keyPoints.map((point, n) => (
+              <li key={n}>{point}</li>
+            ))}
+          </ul>
+          {current && (
+            <div className="actions">
+              <Button
+                label={t("copyToAnswer")}
+                size="sm"
+                isDisabled={busy}
+                onClick={() =>
+                  updateWorkspace({
+                    ...workRef.current,
+                    drafts: {
+                      ...workRef.current.drafts,
+                      [session.stage]: r.answer,
+                    },
+                  })
+                }
+              />
+              <Button
+                label={t("submitRef")}
+                size="sm"
+                isDisabled={busy || !online || !!draft.trim()}
+                tooltip={draft.trim() ? t("clearDraftFirst") : undefined}
+                onClick={() =>
+                  perform(
+                    async () =>
+                      show(
+                        await invoke<Session>("sd_reference", {
+                          sessionId: session.id,
+                          submitTurn: k,
+                        }),
+                      ),
+                    true,
+                  )
+                }
+              />
+            </div>
+          )}
+        </Collapsible>
+      </div>
+    );
+  }
   const list = (values: string[]) => (
     <ul>
       {values.map((v, i) => (
@@ -789,7 +854,9 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
                   <article className={`turn ${turn.role}`} key={i}>
                     <strong>
                       {turn.role === "candidate"
-                        ? t("sdCandidate")
+                        ? turn.aiAssisted
+                          ? t("roleAiAnswer")
+                          : t("sdCandidate")
                         : t("sdInterviewer")}{" "}
                       · {stageLabel(turn.stage)}
                     </strong>
@@ -797,6 +864,7 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
                       <p className="muted">{turn.observation}</p>
                     )}
                     <Markdown text={turn.text} />
+                    {turn.role === "interviewer" && shownReference(i + 1)}
                   </article>
                 ))}
               </div>
@@ -858,6 +926,21 @@ export default function SystemDesignApp({ dark }: { dark: boolean }) {
                         busy || !online || !draft.trim() || saveFailed
                       }
                       onClick={() => request("answer")}
+                    />
+                    <Button
+                      label={referenceReady ? t("refReady") : t("aiReference")}
+                      isDisabled={busy || !online || referenceReady}
+                      onClick={() =>
+                        perform(
+                          async () =>
+                            show(
+                              await invoke<Session>("sd_reference", {
+                                sessionId: session.id,
+                              }),
+                            ),
+                          true,
+                        )
+                      }
                     />
                     <Button
                       label={t("sdFinish")}

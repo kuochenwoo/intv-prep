@@ -282,3 +282,14 @@
     padding: 16px;
   }
 }
+/* Deep Dive and System Design: the left list stays in place; only the right side scrolls. */
+@media (min-width: 761px) {
+  .interview-main aside {
+    position: sticky;
+    top: calc(var(--app-nav-height, 57px) + 16px);
+    max-height: calc(100vh - var(--app-nav-height, 57px) - 32px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-inline-end: 4px;
+  }
+}

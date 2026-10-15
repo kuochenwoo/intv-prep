@@ -6,7 +6,7 @@
   "statement": "给定整数数组和目标值，返回两个不同元素的下标，使其和等于目标值。保证至少存在一组解；返回任意合法下标对即可，下标从 0 开始。",
   "constraints": [
     "2 ≤ n ≤ 10000；-10^9 ≤ nums[i], target ≤ 10^9",
-    "本地比較器允許多組合法答案；官方原題保證唯一答案。"
+    "本地比较器允许多组合法答案；官方原题保证唯一答案。"
   ],
   "tests": [
     {
@@ -999,10 +999,10 @@
     "acmIoSpec": "stdin: first line n target; second line n integers. stdout: two different 0-based indices in any order; any valid answer is accepted."
   },
   "complexity": {
-    "time": "平均 O(n)（本地訓練目標）",
-    "space": "O(n) 額外空間",
-    "officialRequirement": "官方 follow-up 要求時間優於 O(n²)，並未強制只能使用哈希表。",
-    "notes": "n 為元素數。O(n log n) 排序方案也符合官方 follow-up；本地建議練習哈希表。哈希碰撞極端情況可退化。",
+    "time": "平均 O(n)（本地训练目标）",
+    "space": "O(n) 额外空间",
+    "officialRequirement": "官方 follow-up 要求时间优于 O(n²)，并未强制只能使用哈希表。",
+    "notes": "n 为元素数。O(n log n) 排序方案也符合官方 follow-up；本地建议练习哈希表。哈希碰撞极端情况可退化。",
     "sourceUrl": "https://leetcode.com/problems/two-sum/"
   },
   "limits": {

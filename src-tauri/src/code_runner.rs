@@ -190,7 +190,7 @@ fn execute_monitored(
     mut sample: impl FnMut(u32) -> Option<u64>,
 ) -> Result<ProcessResult, String> {
     if memory_limit_bytes.is_some() && !cfg!(any(target_os = "macos", target_os = "linux")) {
-        return Err("此平台尚未支援記憶體監測，無法按題目限制判題".into());
+        return Err("此平台尚未支持内存监测，无法按题目限制判题".into());
     }
     let mut cmd = Command::new(program);
     cmd.args(args)
@@ -297,7 +297,7 @@ fn execute_monitored(
     let out = stdout.join().unwrap_or_default();
     let err = stderr.join().unwrap_or_default();
     if status == "memory_monitor_error" {
-        return Err("無法讀取執行進程的記憶體用量；已終止進程，未繞過記憶體限制".into());
+        return Err("无法读取运行进程的内存用量；已终止进程，未绕过内存限制".into());
     }
     let status = if count.load(Ordering::SeqCst) > cap {
         "output_limit"
@@ -398,7 +398,7 @@ pub fn judge(
         || limits.output_limit_kb == 0
         || limits.output_limit_kb > 1024
     {
-        return Err("無效的題目執行限制".into());
+        return Err("无效的题目运行限制".into());
     }
     if code.len() > 256 * 1024 {
         return Err("代码长度超过 256 KiB".into());
@@ -499,7 +499,7 @@ mod monitor_failure_tests {
                 None
             },
         );
-        assert!(result.unwrap_err().contains("未繞過記憶體限制"));
+        assert!(result.unwrap_err().contains("未绕过内存限制"));
         assert!(pid > 0);
         assert_eq!(
             unsafe { libc::kill(pid as i32, 0) },

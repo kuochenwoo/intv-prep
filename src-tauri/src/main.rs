@@ -38,7 +38,7 @@ fn open_problem_source(problem_id: String) -> Result<(), String> {
     } else if cfg!(target_os = "linux") {
         "xdg-open"
     } else {
-        return Err("此平台尚未支援開啟官方連結".into());
+        return Err("此平台尚未支持打开官方链接".into());
     };
     let status = std::process::Command::new(launcher)
         .arg(url)
@@ -47,7 +47,7 @@ fn open_problem_source(problem_id: String) -> Result<(), String> {
     if status.success() {
         Ok(())
     } else {
-        Err("無法開啟官方題面".into())
+        Err("无法打开官方题面".into())
     }
 }
 #[tauri::command]
@@ -490,6 +490,32 @@ async fn sd_request(
     })
     .await
 }
+#[tauri::command]
+async fn sd_reference(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    session_id: String,
+    submit_turn: Option<usize>,
+) -> Result<system_design::DesignSession, String> {
+    let state = state.inner().clone();
+    background(move || {
+        let _guard = state
+            .interview
+            .try_lock()
+            .map_err(|_| "已有面试请求正在运行")?;
+        let c = state.own_connection()?;
+        let s = system_design_store::session(&c, &session_id)?;
+        let mut config = credentials::settings(&c)?;
+        config.provider = s.provider;
+        config.model = s.model;
+        let api = sd_provider(&app, &config, s.question.lang)?;
+        match submit_turn {
+            Some(turn) => system_design_store::submit_reference(&c, &session_id, turn, &api),
+            None => system_design_store::generate_reference(&c, &session_id, &api),
+        }
+    })
+    .await
+}
 
 fn main() {
     tauri::Builder::default()
@@ -512,6 +538,7 @@ fn main() {
             sd_change_stage,
             sd_generate,
             sd_request,
+            sd_reference,
             sd_delete_session,
             sd_clear_history,
             interview_overview,

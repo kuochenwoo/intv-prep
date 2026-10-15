@@ -50,7 +50,7 @@ pub fn cache_question(
         content,
     };
     c.execute(
-        "INSERT INTO sd_questions VALUES(?1,'system-design-v1',?2)",
+        "INSERT INTO sd_questions VALUES(?1,'system-design-v2-calibrated',?2)",
         params![q.id, serde_json::to_string(&q).map_err(err)?],
     )
     .map_err(err)?;
@@ -135,10 +135,12 @@ pub fn start(c: &Connection, id: &str, config: &LlmSettings) -> Result<DesignSes
             text: Stage::Requirements.guide(lang).into(),
             stage: Stage::Requirements,
             observation: None,
+            ai_assisted: false,
         }],
         suggested_stage: None,
         last_error: None,
         feedback: None,
+        references: vec![],
     };
     c.execute(
         "INSERT INTO sd_sessions VALUES(?1,?2,?3)",
@@ -194,6 +196,7 @@ pub fn change_stage(c: &Connection, id: &str, stage: Stage) -> Result<DesignSess
             text: stage.guide(s.question.lang).into(),
             stage,
             observation: None,
+            ai_assisted: false,
         });
         put(&tx, &s)?;
     }
@@ -201,6 +204,9 @@ pub fn change_stage(c: &Connection, id: &str, stage: Stage) -> Result<DesignSess
     Ok(s)
 }
 pub fn begin_answer(c: &Connection, id: &str, answer: &str) -> Result<(), String> {
+    begin_answer_kind(c, id, answer, false)
+}
+fn begin_answer_kind(c: &Connection, id: &str, answer: &str, ai: bool) -> Result<(), String> {
     if answer.trim().is_empty() || answer.chars().count() > 6000 {
         return Err("回答需要 1–6000 字符".into());
     }
@@ -222,8 +228,12 @@ pub fn begin_answer(c: &Connection, id: &str, answer: &str) -> Result<(), String
         text: answer.into(),
         stage: s.stage,
         observation: None,
+        ai_assisted: ai,
     });
-    s.workspace.drafts.insert(s.stage, answer.into());
+    // Kept as the stage draft until the follow-up arrives; an AI answer never becomes a draft.
+    if !ai {
+        s.workspace.drafts.insert(s.stage, answer.into());
+    }
     s.status = "awaiting_reply".into();
     s.last_error = None;
     put(&tx, &s)?;
@@ -274,6 +284,7 @@ pub fn retry_pending(
                 text: f.follow_up_question,
                 stage: current.stage,
                 observation: Some(f.observation),
+                ai_assisted: false,
             });
             current.suggested_stage = Some(f.suggested_stage);
             current.workspace.drafts.remove(&current.stage);
@@ -310,4 +321,60 @@ pub fn clear_history(c: &Connection) -> Result<(), String> {
     tx.execute("DELETE FROM sd_sessions", []).map_err(err)?;
     tx.execute("DELETE FROM sd_questions", []).map_err(err)?;
     tx.commit().map_err(err)
+}
+/// Generates one reference answer for the current question; asking again returns the saved one.
+pub fn generate_reference(
+    c: &Connection,
+    id: &str,
+    api: &impl DesignProvider,
+) -> Result<DesignSession, String> {
+    let s = session(c, id)?;
+    active(&s)?;
+    let turn_index = s.turns.len();
+    if s.references.iter().any(|r| r.turn_index == turn_index) {
+        return Ok(s);
+    }
+    let answer = api.design_reference(&s)?;
+    answer.validate()?;
+    let tx = c.unchecked_transaction().map_err(err)?;
+    let mut current = session(&tx, id)?;
+    if current.status != "active" || current.turns.len() != turn_index {
+        return Err("系统设计会话状态已变化，请刷新".into());
+    }
+    current.references.push(DesignReference {
+        turn_index,
+        stage: current.stage,
+        answer: answer.answer,
+        key_points: answer.key_points,
+    });
+    put(&tx, &current)?;
+    tx.commit().map_err(err)?;
+    Ok(current)
+}
+/// Submits the saved reference answer as an AI-assisted turn, then asks for the follow-up.
+pub fn submit_reference(
+    c: &Connection,
+    id: &str,
+    turn_index: usize,
+    api: &impl DesignProvider,
+) -> Result<DesignSession, String> {
+    let s = session(c, id)?;
+    active(&s)?;
+    if turn_index != s.turns.len() {
+        return Err("只能提交当前问题的参考答案".into());
+    }
+    let reference = s
+        .references
+        .iter()
+        .find(|r| r.turn_index == turn_index)
+        .ok_or("当前问题还没有参考答案")?;
+    if s.workspace
+        .drafts
+        .get(&s.stage)
+        .is_some_and(|d| !d.trim().is_empty())
+    {
+        return Err("请先提交或清空当前草稿，再使用 AI 代答".into());
+    }
+    begin_answer_kind(c, id, &reference.answer, true)?;
+    retry_pending(c, id, api)
 }
