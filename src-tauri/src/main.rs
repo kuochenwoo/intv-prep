@@ -89,7 +89,7 @@ fn run_judge(
     }
     Ok(result)
 }
-// reqwest::blocking owns a runtime; create and use it only on blocking workers.
+// The provider owns a runtime; create and use it on blocking workers, outside Tauri async tasks.
 async fn background<T: Send + 'static>(
     task: impl FnOnce() -> Result<T, String> + Send + 'static,
 ) -> Result<T, String> {
@@ -100,14 +100,14 @@ async fn background<T: Send + 'static>(
 fn provider(
     c: &rusqlite::Connection,
     session_id: Option<&str>,
-) -> Result<llm::DeepSeekProvider, String> {
+) -> Result<llm::InterviewProvider, String> {
     let mut config = credentials::settings(c)?;
     if let Some(id) = session_id {
         let s = interview_store::session(c, id)?;
         config.provider = s.provider;
         config.model = s.model;
     }
-    llm::DeepSeekProvider::new(&config, credentials::read_key(&config.provider)?)
+    llm::InterviewProvider::new(&config, credentials::read_key(&config.provider)?)
 }
 #[tauri::command(async)]
 fn interview_overview(state: State<AppState>) -> Result<serde_json::Value, String> {

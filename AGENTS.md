@@ -14,4 +14,6 @@
 
 ## 当前阶段状态
 
-P0 已完成，并补充了每题复杂度说明、资源预算及真实资源限制测试。下一阶段是 P1（Technical Deep Dive）；在用户要求开始下一阶段前，不新增 P1–P3 实现。
+P0 已完成，保留全部 LC 复杂度和资源限制约定。用户已授权 P1，当前已实现 Claude / DeepSeek Technical Deep Dive 的界面、缓存、面试、反馈和失败恢复。用户现指定 Claude Haiku 5.5（claude-haiku-5-5）；Claude 已完成真实出题、追问和五维反馈及重试恢复。DeepSeek 的真实多轮验收仍受 503 / 保活超时影响，不得声称 DeepSeek 已通过。不要开始 P2 或 P3。
+
+用户最新明确要求：先将 Key 放在受 Git 忽略、权限 0600 的 `.env` 做测试，测试通过后再写入系统 Keychain。当前运行时只读写 `.env`，不要自动回退系统存储或提前迁移。不同 Provider 的 Key 必须分别保留；不得提交 `.env`、打印实际 Key，或把 Key 写入 SQLite。

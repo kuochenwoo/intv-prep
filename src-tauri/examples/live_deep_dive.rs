@@ -4,14 +4,18 @@ use swe_interview_prep::{
     credentials, db,
     interview::{self, LlmProvider},
     interview_store as store,
-    llm::DeepSeekProvider,
+    llm::InterviewProvider,
 };
 fn run() -> Result<(), String> {
     let path = std::env::args()
         .nth(1)
         .unwrap_or_else(|| "/tmp/intv-p1-live.sqlite3".into());
     let c = db::open(std::path::Path::new(&path))?;
-    let key = credentials::read_key("deepseek")?;
+    let mut config = credentials::settings(&c)?;
+    if let Ok(provider) = std::env::var("INTERVIEW_PROVIDER") {
+        config.provider = provider;
+    }
+    let key = credentials::read_key(&config.provider)?;
     if std::env::var_os("INTERVIEW_MODELS_ONLY").is_some() {
         let client = reqwest::blocking::Client::builder()
             .https_only(true)
@@ -40,12 +44,35 @@ fn run() -> Result<(), String> {
         println!("账户可用模型：{}", ids.join(", "));
         return Ok(());
     }
-    let mut config = credentials::settings(&c)?;
     if let Ok(model) = std::env::var("INTERVIEW_MODEL") {
         config.model = model;
     }
     config.timeout_seconds = 120;
-    let api = DeepSeekProvider::new(&config, key)?;
+    credentials::save_settings(&c, &config)?;
+    println!("真实 API：{} / {}", config.provider, config.model);
+    let api = InterviewProvider::new(&config, key)?;
+    if std::env::var_os("INTERVIEW_RESUME").is_some() {
+        let pending = store::sessions(&c)?
+            .into_iter()
+            .find(|s| s.status == "feedback_pending" || s.status == "awaiting_reply")
+            .ok_or("没有待重试的真实会话")?;
+        let retried = store::retry_pending(&c, &pending.id, &api)?;
+        println!(
+            "真实重试成功：状态 {}；{} 条消息；{} 个反馈维度",
+            retried.status,
+            retried.turns.len(),
+            retried.feedback.as_ref().map_or(0, |f| f.dimensions.len())
+        );
+        drop(c);
+        let c = db::open(std::path::Path::new(&path))?;
+        let restored = store::session(&c, &retried.id)?;
+        if restored.status != "finished" || restored.feedback.is_none() {
+            return Err("反馈尚未完成".into());
+        }
+        let _offline = store::start(&c, &restored.question.id, &config)?;
+        println!("已验证重开恢复与离线缓存复用；测试数据位于 {path}");
+        return Ok(());
+    }
     let question = api.generate_question(&interview::topic("cache-selection")?)?;
     let cached = store::cache_question(&c, "cache-selection", &config, &question)?;
     println!("真实生成并缓存题目：{}", cached.id);

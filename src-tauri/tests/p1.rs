@@ -238,3 +238,40 @@ fn os_keyring_roundtrip() {
     assert_eq!(value, "temporary-fixture-not-an-api-key");
     assert!(matches!(entry.get_password(), Err(keyring::Error::NoEntry)));
 }
+
+#[test]
+fn temporary_env_keys_are_private_atomic_and_provider_specific() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join(".env");
+    credentials::write_env_key(&path, "deepseek", "fixture-deepseek-not-real-key").unwrap();
+    credentials::write_env_key(&path, "claude", "fixture-claude-not-real-key").unwrap();
+    assert_eq!(
+        credentials::read_env_key(&path, "deepseek").unwrap(),
+        "fixture-deepseek-not-real-key"
+    );
+    assert_eq!(
+        credentials::read_env_key(&path, "claude").unwrap(),
+        "fixture-claude-not-real-key"
+    );
+    credentials::write_env_key(&path, "deepseek", "fixture-updated-not-real-key").unwrap();
+    assert_eq!(
+        credentials::read_env_key(&path, "claude").unwrap(),
+        "fixture-claude-not-real-key"
+    );
+    credentials::write_env_key(&path, "deepseek", "").unwrap();
+    assert!(credentials::read_env_key(&path, "deepseek").is_err());
+    assert_eq!(
+        credentials::read_env_key(&path, "claude").unwrap(),
+        "fixture-claude-not-real-key"
+    );
+    assert!(credentials::write_env_key(&path, "deepseek", "bad\nINJECTED=value").is_err());
+    assert!(credentials::write_env_key(&path, "unknown", "fixture-not-real-key").is_err());
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        assert_eq!(
+            std::fs::metadata(path).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+    }
+}

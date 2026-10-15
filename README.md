@@ -1,6 +1,6 @@
-# SWE Interview Prep · P0
+# SWE Interview Prep · P0 + P1
 
-本地 SWE 面试准备桌面应用。目前仅实现 **P0：项目初始化 + LeetCode 双模式本地 Judge**。不包含 P1–P3 的 AI 面试、API Key、系统设计或完整 Hot 100。
+本地 SWE 面试准备桌面应用。P0 的双模式本地 Judge 已完成；P1 的 Technical Deep Dive 已接入 Claude / DeepSeek，包含缓存和可恢复面试流程。Claude Haiku 5.5 已完成真实出题、追问、反馈和失败恢复验证；DeepSeek 真实多轮验收仍受 503 / 保活超时影响。P2 系统设计与 P3 完整 Hot 100 尚未实现。
 
 ## 启动
 
@@ -28,7 +28,7 @@ npm run tauri dev
 
 ```sh
 npm run build                  # TypeScript 检查 + Vite 生产构建
-npm test                       # Rust Judge / IO / SQLite 集成测试，不需要 GUI
+npm test                       # Judge / SQLite / 面试状态 / HTTP 错误恢复测试，不调用收费 API
 npm run tauri build -- --bundles app    # macOS 发布构建（本地未签名 .app）
 ```
 
@@ -44,7 +44,7 @@ macOS 应用输出到 `src-tauri/target/release/bundle/macos/SWE Interview Prep.
 - 每题独立时间/内存/输出设置；Function/ACM 真实分配并触碰内存后被终止，返回 Memory Limit Exceeded；四题最大规模用例。
 - 后台子进程终止、继承管道清理、SQLite 关闭重开后的草稿/状态/结果/设置恢复。
 
-## 本次验证（2026-10-15）
+## P0 验证（2026-10-15）
 
 - macOS Apple Silicon：TypeScript/Vite 构建、Tauri 桌面构建及 `.app` 打包成功。
 - 11 项自动化集成测试通过；4 道题 × 2 种模式，合计执行 50 个语义测试用例，全部调用真实 C++20 编译器。
@@ -70,6 +70,66 @@ macOS 应用输出到 `src-tauri/target/release/bundle/macos/SWE Interview Prep.
 | 移动零               | 检查 void 方法原地修改后的数组                      |
 
 题面是自行撰写的等价题意，测试是本地维护的小型测试集，不是 LeetCode 官方隐藏测试，不能据此宣称官方评测通过或完整边界覆盖。
+
+## P1：Technical Deep Dive
+
+按用户指定，当前使用 **Claude Haiku 5.5**（`claude-haiku-5-5`），保留 DeepSeek 接口和独立密钥，可在设置中切换。未实现 System Design。
+
+- 内置 10 个主题：缓存选型、热点与缓存故障、幂等与重试、消息可靠投递、队列选型、限流/熔断、并发事务、副本故障转移、分片扩容、RPC 尾延迟。
+- 选择主题 → 显式联网生成新题 → SQLite 缓存 → 新建面试 → 提交回答并动态追问 → 结束并生成五维定性反馈。
+- 可随机选择本地主题、复用已缓存问题、查看历史和恢复未完成会话；这些操作不调用 API。
+- 面试官内部的追问方向和检查点不会随题目/会话 DTO 发给前端；反馈只在结束后显示，不做百分制评分。
+- 一次最多 20 轮回答，每条最多 6000 字符。追问只发送当前题目和最近 12 条消息；反馈发送本会话完整记录，不发送其他会话或题库。
+- 模型、超时（15–120 秒）可设置。会话使用创建时的模型，之后改设置不会悄悄改变已有会话的模型。
+- 失败后保留内容并提供手动重试，不做自动收费重试。超时涵盖整次请求，持续空白保活不会重置截止时间；响应上限 1 MiB。
+
+使用方式：打开顶部 **Technical Deep Dive**，检查模型设置。已有 `.env` 时直接使用；没有时可通过应用内密码输入框保存，或先从 `.env.example` 创建 `.env` 再填写（不要覆盖已有 `.env`）。新配置默认模型 `claude-haiku-5-5`；已有 DeepSeek 配置保留，可在 Provider 下拉框切换并保存。已有会话仍使用创建时的 Provider 和模型。按钮明确标示哪些操作联网，并显示最近一次请求状态。
+
+### 当前临时密钥策略（用户指定）
+
+现在 `credentials::read_key/save_key/delete_key` **仅操作项目 `.env`，不会自动回退读取或写入 Keychain**。`.env` 已加入 `.gitignore`，写入使用原子替换，Unix 文件权限 0600；`.env.example` 只包含空值。按 Provider 分别使用 `DEEPSEEK_API_KEY`、`OPENAI_API_KEY`、`CLAUDE_API_KEY`，更新或清除一个不会覆盖另一个。请勿使用 `VITE_` 前缀保存密钥。实际 Key 不写入 SQLite、日志或前端返回值。
+
+先前保存的 DeepSeek 系统凭据已按用户新要求转存并删除。系统凭据适配代码仍保留，**待真实验收通过后再迁移启用**；当前没有自动迁移操作。测试构建从编译时的项目根目录读取 `.env`，不依赖启动命令所在目录。这是临时开发方案，正式可分发构建前需要完成 Keychain 迁移。
+
+### 失败恢复
+
+回答先写入 SQLite 并进入 `awaiting_reply`，随后才调用 API。失败时，回答同时保留为本地消息和待处理草稿，重启后可重试，重试不会再追加一次候选人回答。结束请求同理进入 `feedback_pending`，只有完整反馈校验通过才标记 `finished`。有未提交草稿时不能直接结束，避免悄悄丢弃回答。
+
+HTTP 401/403、余额不足、限流、服务错误、空响应、截断、无效 JSON、缺少字段和错误枚举均有可恢复错误提示；不回显供应商原始错误体或请求调试对象，避免它们带出凭据。生产请求只访问固定 Claude / DeepSeek HTTPS 端点且不跟随重定向。缓存/历史清理不会删除 LC 数据或密钥；清理需要在界面再次确认。
+
+接口依据：[DeepSeek Chat Completions](https://api-docs.deepseek.com/api/create-chat-completion/)。使用 JSON Output (`response_format: json_object`)，提示包含 JSON schema；Rust 使用严格 Serde 反序列化、字段长度/列表/枚举和五个维度检查再次验证，不假设供应商支持强制 JSON Schema 输出。
+
+Claude 接口依据：[Haiku 5.5 迁移指南](https://platform.claude.com/docs/en/models/haiku-5-5/migration-guide)、[Messages API](https://platform.claude.com/docs/en/build-with-claude/working-with-messages)、[结构化输出](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)。采用原生 `x-api-key` 认证、顶层 `system`、`output_config.format` JSON Schema 和 medium effort；按类型提取文本，不把 thinking 当答案。五个反馈维度使用必填对象字段保证覆盖，再转换为共享存储结构；拒绝、截断和缺项均不会标记成功。
+
+当前两家 Provider 都使用 `stream: false`，尚无 SSE 流式显示；点击提交后整段发送输入。
+
+### P1 验证与实际限制
+
+- 26 项默认自动化测试通过：11 项 P0 回归、9 项 HTTP/JSON/整体超时及 Claude 协议测试、6 项面试存储和临时 `.env` 测试。
+- 供应商故障测试使用明确的本机 HTTP 夹具；状态恢复测试使用明确的测试 Provider。这些结果不冒充真实 AI 的出题、追问或评价质量。
+- 真实 macOS Keychain 独立测试在切换临时 `.env` 策略前已通过；该测试默认忽略，当前不再写入系统凭据。
+- 真实账户的 `/models` 查询成功，返回 `deepseek-flash`、`deepseek-v4-pro`。`flash` 生成请求返回 HTTP 503；`pro` 曾返回 HTTP 200 但持续空白保活，未得到可验证的完成内容。桌面端已确认显示失败、解除忙碌状态并保留密钥设置。DeepSeek 完整真实面试仍待服务恢复后验收。
+- Claude Haiku 5.5 最小真实请求成功（输入 14 / 输出 4 tokens），元数据记录 `/tmp/intv-claude-probe.json`。真实面试首次反馈返回空维度列表，被校验拦截；改为五个必填维度对象后，从原会话重试成功，保持 4 条消息且无重复候选人回答，并验证重开恢复与离线复用。随后在全新数据库 `/tmp/intv-p1-live-claude-final.sqlite3` 中完整执行真实出题 → 两轮追问 → 五维反馈 → 重开恢复 → 离线复用，全部通过。AI 技术判断仍需人工复核，不保证每次生成都正确。
+
+重跑自动化测试不需要实际 Key（本机 HTTP 夹具需要 localhost 监听权限）：
+
+```sh
+npm test
+```
+
+下面是显式的真实联网验收，**会使用 `.env` 中的 Key 并产生 API 费用**，默认把测试数据写入 `/tmp/intv-p1-live.sqlite3`；不调用它就不会自动发起这些请求：
+
+```sh
+cargo run --manifest-path src-tauri/Cargo.toml --no-default-features --example live_deep_dive
+# 或指定账户另一可用模型及独立的测试数据库
+INTERVIEW_PROVIDER=deepseek INTERVIEW_MODEL=deepseek-v4-pro cargo run --manifest-path src-tauri/Cargo.toml --no-default-features --example live_deep_dive -- /tmp/intv-p1-live-pro.sqlite3
+```
+
+单独验证系统凭据适配（当前测试阶段不必执行；只使用独立临时测试条目，不会覆盖实际 Key）：
+
+```sh
+cargo test --manifest-path src-tauri/Cargo.toml --no-default-features --test p1 os_keyring_roundtrip -- --ignored
+```
 
 ## 每题复杂度要求和执行预算
 
@@ -119,7 +179,13 @@ src/main.tsx                  LC 界面、Monaco、Tauri 调用
 content/leetcode/adapters/     Function 模式 C++ main 包装器
 src-tauri/src/content.rs       内置题库、输入适配、结果比较器
 src-tauri/src/code_runner.rs   编译、子进程控制、判题
-src-tauri/src/db.rs            SQLite 草稿、状态、最近提交和编译器设置
+src-tauri/src/db.rs            SQLite 初始化与 LC 草稿/状态
+src/features/interview/       Deep Dive 设置、选题、会话、反馈与历史界面
+src-tauri/src/interview.rs     主题与严格响应类型、校验
+src-tauri/src/interview_store.rs 题目缓存和可恢复面试状态
+src-tauri/src/llm.rs           Claude / DeepSeek 请求、schema、整体超时与安全错误
+src-tauri/src/credentials.rs   临时 .env 凭据；保留待启用的系统适配
+content/deep-dive/topics.json  10 个主题种子
 src-tauri/src/main.rs          Tauri commands
 src-tauri/tests/p0.rs          真实编译执行的集成测试
 ```
@@ -130,12 +196,12 @@ src-tauri/tests/p0.rs          真实编译执行的集成测试
 ~/Library/Application Support/local.swe.interview-prep/prep.sqlite3
 ```
 
-不在仓库或静态题库中写入用户数据。P0 不需要 `.env` 或 API Key；唯一设置是应用内编译器路径。
+用户进度和面试数据保存在应用数据目录。LC 不需要 `.env` 或 API Key。按当前测试要求，Claude / DeepSeek Key 暂存在项目根目录 `.env`，模型名称和超时等非敏感设置保存在 SQLite；临时 Key 文件是这一阶段明确允许的例外。
 
 执行边界：仅运行本人编写且可信的 C++ 代码。每次判题使用独立临时目录，自动清理；编译超时 30 秒/输出 256 KiB；每个测试的时间、内存、输出预算由题目 `limits` 读取（当前 1000 ms / 主进程 128 MiB / stdout + stderr 合计 64 KiB）。Unix 下运行在独立进程组，结束、超时、输出超限时终止整个组；设置 CPU、单文件大小、打开文件数和禁止 core dump 的资源限制。记忆体通过主进程 RSS 采样监测（macOS `proc_pidinfo`；Linux `/proc`），超过题目上限则终止进程组。采样间隔约 5 ms，快速释放/退出的瞬时峰值可能漏计；不合计派生进程内存，不是 OS 硬内存配额。持续无法读取活进程内存时会明确报错，不静默跳过。没有内存/网络/文件系统的强安全沙箱，不能用来执行不可信代码。判题 command 在后台线程执行，UI 不等待主线程上的编译进程。
 
 ## 后续工作（本次不实现）
 
-- P1：Technical Deep Dive 端到端 AI 面试、安全密钥存储、问题和会话缓存。
+- 密钥存储仍按用户指定保留临时 `.env` 测试模式；正式分发前启用系统凭据存储。DeepSeek 的真实多轮验收仍待服务恢复。
 - P2：System Design 场景、阶段控制与解释性反馈。
 - P3：逐题补齐并验证完整 Hot 100、更多适配器及比较规则、质量改进。

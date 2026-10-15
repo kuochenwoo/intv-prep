@@ -105,22 +105,33 @@ impl Validated for Feedback {
     fn validate(&self) -> Result<(), String> {
         let names: std::collections::HashSet<_> =
             self.dimensions.iter().map(|d| d.name.as_str()).collect();
-        if text(&self.summary)
-            && self.dimensions.len() == 5
-            && names.len() == 5
-            && DIMENSIONS.iter().all(|n| names.contains(n))
-            && self
-                .dimensions
-                .iter()
-                .all(|d| text(&d.evidence) && text(&d.improvement))
-            && list(&self.strengths, 0)
-            && list(&self.gaps, 0)
-            && list(&self.next_practice_topics, 1)
+        if self.dimensions.len() != 5
+            || names.len() != 5
+            || !DIMENSIONS.iter().all(|n| names.contains(n))
         {
-            Ok(())
-        } else {
-            Err("反馈缺少完整评估维度、依据或建议，请重试".into())
+            return Err(format!(
+                "反馈必须包含五个不同评估维度（收到 {} 项、{} 个不同名称），请重试",
+                self.dimensions.len(),
+                names.len()
+            ));
         }
+        if !text(&self.summary) {
+            return Err("反馈总结为空或过长，请重试".into());
+        }
+        if self
+            .dimensions
+            .iter()
+            .any(|d| !text(&d.evidence) || !text(&d.improvement))
+        {
+            return Err("反馈维度的依据或改进建议为空或过长，请重试".into());
+        }
+        if !list(&self.strengths, 0) || !list(&self.gaps, 0) {
+            return Err("反馈优点或不足列表无效，请重试".into());
+        }
+        if !list(&self.next_practice_topics, 1) {
+            return Err("反馈必须提供至少一个后续练习方向，且不超过12项，请重试".into());
+        }
+        Ok(())
     }
 }
 #[derive(Clone, Serialize, Deserialize)]

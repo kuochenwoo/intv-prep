@@ -1,44 +1,84 @@
-//! Minimal authorized connectivity check. Never print response text or API credentials.
+//! Real, bounded connectivity probe. Records metadata only, never credentials or response text.
+use serde_json::{json, Value};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use swe_interview_prep::credentials;
-fn main() {
-    if let Err(e) = run() {
-        eprintln!("{e}");
-        std::process::exit(1);
-    }
-}
-fn run() -> Result<(), String> {
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let key = credentials::read_key("deepseek")?;
-    let client = reqwest::blocking::Client::builder()
-        .https_only(true)
-        .redirect(reqwest::redirect::Policy::none())
-        .timeout(std::time::Duration::from_secs(30))
-        .build()
-        .map_err(|_| "client")?;
-    for model in ["deepseek-flash", "deepseek-v4-pro"] {
-        let body = serde_json::json!({"model":model,"max_tokens":32,"thinking":{"type":"disabled"},"messages":[{"role":"user","content":"Reply OK."}]});
-        let r = client
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?;
+    let report = runtime.block_on(probe(key));
+    let report = serde_json::to_string_pretty(&report)?;
+    std::fs::write("/tmp/intv-deepseek-probe.json", &report)?;
+    println!("{report}");
+    Ok(())
+}
+
+async fn probe(key: String) -> Value {
+    let start = Instant::now();
+    let mut report = json!({
+        "started_unix_seconds": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+        "endpoint": "https://api.deepseek.com/chat/completions",
+        "model": "deepseek-flash", "stream": false,
+        "prompt": "Reply OK.", "max_tokens": 32,
+        "usage": null, "completed": false
+    });
+    let operation = async {
+        let client = reqwest::Client::builder()
+            .https_only(true)
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .map_err(|_| "client_error")?;
+        let mut response = client
             .post("https://api.deepseek.com/chat/completions")
             .bearer_auth(&key)
-            .json(&body)
+            .json(
+                &json!({"model":"deepseek-flash","stream":false,"max_tokens":32,
+                "thinking":{"type":"disabled"},"messages":[{"role":"user","content":"Reply OK."}]}),
+            )
             .send()
-            .map_err(|e| {
-                if e.is_timeout() {
-                    "API 请求超时"
-                } else {
-                    "API 网络错误"
+            .await
+            .map_err(|_| "transport_error")?;
+        report["http_status"] = json!(response.status().as_u16());
+        for name in ["content-type", "x-request-id", "x-ds-trace-id", "date"] {
+            if let Some(value) = response.headers().get(name).and_then(|v| v.to_str().ok()) {
+                report["headers"][name] = json!(value.chars().take(200).collect::<String>());
+            }
+        }
+        let mut bytes = Vec::new();
+        while let Some(chunk) = response.chunk().await.map_err(|_| "body_read_error")? {
+            bytes.extend_from_slice(&chunk);
+            report["response_bytes"] = json!(bytes.len());
+            if bytes.len() > 65536 {
+                return Err("response_too_large");
+            }
+        }
+        let value: Value = serde_json::from_slice(&bytes).map_err(|_| "invalid_json")?;
+        report["completion_id"] = value["id"].clone();
+        // Copy only numeric usage fields, never arbitrary server text.
+        for name in ["prompt_tokens", "completion_tokens", "total_tokens"] {
+            if let Some(count) = value["usage"][name].as_u64() {
+                if report["usage"].is_null() {
+                    report["usage"] = json!({});
                 }
-            })?;
-        let status = r.status().as_u16();
-        let content_type = r.headers().get("content-type").and_then(|h|h.to_str().ok()).unwrap_or("missing").to_owned();
-        let bytes = r.bytes().map_err(|_|"读取 API 响应失败")?;
-        let parsed = serde_json::from_slice::<serde_json::Value>(&bytes);
-        let valid_json = parsed.is_ok();
-        let value = parsed.unwrap_or(serde_json::Value::Null);
-        let succeeded = status == 200
-            && value["choices"][0]["message"]["content"]
-                .as_str()
-                .is_some_and(|s| !s.is_empty());
-        println!("{model}: HTTP {status}, valid completion = {succeeded}, content_type={content_type}, response_bytes={}, json={valid_json}, choices={}, content_bytes={}, reasoning_bytes={}, finish_stop={}, finish_length={}", bytes.len(), value["choices"].as_array().map_or(0,|v|v.len()),value["choices"][0]["message"]["content"].as_str().map_or(0,str::len),value["choices"][0]["message"]["reasoning_content"].as_str().map_or(0,str::len),value["choices"][0]["finish_reason"]=="stop",value["choices"][0]["finish_reason"]=="length");
+                report["usage"][name] = json!(count);
+            }
+        }
+        report["completed"] = json!(
+            response.status().is_success()
+                && value["choices"][0]["finish_reason"] == "stop"
+                && value["choices"][0]["message"]["content"]
+                    .as_str()
+                    .is_some_and(|s| !s.trim().is_empty())
+        );
+        Ok::<(), &str>(())
+    };
+    match tokio::time::timeout(Duration::from_secs(30), operation).await {
+        Err(_) => report["error"] = json!("overall_timeout_30s"),
+        Ok(Err(error)) => report["error"] = json!(error),
+        Ok(Ok(())) => {}
     }
-    Ok(())
+    report["elapsed_ms"] = json!(start.elapsed().as_millis() as u64);
+    report
 }

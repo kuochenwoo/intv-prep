@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import "./interview.css";
 type Config = { provider: string; model: string; timeoutSeconds: number };
-type Settings = { config: Config; keyStatus: string };
+type Settings = { config: Config; keyStatus: string; credentialSource: string };
 type Topic = {
   id: string;
   category: string;
@@ -87,8 +87,8 @@ export default function InterviewApp() {
   const [session, setSession] = useState<Session | null>(null),
     [draft, setDraft] = useState("");
   const [config, setConfig] = useState<Config>({
-      provider: "deepseek",
-      model: "deepseek-flash",
+      provider: "claude",
+      model: "claude-haiku-5-5",
       timeoutSeconds: 60,
     }),
     [apiKey, setApiKey] = useState("");
@@ -164,7 +164,8 @@ export default function InterviewApp() {
   async function perform(task: () => Promise<void>, network = false) {
     setBusy(true);
     setError("");
-    if (network) setConnection("正在请求 DeepSeek…");
+    if (network)
+      setConnection(`正在请求 ${session?.provider ?? config.provider}…`);
     try {
       await flush();
       await task();
@@ -201,7 +202,7 @@ export default function InterviewApp() {
           <strong>Technical Deep Dive</strong>
           <span>具体场景 → 方案 → 追问 → 反馈</span>
         </div>
-        <span className="badge">P1 · DeepSeek</span>
+        <span className="badge">P1 · {config.provider}</span>
       </header>
       <details
         className="provider-settings"
@@ -209,17 +210,35 @@ export default function InterviewApp() {
       >
         <summary>
           模型与密钥设置 · {config.model} ·{" "}
-          {data?.settings.keyStatus === "saved"
-            ? "密钥已存入系统凭据存储"
-            : data?.settings.keyStatus === "unavailable"
-              ? "凭据存储暂不可访问"
-              : "尚未保存密钥"}
+          {data && config.provider !== data.settings.config.provider
+            ? "Provider 更改尚未保存"
+            : data?.settings.keyStatus === "saved"
+              ? "密钥已保存至临时 .env"
+              : data?.settings.keyStatus === "unavailable"
+                ? ".env 暂不可读取或配置不完整"
+                : "尚未保存密钥"}
         </summary>
         <div className="provider-fields">
           <label>
             Provider
-            <select aria-label="AI Provider" value="deepseek" disabled>
-              <option>deepseek</option>
+            <select
+              aria-label="AI Provider"
+              value={config.provider}
+              disabled={busy}
+              onChange={(e) => {
+                setApiKey("");
+                setConfig({
+                  ...config,
+                  provider: e.target.value,
+                  model:
+                    e.target.value === "claude"
+                      ? "claude-haiku-5-5"
+                      : "deepseek-flash",
+                });
+              }}
+            >
+              <option value="claude">Claude</option>
+              <option value="deepseek">DeepSeek</option>
             </select>
           </label>
           <label>
@@ -248,7 +267,7 @@ export default function InterviewApp() {
           <label>
             API Key
             <input
-              aria-label="DeepSeek API Key"
+              aria-label={`${config.provider} API Key`}
               type="password"
               autoComplete="off"
               placeholder="留空保留已存 Key"
@@ -276,15 +295,15 @@ export default function InterviewApp() {
           </button>
         </div>
         <p className="muted">
-          Key 仅存入操作系统凭据存储，留空不删除。不同 Provider
-          的凭据独立保留，未来接入 Claude 时不会覆盖 DeepSeek；当前仅启用
-          DeepSeek。新模型设置用于新会话，已有会话继续使用创建时的模型。
+          当前按要求仅使用项目 .env 测试，留空不删除，测试通过后再迁移
+          Keychain。Claude 和 DeepSeek
+          的凭据独立保留。新模型设置用于新会话，已有会话继续使用创建时的模型。
         </p>
       </details>
       <div className="privacy-note">
         生成题目、提交回答和生成反馈会将所选主题、题目及必要会话内容发送给
-        DeepSeek，可能产生 API 费用。缓存查看、复用和草稿保存不联网。AI
-        反馈仅作训练辅助。
+        当前会话的 Provider（新会话使用所保存设置），可能产生 API
+        费用。缓存查看、复用和草稿保存不联网。AI 反馈仅作训练辅助。
       </div>
       <div className="connection-status" aria-live="polite">
         {online ? "系统报告网络可用" : "系统报告离线"} · {connection}
@@ -299,7 +318,7 @@ export default function InterviewApp() {
         <div className="confirm-panel" role="alert">
           <span>
             {confirm === "key"
-              ? "确认从系统凭据存储删除 DeepSeek Key？历史及其他 Provider 的 Key 会保留。"
+              ? `确认从 .env 清除 ${config.provider} Key？历史及其他 Provider 的 Key 会保留。`
               : confirm === "history"
                 ? "确认清空全部 Deep Dive 会话、反馈和缓存题目？LC 数据和密钥会保留。"
                 : "确认删除当前面试及反馈？缓存题目会保留。"}
@@ -309,7 +328,7 @@ export default function InterviewApp() {
             onClick={() =>
               perform(async () => {
                 if (confirm === "key") {
-                  await invoke("delete_llm_key", { provider: "deepseek" });
+                  await invoke("delete_llm_key", { provider: config.provider });
                   setApiKey("");
                 } else if (confirm === "history") {
                   await invoke("clear_interview_history");
