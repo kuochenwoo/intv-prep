@@ -443,7 +443,7 @@ impl LlmProvider for InterviewProvider {
         turns: &[Turn],
     ) -> Result<ReferenceAnswer, String> {
         let recent = &turns[turns.len().saturating_sub(12)..];
-        self.request("用户主动请求 AI 代答：现在以候选人身份给出可直接提交给面试官的参考回答。只回答 targetQuestion 指定的原题或当前追问，结合原始业务约束与截至该问题的上下文；不要只重复原题通用答案。给出可在面试中口述的中文参考回答（约400–1000字）以及3–6个关键要点，解释机制、选型依据、必要的取舍及失败边界；题设不足时明确假设，允许多种合理方案，不编造确定性技术结论。不评价候选人，也不生成下一道追问。该回答会自动以 AI 代答标记提交到会话，并触发面试官继续追问。不要在 answer 中评价用户或讨论操作流程。", json!({"question":question,"targetQuestion":target_question,"recentTurns":recent}), reference_schema())
+        self.request("用户主动请求 AI 参考回答：以候选人身份给出一份参考回答。只回答 targetQuestion 指定的原题或当前追问，结合原始业务约束与截至该问题的上下文；不要只重复原题通用答案。给出简洁、可在面试中口述的中文参考回答（150–300字，直接给结论和关键理由，不铺垫、不重复题目）以及3–5个简短要点（每条不超过30字），覆盖机制、选型依据和最重要的取舍或失败边界；题设不足时用一句话说明假设，不编造确定性技术结论。只回答这一问，不评价候选人，不生成追问。不要在 answer 中评价用户或讨论操作流程。", json!({"question":question,"targetQuestion":target_question,"recentTurns":recent}), reference_schema())
     }
     fn summarize(&self, question: &GeneratedQuestion, turns: &[Turn]) -> Result<Feedback, String> {
         self.request("面试结束。基于完整会话逐条给出有依据的定性反馈，允许多种合理方案。aiAssisted=true 的消息是 AI 代答，可以点评其方案内容，但不得把它作为用户独立掌握能力的证据；总结必须说明使用了 AI 参考辅助。某维度若只有 AI 代答而没有用户独立回答的证据，应标 missing，并建议用户自行复述或练习。只评估候选人实际给出的回答，不把面试官提问当作候选人观点；按时间顺序对应问答。最后尚未作答的追问只列为后续练习，不按该轮作答失败扣评，也不声称候选人已经回答了它。dimensions 必须恰好包含以下5个不同维度，各一次：principles、selection_rationale、tradeoffs、failure_and_correctness、communication。每个维度的 evidence 和 improvement 必须非空；未体现的能力仍须保留该维度，标 missing 并说明会话中未见证据和具体练习建议。evidence 引用或准确复述候选人实际说过的话；没说的标 missing，不能凭关键词打分。无法确定的技术判断标 uncertain 并解释。不给百分制分数。至少推荐一个后续练习方向。",json!({"question":question,"turns":turns}),feedback_schema())

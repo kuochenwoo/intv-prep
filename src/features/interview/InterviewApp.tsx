@@ -215,6 +215,50 @@ export default function InterviewApp() {
   const pending =
     session?.status === "awaiting_reply" ||
     session?.status === "feedback_pending";
+  // A reference shown for question k (0 = original question, i + 1 = follow-up
+  // turns[i]) without being submitted as an answer.
+  function shownReference(k: number) {
+    if (!session || session.turns[k]?.aiAssisted) return null;
+    const r = session.references.find((r) => r.turnIndex === k);
+    return (
+      r && (
+        <details className="reference-content shown-reference" open>
+          <summary>AI 参考回答（未提交，仅供参考）</summary>
+          <p>{r.answer}</p>
+          <ul>
+            {r.keyPoints.map((point, n) => (
+              <li key={n}>{point}</li>
+            ))}
+          </ul>
+          {session.status === "active" && k === session.turns.length && (
+            <div className="actions">
+              <button disabled={busy} onClick={() => save(r.answer)}>
+                复制到我的回答（可修改后提交）
+              </button>
+              <button
+                disabled={busy || !!draft.trim()}
+                title={draft.trim() ? "请先清空回答草稿" : undefined}
+                onClick={() =>
+                  perform(
+                    async () =>
+                      show(
+                        await invoke<Session>("submit_interview_reference", {
+                          sessionId: session.id,
+                          turnIndex: k,
+                        }),
+                      ),
+                    true,
+                  )
+                }
+              >
+                直接提交此回答并追问（联网）
+              </button>
+            </div>
+          )}
+        </details>
+      )
+    );
+  }
   return (
     <div className="interview-app">
       <header>
@@ -557,6 +601,7 @@ export default function InterviewApp() {
                       <li key={i}>{c}</li>
                     ))}
                   </ul>
+                  {shownReference(0)}
                 </div>
                 <div className="turns">
                   {session.turns.map((t, i) => (
@@ -581,6 +626,7 @@ export default function InterviewApp() {
                           </ul>
                         </details>
                       )}
+                      {t.role === "interviewer" && shownReference(i + 1)}
                     </section>
                   ))}
                 </div>
@@ -675,16 +721,16 @@ export default function InterviewApp() {
                       <button
                         disabled={
                           busy ||
-                          !!draft.trim() ||
-                          session.turns.filter((t) => t.role === "candidate")
-                            .length >= 20
+                          session.references.some(
+                            (r) => r.turnIndex === session.turns.length,
+                          )
                         }
                         onClick={() =>
                           perform(
                             async () =>
                               show(
                                 await invoke<Session>(
-                                  "submit_interview_reference",
+                                  "show_interview_reference",
                                   {
                                     sessionId: session.id,
                                     turnIndex: session.turns.length,
@@ -695,7 +741,11 @@ export default function InterviewApp() {
                           )
                         }
                       >
-                        AI 参考作答并追问（联网）
+                        {session.references.some(
+                          (r) => r.turnIndex === session.turns.length,
+                        )
+                          ? "已生成参考回答（见上方）"
+                          : "AI 参考回答（联网）"}
                       </button>
                       <button
                         disabled={

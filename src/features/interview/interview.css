@@ -245,3 +245,7 @@
 .reference-content li {
   margin: 6px 0;
 }
+.shown-reference p {
+  white-space: pre-wrap;
+  margin: 8px 0;
+}

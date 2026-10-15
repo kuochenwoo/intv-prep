@@ -298,6 +298,32 @@ async fn submit_interview_reference(
     })
     .await
 }
+// One AI reference answer for the current question, shown beside the session.
+// Unlike submit_interview_reference it is not submitted and asks for no follow-up.
+#[tauri::command(async)]
+async fn show_interview_reference(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    session_id: String,
+    turn_index: usize,
+) -> Result<interview::SessionView, String> {
+    let state = state.inner().clone();
+    background(move || {
+        let _guard = state
+            .interview
+            .try_lock()
+            .map_err(|_| "已有面试请求正在运行")?;
+        let c = state.own_connection()?;
+        interview_store::generate_reference(
+            &c,
+            &session_id,
+            turn_index,
+            &provider(&app, &c, Some(&session_id))?,
+        )?;
+        interview_store::session(&c, &session_id)
+    })
+    .await
+}
 #[tauri::command]
 fn delete_interview_session(state: State<AppState>, session_id: String) -> Result<(), String> {
     let _guard = state
@@ -339,6 +365,7 @@ fn main() {
             finish_interview,
             retry_interview,
             submit_interview_reference,
+            show_interview_reference,
             delete_interview_session,
             clear_interview_history,
             list_problems,
