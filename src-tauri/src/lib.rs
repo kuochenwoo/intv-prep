@@ -6,3 +6,6 @@ pub mod harness;
 pub mod interview;
 pub mod interview_store;
 pub mod llm;
+
+pub mod system_design;
+pub mod system_design_store;

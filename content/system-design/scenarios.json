@@ -1,0 +1,227 @@
+[
+  {
+    "id": "url-shortener",
+    "title": "短链接服务",
+    "description": "设计短链接创建、跳转和过期服务。",
+    "functionalRequirements": [
+      "创建短链接并跳转",
+      "自定义别名与链接过期",
+      "滥用链接处理"
+    ],
+    "scaleRanges": [
+      "每日新增 100万–1000万 链接",
+      "读写比 20:1–100:1；保留 1–5 年"
+    ],
+    "reliabilityConstraints": [
+      "跳转 p99 低于 100 ms",
+      "跳转可用性目标 99.9%–99.99%"
+    ],
+    "deepDiveDirections": [
+      "标识符生成与碰撞",
+      "热点缓存与数据库分片",
+      "缓存失效和故障回源"
+    ],
+    "en": {
+      "title": "URL Shortener",
+      "description": "Design link creation, redirection and expiration.",
+      "functionalRequirements": [
+        "Create links and redirect",
+        "Custom aliases and expiration",
+        "Handle abusive links"
+      ],
+      "scaleRanges": [
+        "1–10 million new links per day",
+        "Read/write ratio 20:1–100:1; retain for 1–5 years"
+      ],
+      "reliabilityConstraints": [
+        "Redirect p99 below 100 ms",
+        "Redirect availability target 99.9%–99.99%"
+      ],
+      "deepDiveDirections": [
+        "Identifier generation and collisions",
+        "Hot-key caching and database partitioning",
+        "Invalidation and fallback under failure"
+      ]
+    }
+  },
+  {
+    "id": "flash-sale",
+    "title": "优惠券与秒杀",
+    "description": "设计限量优惠券领取与订单确认系统。",
+    "functionalRequirements": [
+      "限量领取与每人限领",
+      "订单确认或超时释放",
+      "查询领取结果"
+    ],
+    "scaleRanges": [
+      "活动 10万–100万 用户",
+      "峰值 1万–10万 次领取请求/秒；库存 1万–10万"
+    ],
+    "reliabilityConstraints": [
+      "不允许超卖或重复领取",
+      "领取接口 p99 低于 300 ms；允许明确排队结果"
+    ],
+    "deepDiveDirections": [
+      "库存原子扣减与幂等",
+      "队列积压与背压",
+      "预留过期和补偿对账"
+    ],
+    "en": {
+      "title": "Coupons and Flash Sales",
+      "description": "Design limited coupon claims and order confirmation.",
+      "functionalRequirements": [
+        "Limited inventory and per-user limits",
+        "Confirm orders or release expired reservations",
+        "Query claim results"
+      ],
+      "scaleRanges": [
+        "100k–1 million participants",
+        "10k–100k peak claim requests/s; 10k–100k items"
+      ],
+      "reliabilityConstraints": [
+        "No overselling or duplicate claims",
+        "Claim p99 below 300 ms; explicit queued outcomes allowed"
+      ],
+      "deepDiveDirections": [
+        "Atomic inventory updates and idempotency",
+        "Queue backlog and backpressure",
+        "Reservation expiry and reconciliation"
+      ]
+    }
+  },
+  {
+    "id": "chat",
+    "title": "聊天与实时消息",
+    "description": "设计支持离线消息的一对一及小群聊天服务。",
+    "functionalRequirements": [
+      "发送与接收文本消息",
+      "会话内顺序与离线补拉",
+      "已送达状态和多端同步"
+    ],
+    "scaleRanges": [
+      "100万–1000万 日活用户",
+      "每人每日 20–100 条消息；群人数上限 100"
+    ],
+    "reliabilityConstraints": [
+      "在线消息送达 p99 低于 500 ms",
+      "已确认消息不可静默丢失；允许重传后去重"
+    ],
+    "deepDiveDirections": [
+      "连接网关与路由",
+      "顺序、投递和去重",
+      "断线重连与多端游标"
+    ],
+    "en": {
+      "title": "Chat and Realtime Messaging",
+      "description": "Design direct and small-group chat with offline delivery.",
+      "functionalRequirements": [
+        "Send and receive text messages",
+        "Per-conversation order and offline catch-up",
+        "Delivery receipts and multi-device sync"
+      ],
+      "scaleRanges": [
+        "1–10 million daily active users",
+        "20–100 messages/user/day; up to 100 users/group"
+      ],
+      "reliabilityConstraints": [
+        "Online delivery p99 below 500 ms",
+        "Acknowledged messages must not silently disappear; retry and deduplication allowed"
+      ],
+      "deepDiveDirections": [
+        "Connection gateways and routing",
+        "Ordering, delivery and deduplication",
+        "Reconnect and per-device cursors"
+      ]
+    }
+  },
+  {
+    "id": "activity-feed",
+    "title": "动态信息流",
+    "description": "设计关注关系下的发帖与时间线服务。",
+    "functionalRequirements": [
+      "发布动态与关注用户",
+      "分页读取时间线",
+      "删除动态和隐私可见性"
+    ],
+    "scaleRanges": [
+      "100万–1000万 日活用户",
+      "每人每日发帖 1–5 次、读时间线 10–50 次"
+    ],
+    "reliabilityConstraints": [
+      "时间线读取 p99 低于 300 ms",
+      "动态允许秒级延迟，隐私和删除语义需明确"
+    ],
+    "deepDiveDirections": [
+      "推拉与混合扇出",
+      "大 V 热点与分页稳定性",
+      "删除传播和缓存一致性"
+    ],
+    "en": {
+      "title": "Activity Feed",
+      "description": "Design posting and timelines based on follow relationships.",
+      "functionalRequirements": [
+        "Publish posts and follow users",
+        "Paginated timeline reads",
+        "Post deletion and privacy visibility"
+      ],
+      "scaleRanges": [
+        "1–10 million daily active users",
+        "1–5 posts and 10–50 timeline reads/user/day"
+      ],
+      "reliabilityConstraints": [
+        "Timeline read p99 below 300 ms",
+        "Seconds of feed lag allowed; explicitly define privacy and deletion semantics"
+      ],
+      "deepDiveDirections": [
+        "Push, pull and hybrid fan-out",
+        "Celebrity hot spots and stable pagination",
+        "Deletion propagation and cache consistency"
+      ]
+    }
+  },
+  {
+    "id": "task-queue",
+    "title": "分布式任务队列",
+    "description": "设计带重试和可见性超时的后台任务服务。",
+    "functionalRequirements": [
+      "提交与领取任务",
+      "确认、重试与死信",
+      "延迟任务及执行状态查询"
+    ],
+    "scaleRanges": [
+      "每秒 1000–10000 个任务",
+      "典型执行时间 1–60 秒；任务保留 7 天"
+    ],
+    "reliabilityConstraints": [
+      "确认提交后不能静默丢任务",
+      "至少一次投递；执行方须处理重复"
+    ],
+    "deepDiveDirections": [
+      "租约、心跳和重复执行",
+      "公平调度与背压",
+      "存储分区与故障恢复"
+    ],
+    "en": {
+      "title": "Distributed Task Queue",
+      "description": "Design background tasks with retries and visibility timeouts.",
+      "functionalRequirements": [
+        "Submit and claim tasks",
+        "Acknowledge, retry and dead-letter",
+        "Delayed tasks and execution status"
+      ],
+      "scaleRanges": [
+        "1k–10k tasks/s",
+        "Typical execution 1–60 seconds; retain tasks for 7 days"
+      ],
+      "reliabilityConstraints": [
+        "No silent loss after submission acknowledgement",
+        "At-least-once delivery; workers handle duplicates"
+      ],
+      "deepDiveDirections": [
+        "Leases, heartbeats and duplicate execution",
+        "Fair scheduling and backpressure",
+        "Storage partitions and recovery"
+      ]
+    }
+  }
+]

@@ -423,18 +423,46 @@ impl InterviewProvider {
         context: Value,
         schema: Value,
     ) -> Result<T, String> {
-        let task = if self.lang == Lang::En { en } else { zh };
-        let (url, body) = if self.provider == "claude" {
+        self.request_scoped(self.lang, [zh, en], context, schema, None)
+    }
+    pub(crate) fn request_design<T: DeserializeOwned + Validated>(
+        &self,
+        lang: Lang,
+        tasks: [&str; 2],
+        context: Value,
+        schema: Value,
+    ) -> Result<T, String> {
+        let task = tasks[if lang == Lang::En { 1 } else { 0 }];
+        let system = crate::system_design::prompt(lang, task, &schema);
+        self.request_scoped(lang, tasks, context, schema, Some(system))
+    }
+    fn request_scoped<T: DeserializeOwned + Validated>(
+        &self,
+        lang: Lang,
+        [zh, en]: [&str; 2],
+        context: Value,
+        schema: Value,
+        system: Option<String>,
+    ) -> Result<T, String> {
+        let task = if lang == Lang::En { en } else { zh };
+        let (url, mut body) = if self.provider == "claude" {
             (
                 CLAUDE_ENDPOINT,
-                claude_request_body(&self.model, self.lang, task, context, schema),
+                claude_request_body(&self.model, lang, task, context, schema),
             )
         } else {
             (
                 ENDPOINT,
-                request_body(&self.model, self.lang, task, context, schema),
+                request_body(&self.model, lang, task, context, schema),
             )
         };
+        if let Some(system) = system {
+            if self.provider == "claude" {
+                body["system"] = json!(system);
+            } else {
+                body["messages"][0]["content"] = json!(system);
+            }
+        }
         // Models occasionally return empty or schema-violating JSON (e.g. an empty
         // list). Such responses are retried automatically; HTTP and network errors
         // are not, so a down provider still fails fast with its own message.

@@ -16,6 +16,153 @@ const strings = {
   themeDark: ["深色", "Dark"],
   themeMode: ["外观", "Appearance"],
 
+  // System design
+  sdCandidate: ["你", "You"],
+  sdInterviewer: ["面试官", "Interviewer"],
+  moduleSystemDesign: ["系统设计", "System Design"],
+  sdTagline: [
+    "需求 → 容量估算 → 架构 → 深入分析 → 权衡",
+    "Requirements → estimates → architecture → deep dive → trade-offs",
+  ],
+  sdScope: [
+    "围绕完整系统练习架构、容量与跨组件取舍。阶段由你控制，AI 只给建议。",
+    "Practise complete architectures, capacity and cross-component trade-offs. You control stages; AI only suggests.",
+  ],
+  sdScenarios: ["设计场景", "Design scenarios"],
+  sdGenerate: [
+    "生成设计题并开始（联网）",
+    "Generate design question and start (online)",
+  ],
+  sdCache: ["复用缓存题（离线）", "Reuse cached question (offline)"],
+  sdCached: ["已缓存设计题", "Cached design questions"],
+  sdHistory: ["系统设计历史", "System design history"],
+  sdEmpty: [
+    "选择场景生成新题，或复用缓存题开始。已有面试可从左侧恢复。",
+    "Choose a scenario to generate a question or reuse a cached one. Restore interviews from the history.",
+  ],
+  sdNoCache: [
+    "此场景与语言下尚无缓存题，首次生成需要联网。",
+    "No cached questions for this scenario and language. First generation needs a connection.",
+  ],
+  sdSeed: ["场景范围与训练假设", "Scenario scope and training assumptions"],
+  sdFunctions: ["功能范围", "Functional scope"],
+  sdScale: ["规模范围", "Scale ranges"],
+  sdReliability: ["可靠性约束", "Reliability constraints"],
+  sdCurrent: ["当前设计面试", "Current design interview"],
+  sdStage_requirements: ["需求澄清", "Requirements"],
+  sdStage_estimation: ["容量估算", "Estimation"],
+  sdStage_high_level: ["整体架构", "Architecture"],
+  sdStage_deep_dive: ["深入分析", "Deep dive"],
+  sdStage_tradeoffs: ["跨组件权衡", "Trade-offs"],
+  sdStage_feedback: ["最终反馈", "Feedback"],
+  sdStages: ["面试阶段（可自由切换）", "Interview stages (switch freely)"],
+  sdStageTip: [
+    "切换阶段不联网，各阶段草稿分别保留。新 AI 回复沿用本题语言。",
+    "Switching stages stays offline; each stage keeps its own draft. New AI replies use this question's language.",
+  ],
+  sdSuggest: [
+    "AI 建议：{stage}；是否切换由你决定。",
+    "AI suggests: {stage}. You decide whether to switch.",
+  ],
+  sdNotes: [
+    "设计笔记（Markdown，自动保存）",
+    "Design notes (Markdown, auto-saved)",
+  ],
+  sdNotesHint: [
+    "记录需求、公式与单位、API、数据模型、端到端数据流及取舍。提交回答或生成反馈时会发送给模型。",
+    "Record requirements, formulas with units, APIs, data models, end-to-end flows and trade-offs. Sent with answers and feedback requests.",
+  ],
+  sdNotesPlaceholder: [
+    "## 需求与假设\n\n## 容量估算\n公式、单位、平均与峰值\n\n## 架构与数据流\n\n## 一致性、故障与取舍",
+    "## Requirements and assumptions\n\n## Capacity estimates\nFormulas, units, average and peak\n\n## Architecture and data flow\n\n## Consistency, failures and trade-offs",
+  ],
+  sdDiagram: [
+    "架构图（Mermaid 源码，自动保存）",
+    "Architecture diagram (Mermaid source, auto-saved)",
+  ],
+  sdDiagramHint: [
+    "输入 flowchart 或 sequenceDiagram 源码；仅渲染本地预览，模型接收源码。",
+    "Enter flowchart or sequenceDiagram source. Preview renders locally; the model receives source text.",
+  ],
+  sdRender: ["预览架构图", "Preview diagram"],
+  sdRendering: ["正在渲染…", "Rendering…"],
+  sdDiagramPreview: ["架构图预览", "Architecture diagram preview"],
+  sdDiagramError: [
+    "图表语法无法渲染，请检查 Mermaid 源码；源码已保留。",
+    "Could not render this diagram. Check Mermaid syntax; your source is preserved.",
+  ],
+  sdDiagramEmpty: [
+    "填写 Mermaid 源码后点击预览。",
+    "Enter Mermaid source, then preview it.",
+  ],
+  sdDiagramStale: [
+    "源码已更新，请重新预览。",
+    "Source changed; preview it again.",
+  ],
+  sdNotesPreview: ["笔记预览", "Notes preview"],
+  sdWorkspace: ["设计工作区", "Design workspace"],
+  sdAnswer: ["本阶段回答（自动保存）", "Answer for this stage (auto-saved)"],
+  sdAnswerHint: [
+    "只提交本轮要讨论的内容；设计笔记与图会一并作为上下文。",
+    "Submit what you want to discuss this round; notes and diagram accompany it as context.",
+  ],
+  sdAnswerPlaceholder: [
+    "说明本阶段的假设、推导或架构决策及理由…",
+    "Explain this stage's assumptions, calculations or architectural decisions and reasoning…",
+  ],
+  sdSubmit: [
+    "提交并讨论本阶段（联网）",
+    "Submit and discuss this stage (online)",
+  ],
+  sdFinish: [
+    "结束并生成八维反馈（联网）",
+    "Finish and get eight-dimension feedback (online)",
+  ],
+  sdUnsubmitted: [
+    "还有未提交的阶段草稿，请提交或清空后结束。",
+    "Some stages have unsubmitted drafts. Submit or clear them before finishing.",
+  ],
+  sdPending: [
+    "回答或结束请求已保存。失败后可重试，不会重复提交回答。",
+    "The answer or finish request is saved. Retry failures without submitting the answer twice.",
+  ],
+  sdSavedLanguage: [
+    "题目与会话语言：{language}",
+    "Question and conversation language: {language}",
+  ],
+  sdLangZh: ["中文", "Chinese"],
+  sdLangEn: ["英文", "English"],
+  sdAssessment_requirements: ["需求澄清", "Requirements clarification"],
+  sdAssessment_estimation: [
+    "数量级与容量估算",
+    "Magnitude and capacity estimates",
+  ],
+  sdAssessment_architecture: ["架构与数据流", "Architecture and data flow"],
+  sdAssessment_scalability: ["扩展性", "Scalability"],
+  sdAssessment_availability: [
+    "可用性与故障处理",
+    "Availability and failure handling",
+  ],
+  sdAssessment_correctness: [
+    "数据一致性与正确性",
+    "Consistency and correctness",
+  ],
+  sdAssessment_tradeoffs: [
+    "技术与跨组件取舍",
+    "Technical and cross-component trade-offs",
+  ],
+  sdAssessment_communication: ["沟通表达", "Communication"],
+  sdRetrySave: ["重试保存工作区", "Retry saving workspace"],
+  sdModelSettings: [
+    "模型设置（与技术深挖共享）",
+    "Model settings (shared with Deep Dive)",
+  ],
+  sdProvider: ["模型供应商", "Provider"],
+  sdCounts: ["{n} / {max} 字符", "{n} / {max} characters"],
+  sdNoNotes: ["暂无笔记", "No notes yet"],
+  sdThread: ["阶段讨论记录", "Stage discussion"],
+  sdLoading: ["正在读取本地系统设计数据…", "Loading local system design data…"],
+
   // Coding
   needDesktop: [
     "请通过 npm run tauri dev 打开桌面应用。浏览器预览无法调用本地编译器。",
@@ -38,9 +185,10 @@ const strings = {
   timer: ["计时", "Timer"],
   timerOff: ["不计时", "No timer"],
   timerMinutes: ["{n} 分钟", "{n} min"],
+  timerStart: ["开始", "Start"],
   timerPause: ["暂停", "Pause"],
   timerResume: ["继续", "Resume"],
-  timerRestart: ["重新计时", "Restart"],
+  timerReset: ["重置", "Reset"],
   timeLeft: ["剩余 {t}", "{t} left"],
   timeUp: ["时间到", "Time's up"],
   searchProblems: ["搜索题目", "Search problems"],
@@ -172,17 +320,20 @@ const strings = {
     "Working; wait for it to finish or time out",
   ],
   aiWriting: ["AI 正在生成…", "AI is writing…"],
+  confirmKeyTitle: ["删除 {p} 密钥？", "Delete the {p} key?"],
   confirmKey: [
-    "确认从 .env 删除 {p} 的密钥？历史记录和其他 Provider 的密钥会保留。",
-    "Delete the {p} key from .env? History and the other provider's key are kept.",
+    "将从 .env 删除该密钥。历史记录和其他 Provider 的密钥会保留。",
+    "This removes the key from .env. History and the other provider's key are kept.",
   ],
+  confirmHistoryTitle: ["清空技术深挖历史？", "Clear deep-dive history?"],
   confirmHistory: [
-    "确认清空所有技术深挖会话、反馈和缓存题目？LC 数据和密钥会保留。",
-    "Clear all deep-dive sessions, feedback and cached questions? LeetCode data and keys are kept.",
+    "将删除所有技术深挖会话、反馈和缓存题目，无法恢复。LC 数据和密钥会保留。",
+    "This deletes all deep-dive sessions, feedback and cached questions and cannot be undone. LeetCode data and keys are kept.",
   ],
+  confirmSessionTitle: ["删除当前面试？", "Delete this interview?"],
   confirmSession: [
-    "确认删除当前面试及其反馈？缓存题目会保留。",
-    "Delete this interview and its feedback? Cached questions are kept.",
+    "将删除这次面试及其反馈，无法恢复。缓存题目会保留。",
+    "This deletes the interview and its feedback and cannot be undone. Cached questions are kept.",
   ],
   confirmDelete: ["确认删除", "Delete"],
   cancel: ["取消", "Cancel"],

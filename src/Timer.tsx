@@ -11,13 +11,14 @@ const clock = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
-/** Optional countdown for a coding attempt. Off by default; starts as soon as a length is picked. */
+/** Optional countdown for a coding attempt. Off by default; a picked length waits for Start. */
 export function Timer() {
   const { t } = useI18n();
   const [minutes, setMinutes] = useState("off"),
     // While running: the moment time runs out. While paused: the time left.
     [deadline, setDeadline] = useState(0),
     [pausedLeft, setPausedLeft] = useState<number | null>(null),
+    [started, setStarted] = useState(false),
     [now, setNow] = useState(Date.now());
   const on = minutes !== "off";
   const left = pausedLeft ?? Math.max(0, deadline - now);
@@ -29,12 +30,11 @@ export function Timer() {
     return () => clearInterval(id);
   }, [running]);
 
-  function start(value: string) {
+  // Picking a length (or Reset) shows the full time, held until Start.
+  function choose(value: string) {
     setMinutes(value);
-    setPausedLeft(null);
-    const at = Date.now();
-    setNow(at);
-    if (value !== "off") setDeadline(at + Number(value) * 60_000);
+    setStarted(false);
+    setPausedLeft(value === "off" ? null : Number(value) * 60_000);
   }
   function pauseOrResume() {
     if (pausedLeft === null) setPausedLeft(left);
@@ -53,7 +53,7 @@ export function Timer() {
         isLabelHidden
         size="sm"
         value={minutes}
-        onChange={start}
+        onChange={choose}
         options={[
           { value: "off", label: t("timerOff") },
           ...MINUTES.map((n) => ({
@@ -67,7 +67,7 @@ export function Timer() {
           <Badge variant="red" label={t("timeUp")} />
         ) : (
           <span
-            className={`timer-clock ${left <= 60_000 ? "urgent" : ""} ${pausedLeft !== null ? "paused" : ""}`}
+            className={`timer-clock ${left <= 60_000 ? "urgent" : ""} ${started && pausedLeft !== null ? "paused" : ""}`}
             role="timer"
             aria-label={t("timeLeft", { t: clock(left) })}
           >
@@ -77,17 +77,26 @@ export function Timer() {
       {on && left > 0 && (
         <Button
           size="sm"
-          variant="ghost"
-          label={pausedLeft === null ? t("timerPause") : t("timerResume")}
-          onClick={pauseOrResume}
+          variant={started ? "ghost" : "primary"}
+          label={
+            !started
+              ? t("timerStart")
+              : pausedLeft === null
+                ? t("timerPause")
+                : t("timerResume")
+          }
+          onClick={() => {
+            setStarted(true);
+            pauseOrResume();
+          }}
         />
       )}
-      {on && (
+      {on && started && (
         <Button
           size="sm"
           variant="ghost"
-          label={t("timerRestart")}
-          onClick={() => start(minutes)}
+          label={t("timerReset")}
+          onClick={() => choose(minutes)}
         />
       )}
     </div>

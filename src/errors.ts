@@ -3,6 +3,48 @@ import type { Lang } from "./i18n";
 // The Rust backend reports errors in Chinese. In English mode the UI translates
 // them here, so keep this table in sync when adding or rewording a backend error.
 const EXACT: [string, string][] = [
+  // system_design.rs, system_design_store.rs
+  ["未知系统设计场景", "Unknown system design scenario"],
+  ["系统设计题目结构无效，请重试", "Invalid system design question; retry"],
+  [
+    "系统设计追问为空或过长，请重试",
+    "System design follow-up is empty or too long; retry",
+  ],
+  [
+    "系统设计反馈必须包含八个不同维度，请重试",
+    "System design feedback must include eight distinct dimensions; retry",
+  ],
+  ["系统设计反馈内容无效，请重试", "Invalid system design feedback; retry"],
+  ["系统设计缓存题目不存在", "Cached system design question not found"],
+  ["系统设计本地数据损坏", "Local system design data is damaged"],
+  ["系统设计会话不存在", "System design session not found"],
+  [
+    "系统设计会话有待处理请求或已结束",
+    "System design session has a pending request or is finished",
+  ],
+  ["系统设计草稿超出限制", "System design workspace exceeds its limits"],
+  [
+    "请通过结束面试生成系统设计反馈",
+    "Finish the interview to generate system design feedback",
+  ],
+  [
+    "系统设计会话已达长度上限，请结束面试",
+    "System design session length limit reached; finish the interview",
+  ],
+  [
+    "系统设计仍有未提交的阶段草稿，请先提交或清空",
+    "Some stages have unsubmitted drafts; submit or clear them first",
+  ],
+  [
+    "系统设计会话没有待重试请求",
+    "System design session has no pending request to retry",
+  ],
+  [
+    "系统设计会话状态已变化，请刷新",
+    "System design session changed; refresh it",
+  ],
+  ["未知系统设计操作", "Unknown system design operation"],
+
   // code_runner.rs
   [
     "此平台尚未支援記憶體監測，無法按題目限制判題",

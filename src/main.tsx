@@ -25,6 +25,7 @@ import { Banner } from "@astryxdesign/core/Banner";
 import "./style.css";
 import logo from "./assets/logo.png";
 import InterviewApp from "./features/interview/InterviewApp";
+import SystemDesignApp from "./features/system-design/SystemDesignApp";
 import { LangProvider, lookup, useI18n } from "./i18n";
 import { Timer } from "./Timer";
 import { localizeError } from "./errors";
@@ -104,7 +105,11 @@ type Result = {
   }[];
 };
 const keyOf = (id: string, mode: Mode) => `${id}:${mode}`;
-const difficultyBadge = { easy: "green", medium: "orange", hard: "red" } as const;
+const difficultyBadge = {
+  easy: "green",
+  medium: "orange",
+  hard: "red",
+} as const;
 function CodingApp({ scheme }: { scheme: Scheme }) {
   const { t, lang } = useI18n();
   const [allProblems, setProblems] = useState<Problem[]>([]),
@@ -250,11 +255,7 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
   );
   const progressLabel = (p: Problem, m: Mode) => {
     const r = progress[keyOf(p.id, m)];
-    return r?.status === "completed"
-      ? "done"
-      : r
-        ? "doing"
-        : "todo";
+    return r?.status === "completed" ? "done" : r ? "doing" : "todo";
   };
   return (
     <div className="coding-app">
@@ -561,8 +562,9 @@ function storedScheme(): Scheme {
 }
 function App() {
   const { lang, setLang, t } = useI18n();
-  const [view, setView] = useState<"lc" | "deep_dive">("lc");
+  const [view, setView] = useState<"lc" | "deep_dive" | "system_design">("lc");
   const [visited, setVisited] = useState(false);
+  const [designVisited, setDesignVisited] = useState(false);
   const [scheme, setScheme] = useState<Scheme>(storedScheme);
   useEffect(() => {
     document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
@@ -596,13 +598,18 @@ function App() {
                 value={view}
                 onChange={(v) => {
                   if (v === "deep_dive") setVisited(true);
-                  setView(v as "lc" | "deep_dive");
+                  if (v === "system_design") setDesignVisited(true);
+                  setView(v as "lc" | "deep_dive" | "system_design");
                 }}
               >
                 <SegmentedControlItem value="lc" label={t("moduleLc")} />
                 <SegmentedControlItem
                   value="deep_dive"
                   label={t("moduleDeepDive")}
+                />
+                <SegmentedControlItem
+                  value="system_design"
+                  label={t("moduleSystemDesign")}
                 />
               </SegmentedControl>
             }
@@ -629,6 +636,11 @@ function App() {
           <div hidden={view !== "lc"}>
             <CodingApp scheme={scheme} />
           </div>
+          {designVisited && (
+            <div hidden={view !== "system_design"}>
+              <SystemDesignApp dark={scheme === "dark"} />
+            </div>
+          )}
           {visited && (
             <div hidden={view !== "deep_dive"}>
               <InterviewApp />

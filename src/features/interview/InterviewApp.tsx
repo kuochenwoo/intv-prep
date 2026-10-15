@@ -9,6 +9,7 @@ import { Selector } from "@astryxdesign/core/Selector";
 import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
 import { Collapsible } from "@astryxdesign/core/Collapsible";
+import { AlertDialog } from "@astryxdesign/core/AlertDialog";
 import { lookup, useI18n } from "../../i18n";
 import { localizeError } from "../../errors";
 import { readablePartialJson } from "./stream";
@@ -449,58 +450,50 @@ export default function InterviewApp() {
           />
         </div>
       )}
-      {confirm && (
-        <div className="page-banner">
-          <Banner
-            status="warning"
-            title={
-              confirm === "key"
-                ? t("confirmKey", { p: config.provider })
-                : confirm === "history"
-                  ? t("confirmHistory")
-                  : t("confirmSession")
+      <AlertDialog
+        isOpen={confirm !== null}
+        onOpenChange={(open) => !open && !busy && setConfirm(null)}
+        title={
+          confirm === "key"
+            ? t("confirmKeyTitle", { p: config.provider })
+            : confirm === "history"
+              ? t("confirmHistoryTitle")
+              : t("confirmSessionTitle")
+        }
+        description={
+          confirm === "key"
+            ? t("confirmKey")
+            : confirm === "history"
+              ? t("confirmHistory")
+              : t("confirmSession")
+        }
+        actionLabel={t("confirmDelete")}
+        cancelLabel={t("cancel")}
+        isActionLoading={busy}
+        onAction={async () => {
+          // perform() reports failures in the error banner, so the dialog closes either way.
+          await perform(async () => {
+            if (confirm === "key") {
+              await invoke("delete_llm_key", {
+                provider: config.provider,
+              });
+              setApiKey("");
+            } else if (confirm === "history") {
+              await invoke("clear_interview_history");
+              setSession(null);
+              setDraft("");
+              setQuestionId("");
+            } else if (session) {
+              await invoke("delete_interview_session", {
+                sessionId: session.id,
+              });
+              setSession(null);
+              setDraft("");
             }
-            endContent={
-              <span className="actions">
-                <Button
-                  label={t("confirmDelete")}
-                  variant="destructive"
-                  size="sm"
-                  isDisabled={busy}
-                  onClick={() =>
-                    perform(async () => {
-                      if (confirm === "key") {
-                        await invoke("delete_llm_key", {
-                          provider: config.provider,
-                        });
-                        setApiKey("");
-                      } else if (confirm === "history") {
-                        await invoke("clear_interview_history");
-                        setSession(null);
-                        setDraft("");
-                        setQuestionId("");
-                      } else if (session) {
-                        await invoke("delete_interview_session", {
-                          sessionId: session.id,
-                        });
-                        setSession(null);
-                        setDraft("");
-                      }
-                      setConfirm(null);
-                    })
-                  }
-                />
-                <Button
-                  label={t("cancel")}
-                  size="sm"
-                  isDisabled={busy}
-                  onClick={() => setConfirm(null)}
-                />
-              </span>
-            }
-          />
-        </div>
-      )}
+          });
+          setConfirm(null);
+        }}
+      />
       <main className="interview-main">
         <aside>
           <div className="list-head">
@@ -724,7 +717,9 @@ export default function InterviewApp() {
                 {session.lastError && (
                   <Banner
                     status="error"
-                    title={t("savedLocally", { e: localizeError(session.lastError, lang) })}
+                    title={t("savedLocally", {
+                      e: localizeError(session.lastError, lang),
+                    })}
                   />
                 )}
                 {pending && (
@@ -793,7 +788,11 @@ export default function InterviewApp() {
                               show(
                                 await invoke<Session>(
                                   "submit_interview_answer",
-                                  { sessionId: session.id, answer: draft, lang },
+                                  {
+                                    sessionId: session.id,
+                                    answer: draft,
+                                    lang,
+                                  },
                                 ),
                               ),
                             true,
@@ -801,7 +800,9 @@ export default function InterviewApp() {
                         }
                       />
                       <Button
-                        label={referenceReady ? t("refReady") : t("aiReference")}
+                        label={
+                          referenceReady ? t("refReady") : t("aiReference")
+                        }
                         isDisabled={busy || referenceReady}
                         onClick={() =>
                           perform(

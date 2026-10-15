@@ -5,6 +5,7 @@ use std::{
     sync::{Arc, Mutex, MutexGuard},
 };
 use swe_interview_prep::{code_runner, content, credentials, db, interview, interview_store, llm};
+use swe_interview_prep::{system_design, system_design_store};
 use tauri::{AppHandle, Emitter, Manager, State};
 #[derive(Clone)]
 struct AppState {
@@ -352,6 +353,128 @@ fn clear_interview_history(state: State<AppState>) -> Result<(), String> {
         .map_err(|_| "请等待当前面试请求完成")?;
     interview_store::clear_history(&state.db())
 }
+#[tauri::command]
+fn sd_overview(state: State<AppState>) -> Result<serde_json::Value, String> {
+    let c = state.db();
+    Ok(
+        serde_json::json!({"scenarios":system_design::scenarios(),"questions":system_design_store::questions(&c)?,"sessions":system_design_store::sessions(&c)?,"settings":credentials::view(&c)?}),
+    )
+}
+#[tauri::command]
+fn sd_start(
+    state: State<AppState>,
+    question_id: String,
+) -> Result<system_design::DesignSession, String> {
+    let _guard = state
+        .interview
+        .try_lock()
+        .map_err(|_| "请等待当前面试请求完成")?;
+    let c = state.db();
+    system_design_store::start(&c, &question_id, &credentials::settings(&c)?)
+}
+#[tauri::command]
+fn sd_session(
+    state: State<AppState>,
+    session_id: String,
+) -> Result<system_design::DesignSession, String> {
+    system_design_store::session(&state.db(), &session_id)
+}
+#[tauri::command]
+fn sd_save_workspace(
+    state: State<AppState>,
+    session_id: String,
+    workspace: system_design::Workspace,
+) -> Result<(), String> {
+    system_design_store::save_workspace(&state.db(), &session_id, workspace)
+}
+#[tauri::command]
+fn sd_change_stage(
+    state: State<AppState>,
+    session_id: String,
+    stage: system_design::Stage,
+) -> Result<system_design::DesignSession, String> {
+    let _guard = state
+        .interview
+        .try_lock()
+        .map_err(|_| "请等待当前面试请求完成")?;
+    system_design_store::change_stage(&state.db(), &session_id, stage)
+}
+fn sd_provider(
+    app: &AppHandle,
+    config: &credentials::LlmSettings,
+    lang: interview::Lang,
+) -> Result<llm::InterviewProvider, String> {
+    let app = app.clone();
+    let last = Mutex::new(std::time::Instant::now());
+    Ok(
+        llm::InterviewProvider::new(config, credentials::read_key(&config.provider)?)?
+            .lang(lang)
+            .on_text(move |text| {
+                let mut last = last.lock().unwrap_or_else(|e| e.into_inner());
+                if text.is_empty() || last.elapsed() >= std::time::Duration::from_millis(80) {
+                    *last = std::time::Instant::now();
+                    let _ = app.emit("sd-stream", text);
+                }
+            }),
+    )
+}
+#[tauri::command(async)]
+async fn sd_generate(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    scenario_id: String,
+    lang: interview::Lang,
+) -> Result<system_design::CachedQuestion, String> {
+    let state = state.inner().clone();
+    background(move || {
+        use system_design::DesignProvider;
+        let _guard = state
+            .interview
+            .try_lock()
+            .map_err(|_| "已有面试请求正在运行")?;
+        let c = state.own_connection()?;
+        let config = credentials::settings(&c)?;
+        let q = sd_provider(&app, &config, lang)?
+            .generate_design(&system_design::scenario(&scenario_id)?, lang)?;
+        system_design_store::cache_question(&c, &scenario_id, lang, &config, q)
+    })
+    .await
+}
+#[tauri::command(async)]
+async fn sd_request(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    session_id: String,
+    action: String,
+    answer: Option<String>,
+) -> Result<system_design::DesignSession, String> {
+    let state = state.inner().clone();
+    background(move || {
+        let _guard = state
+            .interview
+            .try_lock()
+            .map_err(|_| "已有面试请求正在运行")?;
+        let c = state.own_connection()?;
+        let s = system_design_store::session(&c, &session_id)?;
+        let mut config = credentials::settings(&c)?;
+        config.provider = s.provider;
+        config.model = s.model;
+        let api = sd_provider(&app, &config, s.question.lang)?;
+        match action.as_str() {
+            "answer" => system_design_store::begin_answer(
+                &c,
+                &session_id,
+                answer.as_deref().unwrap_or_default(),
+            )?,
+            "feedback" => system_design_store::begin_feedback(&c, &session_id)?,
+            "retry" => {}
+            _ => return Err("未知系统设计操作".into()),
+        }
+        system_design_store::retry_pending(&c, &session_id, &api)
+    })
+    .await
+}
+
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
@@ -366,6 +489,13 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            sd_overview,
+            sd_start,
+            sd_session,
+            sd_save_workspace,
+            sd_change_stage,
+            sd_generate,
+            sd_request,
             interview_overview,
             save_llm_settings,
             delete_llm_key,

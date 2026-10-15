@@ -1,0 +1,103 @@
+.sd-message {
+  margin: 16px 24px;
+}
+.sd-app .topic-panel,
+.sd-app .conversation-panel {
+  min-width: 0;
+}
+.sd-app .topic-panel > .actions {
+  margin-top: 14px;
+}
+.sd-stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+.sd-suggestion {
+  padding: 12px;
+  border-inline-start: 3px solid var(--color-accent);
+  background: var(--color-accent-muted);
+}
+.sd-workspace {
+  padding: 14px;
+  margin: 16px 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-container);
+  background: var(--color-background-surface);
+}
+.sd-workspace textarea {
+  font-family: var(--font-family-monospace, monospace);
+}
+.sd-workspace > *,
+.sd-workspace textarea {
+  max-width: 100%;
+}
+.sd-cache {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.sd-cache > :first-child {
+  flex: 1;
+  min-width: 200px;
+  max-width: 100%;
+}
+.sd-markdown {
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+}
+.sd-markdown pre {
+  overflow: auto;
+  padding: 12px;
+  background: var(--color-background-muted);
+  border-radius: var(--radius-element);
+}
+.sd-markdown table {
+  border-collapse: collapse;
+  display: block;
+  overflow: auto;
+  max-width: 100%;
+}
+.sd-markdown th,
+.sd-markdown td {
+  border: 1px solid var(--color-border);
+  padding: 6px 10px;
+}
+.sd-markdown > :first-child {
+  margin-top: 8px;
+}
+.sd-diagram {
+  margin-top: 10px;
+}
+.sd-diagram iframe {
+  display: block;
+  width: 100%;
+  min-height: 360px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-element);
+  margin-top: 10px;
+}
+.sd-app .interview-main aside button {
+  white-space: normal;
+  text-align: start;
+  height: auto;
+  min-height: 40px;
+}
+@media (max-width: 1000px) {
+  .sd-app .interview-main {
+    grid-template-columns: 210px minmax(0, 1fr);
+    padding-inline: 16px;
+  }
+}
+
+/* Keep stream progress visible while the user waits at the answer controls. */
+.sd-app > .live-response {
+  position: fixed;
+  inset-inline-end: 24px;
+  bottom: 16px;
+  width: min(640px, calc(100vw - 48px));
+  max-height: 32vh;
+  z-index: 5;
+}
