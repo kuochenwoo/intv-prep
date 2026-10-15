@@ -1,19 +1,21 @@
 # SWE Interview Prep · P0 + P1
 
-本地 SWE 面试准备桌面应用。P0 的双模式本地 Judge 已完成；P1 的 Technical Deep Dive 已接入 Claude / DeepSeek，包含缓存和可恢复面试流程。Claude Haiku 5.5 已完成真实出题、追问、反馈和失败恢复验证；DeepSeek 真实多轮验收仍受 503 / 保活超时影响。P2 系统设计与 P3 完整 Hot 100 尚未实现。
+A local SWE interview-preparation desktop application. P0's dual-mode local Judge is complete. P1's Technical Deep Dive supports Claude / DeepSeek, caching, and resumable interviews. Claude Haiku 5.5 has passed real question generation, follow-ups, feedback, and failure recovery. DeepSeek's real multi-turn acceptance remains affected by HTTP 503 / keepalive timeouts. P2 System Design and P3's complete Hot 100 coverage are not implemented.
 
-## 启动
+Project documentation and code comments are in English. The application UI, problem statements, and interview content remain in Chinese.
 
-开发依赖：Node.js 22.12+、npm、Rust stable、平台对应的 [Tauri 2 prerequisites](https://v2.tauri.app/start/prerequisites/)，以及支持 C++20 的 `clang++` 或 `g++`。macOS 使用 Xcode Command Line Tools 即可提供 C++ 编译器。
+## Getting started
+
+Development dependencies: Node.js 22.12+, npm, stable Rust, the platform-specific [Tauri 2 prerequisites](https://v2.tauri.app/start/prerequisites/), and a C++20-capable `clang++` or `g++`. On macOS, Xcode Command Line Tools provide the C++ compiler.
 
 ```sh
 npm ci
 npm run tauri dev
 ```
 
-`npm run dev` 仅供前端开发，不提供本地 Judge；必须在 Tauri 窗口中运行。本应用没有 Node/Express 业务服务器。
+`npm run dev` is for frontend development only and does not provide the local Judge. Run the application in a Tauri window. There is no Node/Express application server.
 
-本次在开发机上安装了临时 Rust 工具链（没有修改 shell 配置）。若尚未正常安装 Rust，当前机器可使用：
+A temporary Rust toolchain was installed on the development machine without changing shell configuration. Until Rust is installed normally, this machine can use:
 
 ```sh
 export PATH="/tmp/intv-cargo/bin:$PATH"
@@ -22,197 +24,197 @@ export RUSTUP_HOME=/tmp/intv-rustup
 npm run tauri dev
 ```
 
-`/tmp` 可能被系统清理；长期开发请按官方先决条件安装 Rust。
+The operating system may clear `/tmp`. For ongoing development, install Rust according to the official prerequisites.
 
-## 构建与测试
+## Build and test
 
 ```sh
-npm run build                  # TypeScript 检查 + Vite 生产构建
-npm test                       # Judge / SQLite / 面试状态 / HTTP 错误恢复测试，不调用收费 API
-npm run tauri build -- --bundles app    # macOS 发布构建（本地未签名 .app）
+npm run build                         # TypeScript checks and Vite production build
+npm test                              # Judge, SQLite, interview state, and HTTP recovery; no paid API calls
+npm run tauri build -- --bundles app  # macOS release build: a locally unsigned .app
 ```
 
-macOS 应用输出到 `src-tauri/target/release/bundle/macos/SWE Interview Prep.app`；可直接双击打开，不再需要 Node 或 Rust，也不依赖 Vite 服务。C++ 编译器仍需安装。调试打包使用 `npm run tauri build -- --debug --bundles app`，输出在 `src-tauri/target/debug/bundle/macos/`。
+The macOS application is written to `src-tauri/target/release/bundle/macos/SWE Interview Prep.app`. Open it directly; it no longer needs Node, Rust, or the Vite server. A C++ compiler is still required. Use `npm run tauri build -- --debug --bundles app` for a debug bundle under `src-tauri/target/debug/bundle/macos/`.
 
-当前在 macOS Apple Silicon 上验证。进程组终止和资源限制使用 Unix API；尚未实现或验证 Windows 的进程树终止，不应将本版本视为 Windows 可用版本。
+Verified on macOS Apple Silicon. Process-group termination and resource limits use Unix APIs. Windows process-tree termination has not been implemented or verified; this version should not be considered Windows-ready.
 
-测试会真实调用本机编译器，不使用编译、执行或 Accepted 的 Mock。`src-tauri/tests/p0.rs` 覆盖：
+Tests invoke the real local compiler, without mocking compilation, execution, or Accepted results. `src-tauri/tests/p0.rs` covers:
 
-- 4 道题的 Function / ACM 全部本地用例，C++20 和含空格的编译器路径。
-- 编译错误、错误答案、空输出、非零退出、崩溃、无限循环、stdout/stderr 输出超限。
-- 多个合法答案、非法下标、格式错误、空链表的比较。
-- 每题独立时间/内存/输出设置；Function/ACM 真实分配并触碰内存后被终止，返回 Memory Limit Exceeded；四题最大规模用例。
-- 后台子进程终止、继承管道清理、SQLite 关闭重开后的草稿/状态/结果/设置恢复。
+- All local tests for four problems in Function and ACM modes, C++20, and compiler paths containing spaces.
+- Compilation errors, wrong answers, empty output, nonzero exits, crashes, infinite loops, and excessive stdout/stderr output.
+- Multiple valid answers, invalid indices, malformed output, and empty linked lists.
+- Per-problem time, memory, and output settings; real memory allocation and page touching in both modes, terminated as Memory Limit Exceeded; maximum-size inputs for all four problems.
+- Background-child termination, inherited-pipe cleanup, and restoration of drafts, statuses, results, and settings after reopening SQLite.
 
-## P0 验证（2026-10-15）
+## P0 verification (2026-10-15)
 
-- macOS Apple Silicon：TypeScript/Vite 构建、Tauri 桌面构建及 `.app` 打包成功。
-- 11 项自动化集成测试通过；4 道题 × 2 种模式，合计执行 50 个语义测试用例，全部调用真实 C++20 编译器。
-- 实际桌面窗口：空实现显示错误答案；两数之和 Function/ACM 分别提交后均显示 5/5；退出重启后草稿、完成状态、编译器设置及最近提交结果恢复。
-- 限制功能更新后，实际桌面两数之和 Function 提交显示 6/6、当次上限 1000 ms / 128 MiB，并显示每例真实 RSS 采样峰值。
-- 判题测试在无网络权限的执行环境通过，打包资源使用本地 `tauri://localhost` 加载；没有修改整机网络设置做物理断网测试。
+- TypeScript/Vite builds, the Tauri desktop build, and `.app` packaging succeeded on macOS Apple Silicon.
+- Eleven automated integration tests passed. Four problems × two modes executed 50 semantic test cases through a real C++20 compiler.
+- In the desktop window, empty implementations produced wrong answers. Two Sum submissions in Function and ACM modes initially showed 5/5. Drafts, completion states, compiler settings, and the latest submission results survived a restart.
+- After the resource-limit update, a desktop Two Sum Function submission showed 6/6, the active 1000 ms / 128 MiB budget, and each test's measured peak RSS sample.
+- Judge tests passed in an execution environment without network access. Bundled assets load locally through `tauri://localhost`. No machine-wide network settings were changed for a physical-disconnection test.
 
-## 使用
+## Using the application
 
-1. 可自动探测 `clang++` / `g++`，也可在顶部填写可执行文件的完整路径并点击“检测并保存”。路径不含额外编译参数。检测验证程序可以启动；真正判题以 `-std=c++20 -O0` 编译，诊断完整显示。
-2. 选择题目，查看题意、约束、逻辑样例和 ACM 输入输出协议。可搜索标题/编号/标签、筛选难度和标签。
-3. Function 模式只写 `class Solution`，系统提供头文件、`main()` 和序列化包装。链表题额外提供 `ListNode`。ACM 模式自行编写完整程序，严格遵守题目协议。
-4. “运行样例”执行标记为样例的前 2 个用例；“提交本地测试”执行该题全部本地测试。仅提交全部通过会标记该模式“完成”。已完成状态作为练习记录保留，后续编辑/错误提交不会抹除；最近提交结果会更新。
-5. 每次编辑自动写入 SQLite。等待“草稿已保存”后退出；两种模式分别保存。样例结果仅在当前窗口显示，最近一次提交结果可在重启后恢复。结果对应上次执行代码，修改后需重新判题。
+1. The application detects `clang++` / `g++`, or accepts the executable's full path through the compiler field and the “检测并保存” button. Do not include extra compiler flags in the path. Detection checks that the executable starts; real judging compiles with `-std=c++20 -O0` and displays compiler diagnostics.
+2. Select a problem and read its statement, constraints, logical examples, and ACM I/O protocol. Search by title, ID, or tag; filter by difficulty and tag.
+3. In Function mode, implement only `class Solution`; the application provides headers, `main()`, and serialization wrappers. Linked-list problems also provide `ListNode`. In ACM mode, write the full program and follow the problem's I/O protocol.
+4. “运行样例” runs the first two tests marked as samples. “提交本地测试” runs every local test for the problem. Only a full passing submission marks that mode complete. Completion remains as a practice record after subsequent edits or failed submissions; the latest submission result updates.
+5. Edits are saved automatically to SQLite. Wait for “草稿已保存” before exiting. Each mode has its own draft. Sample results appear only in the current window; the latest submission result survives a restart. Results correspond to the last executed code, so edits require another run.
 
-内置题目（共 25 个自行整理的语义测试，两个模式共享）：
+Bundled problems share 25 locally maintained semantic tests across both modes:
 
-| 题目                 | 包装 / 比较重点                                     |
-| -------------------- | --------------------------------------------------- |
-| 两数之和             | 数组参数 + target；验证任意合法下标对               |
-| 无重复字符的最长子串 | 整行字符串，保留空格，包含空串                      |
-| 反转链表             | 根据值序列构建链表、返回链表序列化、检测结果环/过长 |
-| 移动零               | 检查 void 方法原地修改后的数组                      |
+| Problem                                        | Wrapper / comparison focus                                                                  |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Two Sum                                        | Array and target arguments; accept any valid pair of indices                                |
+| Longest Substring Without Repeating Characters | Whole-line strings, preserving spaces and empty strings                                     |
+| Reverse Linked List                            | Build from a value sequence; serialize the returned list; detect cycles or excessive length |
+| Move Zeroes                                    | Check the array after in-place mutation by a void method                                    |
 
-题面是自行撰写的等价题意，测试是本地维护的小型测试集，不是 LeetCode 官方隐藏测试，不能据此宣称官方评测通过或完整边界覆盖。
+Statements are independently written equivalents. These small, locally maintained test suites are not LeetCode's official hidden tests and do not establish official acceptance or complete edge-case coverage.
 
-## P1：Technical Deep Dive
+## P1: Technical Deep Dive
 
-按用户指定，当前使用 **Claude Haiku 5.5**（`claude-haiku-5-5`），保留 DeepSeek 接口和独立密钥，可在设置中切换。未实现 System Design。
+The currently selected provider is **Claude Haiku 5.5** (`claude-haiku-5-5`), as requested. The DeepSeek adapter and its separate key remain available through settings. System Design is not implemented.
 
-- 内置 10 个主题：缓存选型、热点与缓存故障、幂等与重试、消息可靠投递、队列选型、限流/熔断、并发事务、副本故障转移、分片扩容、RPC 尾延迟。
-- 选择主题 → 显式联网生成新题 → SQLite 缓存 → 新建面试 → 提交回答并动态追问 → 结束并生成五维定性反馈。
-- 可随机选择本地主题、复用已缓存问题、查看历史和恢复未完成会话；这些操作不调用 API。
-- “AI 参考作答并追问（联网）”会让模型回答当前原题或追问，自动作为候选人消息提交，再由面试官继续追问。会话明确标记“AI 参考代答”，可回看作答要点；支持与手写回答交替使用。代答进入后续追问上下文，结束反馈会区分 AI 辅助与用户独立回答。
-- 面试官内部的追问方向和检查点不会随题目/会话 DTO 发给前端；反馈只在结束后显示，不做百分制评分。
-- 一次最多 20 轮回答，每条最多 6000 字符。追问只发送当前题目和最近 12 条消息；反馈发送本会话完整记录，不发送其他会话或题库。
-- 模型、超时（15–120 秒）可设置。会话使用创建时的模型，之后改设置不会悄悄改变已有会话的模型。
-- 失败后保留内容并提供手动重试，不做自动收费重试。超时涵盖整次请求，持续空白保活不会重置截止时间；响应上限 1 MiB。
+- Ten bundled topics: cache selection, hot keys and cache failures, idempotency and retries, reliable message delivery, queue selection, rate limiting/circuit breaking, concurrent transactions, replica failover, sharding/expansion, and RPC tail latency.
+- Select a topic → explicitly generate a question online → cache it in SQLite → start an interview → submit answers and receive dynamic follow-ups → finish with five-dimension qualitative feedback.
+- Random local topic selection, cached-question reuse, history viewing, and unfinished-session recovery do not call an API.
+- “AI 参考作答并追问（联网）” makes the model answer the current original question or follow-up, submits it as a candidate message, and asks the interviewer to continue. These turns are labeled “AI 参考代答”; their key points can be reviewed. Alternate freely between AI-assisted and handwritten answers. Assisted answers enter follow-up context, while final feedback distinguishes them from independent user answers.
+- Internal follow-up directions and evaluation checkpoints are excluded from frontend question/session DTOs. Feedback appears only after the interview ends, without a percentage score.
+- Up to 20 answers per session, each at most 6000 characters. Follow-ups send the current question and the latest 12 messages. Feedback sends the full current session, without other sessions or the problem library.
+- Model and timeout (15–120 seconds) are configurable. Existing sessions keep their original provider/model when settings change.
+- Failures preserve content and offer manual retries, without automatic paid retries. The overall deadline covers the entire request; whitespace keepalives do not reset it. Responses are limited to 1 MiB.
 
-使用方式：打开顶部 **Technical Deep Dive**，检查模型设置。已有 `.env` 时直接使用；没有时可通过应用内密码输入框保存，或先从 `.env.example` 创建 `.env` 再填写（不要覆盖已有 `.env`）。新配置默认模型 `claude-haiku-5-5`；已有 DeepSeek 配置保留，可在 Provider 下拉框切换并保存。已有会话仍使用创建时的 Provider 和模型。按钮明确标示哪些操作联网，并显示最近一次请求状态。
+Open **Technical Deep Dive** and check the model settings. An existing `.env` is used directly. Otherwise, save a key through the application's password field, or copy `.env.example` to `.env` and fill it in without overwriting existing credentials. New configurations default to `claude-haiku-5-5`. Existing DeepSeek configurations are retained; switch providers in the dropdown and save. Existing sessions retain their original provider/model. Buttons identify online operations, and the UI shows the latest request status.
 
-AI 代答使用当前会话创建时的 Provider / 模型，一次操作通常有“生成代答”和“获取追问”两次 API 请求，可能产生费用；已有本轮代答缓存会复用。代答先保存再请求追问，后者失败时通过“重试待处理请求”恢复，不重复生成或追加代答。已有未提交草稿时先自行提交或清空，再使用 AI 代答；重启后历史消息和 AI 标记都会恢复。
+An AI-assisted operation normally makes two API requests: generating the answer and obtaining the follow-up. These may incur charges. An existing answer cache for that round is reused. The answer is saved before requesting the follow-up; use “重试待处理请求” after a follow-up failure to resume without regenerating or appending another answer. Submit or clear any current draft before using AI assistance. Historical messages and AI-assistance flags survive restarts.
 
-### 当前临时密钥策略（用户指定）
+### Temporary credential policy (user requested)
 
-现在 `credentials::read_key/save_key/delete_key` **仅操作项目 `.env`，不会自动回退读取或写入 Keychain**。`.env` 已加入 `.gitignore`，写入使用原子替换，Unix 文件权限 0600；`.env.example` 只包含空值。按 Provider 分别使用 `DEEPSEEK_API_KEY`、`OPENAI_API_KEY`、`CLAUDE_API_KEY`，更新或清除一个不会覆盖另一个。请勿使用 `VITE_` 前缀保存密钥。实际 Key 不写入 SQLite、日志或前端返回值。
+`credentials::read_key/save_key/delete_key` **only access the project's `.env`; they do not automatically read or write the system Keychain**. `.env` is Git-ignored, updated atomically, and given Unix mode 0600. `.env.example` contains blank values only. `DEEPSEEK_API_KEY`, `OPENAI_API_KEY`, and `CLAUDE_API_KEY` are independent; updating or deleting one does not overwrite another. Never use a `VITE_` prefix for secrets. Real keys are not stored in SQLite, logs, or frontend responses.
 
-先前保存的 DeepSeek 系统凭据已按用户新要求转存并删除。系统凭据适配代码仍保留，**待真实验收通过后再迁移启用**；当前没有自动迁移操作。测试构建从编译时的项目根目录读取 `.env`，不依赖启动命令所在目录。这是临时开发方案，正式可分发构建前需要完成 Keychain 迁移。
+The previously saved DeepSeek system credential was moved and deleted as requested. The system-credential adapter remains available **for migration after real acceptance testing**; migration is not automatic. Test builds read `.env` from the project root recorded at compile time rather than the launch directory. This is a temporary development arrangement; system-credential migration is required before a distributable release.
 
-### 失败恢复
+### Failure recovery
 
-回答先写入 SQLite 并进入 `awaiting_reply`，随后才调用 API。失败时，回答同时保留为本地消息和待处理草稿，重启后可重试，重试不会再追加一次候选人回答。结束请求同理进入 `feedback_pending`，只有完整反馈校验通过才标记 `finished`。有未提交草稿时不能直接结束，避免悄悄丢弃回答。
+Answers are written to SQLite and marked `awaiting_reply` before the API call. On failure, the answer remains both a local message and a pending draft. Restarting and retrying does not append another candidate answer. Finishing similarly enters `feedback_pending`; only complete, validated feedback marks the session `finished`. A session cannot end while it has an unsubmitted draft, preventing silent answer loss.
 
-HTTP 401/403、余额不足、限流、服务错误、空响应、截断、无效 JSON、缺少字段和错误枚举均有可恢复错误提示；不回显供应商原始错误体或请求调试对象，避免它们带出凭据。生产请求只访问固定 Claude / DeepSeek HTTPS 端点且不跟随重定向。缓存/历史清理不会删除 LC 数据或密钥；清理需要在界面再次确认。
+HTTP 401/403, insufficient balance, rate limits, service failures, empty or truncated responses, invalid JSON, missing fields, and invalid enum values produce recoverable errors. Raw provider error bodies and request debug objects are not echoed because they could contain credentials. Production requests use fixed Claude / DeepSeek HTTPS endpoints without following redirects. Clearing interview caches/history preserves LC data and keys and requires an additional UI confirmation.
 
-接口依据：[DeepSeek Chat Completions](https://api-docs.deepseek.com/api/create-chat-completion/)。使用 JSON Output (`response_format: json_object`)，提示包含 JSON schema；Rust 使用严格 Serde 反序列化、字段长度/列表/枚举和五个维度检查再次验证，不假设供应商支持强制 JSON Schema 输出。
+DeepSeek integration follows [Chat Completions](https://api-docs.deepseek.com/api/create-chat-completion/). It uses JSON Output (`response_format: json_object`) with a JSON schema in the prompt. Rust applies strict Serde deserialization plus field-length, list, enum, and five-dimension validation; it does not assume provider-enforced JSON Schema support.
 
-Claude 接口依据：[Haiku 5.5 迁移指南](https://platform.claude.com/docs/en/models/haiku-5-5/migration-guide)、[Messages API](https://platform.claude.com/docs/en/build-with-claude/working-with-messages)、[结构化输出](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)。采用原生 `x-api-key` 认证、顶层 `system`、`output_config.format` JSON Schema 和 medium effort；按类型提取文本，不把 thinking 当答案。五个反馈维度使用必填对象字段保证覆盖，再转换为共享存储结构；拒绝、截断和缺项均不会标记成功。
+Claude integration follows the [Haiku 5.5 migration guide](https://platform.claude.com/docs/en/models/haiku-5-5/migration-guide), [Messages API](https://platform.claude.com/docs/en/build-with-claude/working-with-messages), and [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs). It uses native `x-api-key` authentication, a top-level `system` prompt, `output_config.format` JSON Schema, and medium effort. Text blocks are selected by type; thinking blocks are not treated as answers. Feedback uses five required dimension keys, projected into the shared storage structure. Refusals, truncation, and missing content never count as success.
 
-当前两家 Provider 都使用 `stream: false`，尚无 SSE 流式显示；点击提交后整段发送输入。
+Both providers currently use `stream: false`. SSE streaming display is not implemented; input is sent as a whole when submitted.
 
-### P1 验证与实际限制
+### P1 verification and limitations
 
-- 30 项默认自动化测试通过：11 项 P0 回归、9 项 HTTP/JSON/整体超时及 Claude 协议测试、10 项面试存储、AI 代答、失败恢复、旧数据迁移和临时 `.env` 测试。
-- 供应商故障测试使用明确的本机 HTTP 夹具；状态恢复测试使用明确的测试 Provider。这些结果不冒充真实 AI 的出题、追问或评价质量。
-- 真实 macOS Keychain 独立测试在切换临时 `.env` 策略前已通过；该测试默认忽略，当前不再写入系统凭据。
-- 真实账户的 `/models` 查询成功，返回 `deepseek-flash`、`deepseek-v4-pro`。`flash` 生成请求返回 HTTP 503；`pro` 曾返回 HTTP 200 但持续空白保活，未得到可验证的完成内容。桌面端已确认显示失败、解除忙碌状态并保留密钥设置。DeepSeek 完整真实面试仍待服务恢复后验收。
-- Claude Haiku 5.5 最小真实请求成功（输入 14 / 输出 4 tokens），元数据记录 `/tmp/intv-claude-probe.json`。真实面试首次反馈返回空维度列表，被校验拦截；改为五个必填维度对象后，从原会话重试成功，保持 4 条消息且无重复候选人回答，并验证重开恢复与离线复用。随后在全新数据库 `/tmp/intv-p1-live-claude-final.sqlite3` 中完整执行真实出题 → 两轮追问 → 五维反馈 → 重开恢复 → 离线复用，全部通过。AI 技术判断仍需人工复核，不保证每次生成都正确。
+- Thirty default automated tests passed: 11 P0 regressions, nine HTTP/JSON/deadline/Claude-protocol tests, and ten interview storage, AI assistance, recovery, migration, and temporary `.env` tests.
+- Provider-failure tests use explicit localhost HTTP fixtures. State-recovery tests use an explicit test provider. These do not establish real AI question, follow-up, or feedback quality.
+- An isolated real macOS Keychain test passed before switching to temporary `.env` storage. That test is ignored by default; the current test stage does not write system credentials.
+- A real DeepSeek `/models` request returned `deepseek-flash` and `deepseek-v4-pro`. Flash generation returned HTTP 503. Pro once returned HTTP 200 with continuing whitespace keepalives, without a verifiable completion. The desktop UI displayed failure, cleared its busy state, and retained settings. DeepSeek's complete real interview acceptance remains pending service recovery.
+- A real minimal Claude Haiku 5.5 request succeeded with 14 input / four output tokens; metadata is in `/tmp/intv-claude-probe.json`. The first real interview feedback had an empty dimensions array and was rejected. After requiring all five dimension keys, retrying the original session succeeded with four messages and no duplicated candidate answer. Database reopening and offline reuse passed. A fresh database at `/tmp/intv-p1-live-claude-final.sqlite3` then passed real generation → two follow-ups → five-dimension feedback → reopening → offline reuse. AI technical judgments still require human review; individual generations are not guaranteed correct.
 
-重跑自动化测试不需要实际 Key（本机 HTTP 夹具需要 localhost 监听权限）：
+Automated tests do not require real keys; localhost HTTP fixtures require permission to bind a local port:
 
 ```sh
 npm test
 ```
 
-下面是显式的真实联网验收，**会使用 `.env` 中的 Key 并产生 API 费用**，默认把测试数据写入 `/tmp/intv-p1-live.sqlite3`；不调用它就不会自动发起这些请求：
+The following explicit live acceptance test **uses `.env` credentials and incurs API charges**. Its default database is `/tmp/intv-p1-live.sqlite3`. It does not run automatically:
 
 ```sh
 cargo run --manifest-path src-tauri/Cargo.toml --no-default-features --example live_deep_dive
-# 或指定账户另一可用模型及独立的测试数据库
+# Select another available model and an independent test database.
 INTERVIEW_PROVIDER=deepseek INTERVIEW_MODEL=deepseek-v4-pro cargo run --manifest-path src-tauri/Cargo.toml --no-default-features --example live_deep_dive -- /tmp/intv-p1-live-pro.sqlite3
 ```
 
-已用 Claude Haiku 5.5 完成真实原题代答→自动提交→继续追问→追问代答→继续追问→五维反馈→重开恢复，并验证追问失败后的恢复不会重复追加代答。Claude 请求输出预算为 8192 tokens，给思考及完整 JSON 留出空间；截断或空追问会被拦截，可重试。
+Claude Haiku 5.5 has also passed real original-question assistance → automatic submission → follow-up → assisted follow-up answer → further questioning → five-dimension feedback → reopening. Recovery after a failed follow-up did not duplicate the answer. Claude requests allow 8192 output tokens for thinking and complete JSON. Truncated or empty follow-ups are rejected and can be retried.
 
-下面的真实 AI 代答验收会在已有 Claude 场景题的测试数据库中新建一个会话，连续为原题及下一轮追问代答并自动提交，随后检查五维反馈和重开恢复；会调用真实 API 并产生费用：
+The following live AI-assistance test starts a new session using a cached Claude question in a test database, answers the original question and a follow-up automatically, then checks feedback and restoration. It makes real paid API calls:
 
 ```sh
 cargo run --manifest-path src-tauri/Cargo.toml --no-default-features --example live_reference -- /tmp/intv-p1-live-claude-final.sqlite3
 ```
 
-单独验证系统凭据适配（当前测试阶段不必执行；只使用独立临时测试条目，不会覆盖实际 Key）：
+To test the system-credential adapter separately (unnecessary during this stage; uses an isolated temporary credential rather than a real key):
 
 ```sh
 cargo test --manifest-path src-tauri/Cargo.toml --no-default-features --test p1 os_keyring_roundtrip -- --ignored
 ```
 
-## 每题复杂度要求和执行预算
+## Per-problem complexity requirements and execution budgets
 
-所有题目的 JSON 均包含 `complexity`（时间、额外空间、官方要求、训练说明、来源）和 `limits`（`timeLimitMs`、`memoryLimitMb`、`outputLimitKb`）。题目详情同时显示，Judge 按题目设置执行，并在结果中保存当次预算、实测耗时和主进程内存采样峰值。复杂度要求适用于两种模式；ACM 解析输入使用的存储需单独说明。
+Every problem JSON includes `complexity` (time, auxiliary space, official requirements, training notes, and sources) and `limits` (`timeLimitMs`, `memoryLimitMb`, `outputLimitKb`). Details display both. The Judge enforces each problem's settings and records the applied budget, measured duration, and peak sampled main-process memory. Complexity requirements apply to both modes; ACM input-storage overhead must be described separately.
 
-| 题目           | 本地训练时间目标 | 额外空间要求 / 目标              | 官方依据                                                                                                                                 |
-| -------------- | ---------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 两数之和       | 平均 O(n)        | O(n)                             | [官方 follow-up](https://leetcode.com/problems/two-sum/) 要求优于 O(n²)，O(n log n) 排序方案也符合该 follow-up；哈希表是本地建议目标     |
-| 最长无重复子串 | O(n)             | O(min(n, Σ))；固定 ASCII 时 O(1) | [官方题面](https://leetcode.com/problems/longest-substring-without-repeating-characters/) 未明文规定 Big-O；滑动窗口复杂度为本地训练目标 |
-| 反转链表       | O(n)             | 迭代 O(1)，递归 O(n) 栈亦允许    | [官方 follow-up](https://leetcode.com/problems/reverse-linked-list/) 允许练习迭代和递归，不将递归误判为违反官方 O(1) 要求                |
-| 移动零         | O(n)             | O(1)，原地修改，不复制数组       | [官方题面](https://leetcode.com/problems/move-zeroes/) 明确要求原地且不复制数组，优化操作次数是 follow-up                                |
+| Problem                                        | Local time target | Auxiliary space requirement / target              | Official basis                                                                                                                                                                                            |
+| ---------------------------------------------- | ----------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Two Sum                                        | Average O(n)      | O(n)                                              | The [official follow-up](https://leetcode.com/problems/two-sum/) asks for better than O(n²). O(n log n) sorting also qualifies; a hash table is the local recommendation.                                 |
+| Longest Substring Without Repeating Characters | O(n)              | O(min(n, Σ)); O(1) for fixed ASCII                | The [official statement](https://leetcode.com/problems/longest-substring-without-repeating-characters/) does not explicitly mandate Big-O. Sliding-window complexity is a local training target.          |
+| Reverse Linked List                            | O(n)              | Iterative O(1); recursive O(n) stack also allowed | The [official follow-up](https://leetcode.com/problems/reverse-linked-list/) encourages iterative and recursive solutions. Recursion must not be misclassified as violating an official O(1) requirement. |
+| Move Zeroes                                    | O(n)              | O(1), in-place, without copying the array         | The [official statement](https://leetcode.com/problems/move-zeroes/) explicitly requires in-place operation without copying. Minimizing operations is a follow-up.                                        |
 
-查核日期：2026-10-15。上述官方公开题面未列出可核对的逐题固定毫秒/MiB 配额，因此 **1000 ms / 128 MiB 是本地预算，不冒充官方限额**。[官方编译环境说明](https://support.leetcode.com/hc/en-us/articles/360011833974-What-are-the-environments-for-the-programming-languages) 使用 `-O2`、C++23 和 AddressSanitizer；本项目按 P0 保留 C++20 / `-O0`，耗时不能与官方直接比较。
+Sources checked on 2026-10-15. Those public statements do not provide verifiable fixed per-problem millisecond/MiB quotas. **1000 ms / 128 MiB are local budgets, not official limits**. The [official compiler-environment description](https://support.leetcode.com/hc/en-us/articles/360011833974-What-are-the-environments-for-the-programming-languages) uses `-O2`, C++23, and AddressSanitizer; this P0 implementation keeps C++20 / `-O0`, so timings are not directly comparable.
 
-本地数据范围参考公开约束：字符串最长 100000，链表最多 5000 节点，数组最多 10000 元素；保留明确说明的本地变体（多个两数和答案、移动零空数组、ASCII 字符子集）。四题均加入最大规模、确定性预期值的自建用例。
+Local input scales follow public constraints: strings up to 100000 characters, linked lists up to 5000 nodes, and arrays up to 10000 elements. Explicit local variants remain: multiple valid Two Sum answers, empty Move Zeroes arrays, and ASCII-only string inputs. All four problems have maximum-size tests with deterministic expected results.
 
-时间测试和 RSS 预算不能证明任意代码的渐进复杂度或原地语义。进程 RSS 包含输入、C++ 运行库及系统包装，**不是算法额外空间**。例如复制数组后写回可能通过输出测试，但不满足移动零的原地要求；仍需审阅代码。页面会直接说明这个边界，不把资源达标显示为复杂度已认证。旧提交记录可能没有内存或预算字段，显示为旧记录/未取得；重新提交会执行新预算。
+Timing tests and RSS budgets cannot prove arbitrary code's asymptotic complexity or in-place semantics. RSS includes inputs, the C++ runtime, and wrappers; **it is not algorithmic auxiliary space**. For example, copying an array and writing it back can pass output tests while violating Move Zeroes' in-place requirement. Code review is still necessary. The UI explains this distinction rather than certifying complexity from resource compliance. Older results may lack memory or budget fields and are labeled accordingly; resubmission applies the new budgets.
 
-## 两数之和：双重循环复杂度回归
+## Two Sum: nested-loop complexity regression
 
-本地提交测试包含 `worst-case-10000`：`nums = [0, 1, ..., 9997, 100000, 200000]`，`target = 300000`，唯一合法答案是 `[9998, 9999]`（顺序不限）。它处于声明的 n ≤ 10000 约束内，且使 `for (i) for (j=i+1)` 在找到答案前扫描全部 n(n−1)/2 个候选对。该用例在 Function / ACM 提交中共享，不增加样例数量。
+Submission tests include `worst-case-10000`: `nums = [0, 1, ..., 9997, 100000, 200000]`, `target = 300000`. The only valid answer is `[9998, 9999]`, in either order. This is within n ≤ 10000 and makes `for (i) for (j=i+1)` scan all n(n−1)/2 pairs before finding the answer. Both modes share this submission test; it does not add a sample.
 
-`src-tauri/tests/benchmarks/two_sum.cpp` 对两个已知实现计数并实测算法耗时，规模为 1000、2000、4000、10000。自动化测试校验计数；不把不稳定的毫秒比例当作断言，也不声称能自动识别任意用户代码的复杂度。单独运行：
+`src-tauri/tests/benchmarks/two_sum.cpp` counts operations and measures algorithm time for two known implementations at sizes 1000, 2000, 4000, and 10000. Tests check the counts, without asserting unstable timing ratios or claiming automatic complexity detection for arbitrary code. Run it separately with:
 
 ```sh
 cargo test --manifest-path src-tauri/Cargo.toml --no-default-features two_sum_worst_case_and_complexity_profile -- --nocapture
 ```
 
-本机一次真实 C++20 / `-O0` 运行（带计数器，算法耗时不含编译、输入生成和进程启动）：
+One real local C++20 / `-O0` run with counters (algorithm timings exclude compilation, input generation, and process startup):
 
-| n     | 双循环候选对数 | 双循环耗时 | 哈希查找次数 | 哈希耗时 | 哈希峰值键数 |
-| ----- | -------------: | ---------: | -----------: | -------: | -----------: |
-| 1000  |         499500 |    1.97 ms |         1000 |  0.26 ms |          999 |
-| 2000  |        1999000 |    6.91 ms |         2000 |  0.50 ms |         1999 |
-| 4000  |        7998000 |   27.85 ms |         4000 |  1.04 ms |         3999 |
-| 10000 |       49995000 |  169.02 ms |        10000 |  2.44 ms |         9999 |
+| n     | Nested-loop pairs | Nested-loop time | Hash lookups | Hash time | Peak hash keys |
+| ----- | ----------------: | ---------------: | -----------: | --------: | -------------: |
+| 1000  |            499500 |          1.97 ms |         1000 |   0.26 ms |            999 |
+| 2000  |           1999000 |          6.91 ms |         2000 |   0.50 ms |           1999 |
+| 4000  |           7998000 |         27.85 ms |         4000 |   1.04 ms |           3999 |
+| 10000 |          49995000 |        169.02 ms |        10000 |   2.44 ms |           9999 |
 
-双循环最坏时间 O(n²)，额外空间 O(1)；哈希表平均时间 O(n)，额外空间 O(n)（极端哈希冲突下时间可退化）。空间分析不计输入数组；测试中的辅助键数是结构规模指标，不是进程 RSS 或内存字节实测。
+Nested loops use worst-case O(n²) time and O(1) auxiliary space. The hash table uses average O(n) time and O(n) auxiliary space, with possible degradation under extreme collisions. Space analysis excludes the input array. Auxiliary key counts measure data-structure size, not RSS or measured memory bytes.
 
-另以未插入计数器的完整双循环程序运行真实 Judge，此次为 Accepted / 383 ms（包含进程运行开销）。1 秒上限下不会保证 O(n²) 必然超时；机器、编译选项及实现均影响实际速度。正确性通过不等于复杂度最优，测试不会伪造 TLE。
+A complete nested-loop program without counters also passed the real Judge: Accepted / 383 ms, including process overhead. A one-second limit does not guarantee that O(n²) times out. Hardware, compiler options, and implementation affect speed. Correctness acceptance does not imply optimal complexity; tests do not fake TLE.
 
-## 结构和存储
+## Structure and storage
 
 ```text
-content/leetcode/problems/     题目、模板、逻辑测试 JSON
-src/main.tsx                  LC 界面、Monaco、Tauri 调用
-content/leetcode/adapters/     Function 模式 C++ main 包装器
-src-tauri/src/content.rs       内置题库、输入适配、结果比较器
-src-tauri/src/code_runner.rs   编译、子进程控制、判题
-src-tauri/src/db.rs            SQLite 初始化与 LC 草稿/状态
-src/features/interview/       Deep Dive 设置、选题、会话、反馈与历史界面
-src-tauri/src/interview.rs     主题与严格响应类型、校验
-src-tauri/src/interview_store.rs 题目缓存和可恢复面试状态
-src-tauri/src/llm.rs           Claude / DeepSeek 请求、schema、整体超时与安全错误
-src-tauri/src/credentials.rs   临时 .env 凭据；保留待启用的系统适配
-content/deep-dive/topics.json  10 个主题种子
-src-tauri/src/main.rs          Tauri commands
-src-tauri/tests/p0.rs          真实编译执行的集成测试
+content/leetcode/problems/      Problem, template, and logical-test JSON
+src/main.tsx                   LC UI, Monaco, and Tauri calls
+content/leetcode/adapters/      C++ main wrappers for Function mode
+src-tauri/src/content.rs        Bundled library, input adapters, and comparators
+src-tauri/src/code_runner.rs    Compilation, subprocess control, and judging
+src-tauri/src/db.rs             SQLite initialization and LC drafts/status
+src/features/interview/         Deep Dive settings, topics, sessions, feedback, and history UI
+src-tauri/src/interview.rs      Topics, strict response types, and validation
+src-tauri/src/interview_store.rs Question cache and resumable interview state
+src-tauri/src/llm.rs            Claude / DeepSeek requests, schemas, deadlines, and safe errors
+src-tauri/src/credentials.rs    Temporary .env credentials; retained system adapter
+content/deep-dive/topics.json   Ten topic seeds
+src-tauri/src/main.rs           Tauri commands
+src-tauri/tests/p0.rs           Integration tests with real compilation and execution
 ```
 
-题库编译时嵌入 Rust，Monaco 和 worker 通过 Vite 打包，无运行时 CDN 或 LeetCode API。完成依赖安装和打包后，题目、编辑、判题和存储不需要外网。SQLite 保存在 Tauri 的应用数据目录，例如 macOS：
+Problems are embedded into Rust at compile time. Monaco and its workers are bundled by Vite; there is no runtime CDN or LeetCode API dependency. After installing dependencies and packaging, LC problems, editing, judging, and storage work without external network access. SQLite uses Tauri's application-data directory, for example on macOS:
 
 ```text
 ~/Library/Application Support/local.swe.interview-prep/prep.sqlite3
 ```
 
-用户进度和面试数据保存在应用数据目录。LC 不需要 `.env` 或 API Key。按当前测试要求，Claude / DeepSeek Key 暂存在项目根目录 `.env`，模型名称和超时等非敏感设置保存在 SQLite；临时 Key 文件是这一阶段明确允许的例外。
+User progress and interview data are stored in the application-data directory. LC needs no `.env` or API key. Under the current testing policy, Claude / DeepSeek keys temporarily live in the project-root `.env`; non-sensitive model and timeout settings live in SQLite. The temporary key file is an explicitly authorized exception for this stage.
 
-执行边界：仅运行本人编写且可信的 C++ 代码。每次判题使用独立临时目录，自动清理；编译超时 30 秒/输出 256 KiB；每个测试的时间、内存、输出预算由题目 `limits` 读取（当前 1000 ms / 主进程 128 MiB / stdout + stderr 合计 64 KiB）。Unix 下运行在独立进程组，结束、超时、输出超限时终止整个组；设置 CPU、单文件大小、打开文件数和禁止 core dump 的资源限制。记忆体通过主进程 RSS 采样监测（macOS `proc_pidinfo`；Linux `/proc`），超过题目上限则终止进程组。采样间隔约 5 ms，快速释放/退出的瞬时峰值可能漏计；不合计派生进程内存，不是 OS 硬内存配额。持续无法读取活进程内存时会明确报错，不静默跳过。没有内存/网络/文件系统的强安全沙箱，不能用来执行不可信代码。判题 command 在后台线程执行，UI 不等待主线程上的编译进程。
+Execution boundary: run only personally authored, trusted C++ code. Each Judge run uses an automatically cleaned temporary directory. Compilation has a 30-second / 256 KiB output limit. Per-test budgets come from `limits` (currently 1000 ms / 128 MiB main-process memory / 64 KiB combined stdout and stderr). Unix programs run in their own process groups; completion, timeout, and output violations terminate the whole group. CPU time, individual file size, open-file count, and core dumps are restricted. Main-process RSS is sampled through macOS `proc_pidinfo` or Linux `/proc`; exceeding the problem's budget terminates the group. Sampling is approximately every 5 ms and can miss brief peaks. It does not aggregate child-process memory or enforce a hard OS memory quota. Persistent failure to read a live process's memory produces an explicit error rather than silently skipping enforcement. There is no strong memory/network/filesystem security sandbox, so this application must not execute untrusted code. Judge commands run on background workers rather than blocking compilation on the UI thread.
 
-## 后续工作（本次不实现）
+## Remaining work (outside this change)
 
-- 密钥存储仍按用户指定保留临时 `.env` 测试模式；正式分发前启用系统凭据存储。DeepSeek 的真实多轮验收仍待服务恢复。
-- P2：System Design 场景、阶段控制与解释性反馈。
-- P3：逐题补齐并验证完整 Hot 100、更多适配器及比较规则、质量改进。
+- Keep temporary `.env` testing mode as requested; enable system-credential storage before distribution. DeepSeek's real multi-turn acceptance remains pending service recovery.
+- P2: System Design scenarios, stage control, and explainable feedback.
+- P3: Complete and verify the full Hot 100, add adapters/comparators, and improve quality.

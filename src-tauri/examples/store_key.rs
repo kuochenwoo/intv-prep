@@ -6,7 +6,7 @@ fn main() {
     io::stdin().lock().read_line(&mut key).expect("stdin");
     match swe_interview_prep::credentials::save_key(&provider, &key) {
         Ok(()) => {
-            println!("API Key 已保存到当前测试用 .env（未输出 Key，未写入 SQLite 或 Keychain）")
+            println!("API key saved to the temporary test .env (key not printed or written to SQLite/Keychain)")
         }
         Err(e) => {
             eprintln!("{e}");

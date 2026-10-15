@@ -9,7 +9,7 @@ fn run() -> Result<(), String> {
     let question = store::questions(&c)?
         .into_iter()
         .find(|q| q.provider == "claude")
-        .ok_or("请先运行真实面试验收，保存一题 Claude 场景题")?;
+        .ok_or("Run the live interview acceptance first to cache a Claude scenario question")?;
     let config = credentials::LlmSettings {
         provider: question.provider.clone(),
         model: question.model.clone(),
@@ -22,13 +22,13 @@ fn run() -> Result<(), String> {
         store::start(&c, &question.id, &config)?
     };
     println!(
-        "真实 AI 代答测试会话：{}；{} / {}",
+        "Live AI-assisted answer test session: {}; {} / {}",
         s.id, config.provider, config.model
     );
     if s.status == "awaiting_reply" {
         s = store::retry_pending(&c, &s.id, &api)?;
         println!(
-            "已恢复待处理追问，未重复追加 AI 代答；现有 {} 条消息",
+            "Resumed the pending follow-up without duplicating the AI answer; {} messages",
             s.turns.len()
         );
     }
@@ -36,12 +36,12 @@ fn run() -> Result<(), String> {
         let round = s.turns.len() / 2;
         s = store::submit_reference(&c, &s.id, s.turns.len(), &api)?;
         let answer = &s.turns[s.turns.len() - 2];
-        let followup = s.turns.last().ok_or("缺少追问")?;
+        let followup = s.turns.last().ok_or("Missing follow-up")?;
         if answer.role != "candidate" || !answer.ai_assisted || followup.role != "interviewer" {
-            return Err("AI 代答或后续追问未正确保存".into());
+            return Err("The AI answer or subsequent follow-up was not saved correctly".into());
         }
         println!(
-            "第 {} 轮真实代答已提交：{} 字符；下一轮追问：{}",
+            "Round {}: submitted a real AI answer ({} characters); next follow-up: {}",
             round + 1,
             answer.text.chars().count(),
             followup.text
@@ -54,8 +54,8 @@ fn run() -> Result<(), String> {
         s = store::retry_pending(&c, &s.id, &api)?;
     }
     println!(
-        "真实反馈：{}",
-        s.feedback.as_ref().ok_or("缺少反馈")?.summary
+        "Live feedback: {}",
+        s.feedback.as_ref().ok_or("Missing feedback")?.summary
     );
     drop(c);
     let c = db::open(std::path::Path::new(&path))?;
@@ -65,14 +65,14 @@ fn run() -> Result<(), String> {
         || restored.turns.iter().filter(|t| t.ai_assisted).count() != 2
         || restored.references.len() != 2
     {
-        return Err("重开后 AI 代答或会话状态不一致".into());
+        return Err("AI answers or session state did not survive reopening consistently".into());
     }
-    println!("已验证原题和追问的自动代答→提交→继续追问、五维反馈及重开恢复。测试数据库：{path}");
+    println!("Verified automatic AI answers, submission, follow-ups, five-dimension feedback, and restoration. Test database: {path}");
     Ok(())
 }
 fn main() {
     if let Err(e) = run() {
-        eprintln!("真实 AI 代答验收未完成：{e}");
+        eprintln!("Live AI-assisted answer acceptance incomplete: {e}");
         std::process::exit(1);
     }
 }

@@ -955,8 +955,8 @@
     }
   ],
   "cpp": {
-    "functionTemplate": "class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        return {}; // 返回两个下标\n    }\n};",
-    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // 按题目协议读取 stdin 并输出答案\n    return 0;\n}\n",
+    "functionTemplate": "class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        return {}; // Return two indices.\n    }\n};",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n",
     "functionHarnessId": "two_sum",
     "acmIoSpec": "stdin：第一行 n target；第二行 n 个整数。stdout：两个不同的 0-based 下标，顺序不限，任意合法解均可。",
     "comparatorId": "valid_pair"

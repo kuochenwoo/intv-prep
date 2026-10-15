@@ -883,8 +883,8 @@
     }
   ],
   "cpp": {
-    "functionTemplate": "class Solution {\npublic:\n    void moveZeroes(vector<int>& nums) {\n        // 原地修改 nums\n    }\n};",
-    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // 按题目协议读取 stdin 并输出答案\n    return 0;\n}\n",
+    "functionTemplate": "class Solution {\npublic:\n    void moveZeroes(vector<int>& nums) {\n        // Modify nums in place.\n    }\n};",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n",
     "functionHarnessId": "move_zeroes",
     "acmIoSpec": "stdin：第一行数组长度 n；随后 n 个整数。stdout：修改后的 n 个整数，空数组输出空行。",
     "comparatorId": "integer_sequence"

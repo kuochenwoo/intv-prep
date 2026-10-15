@@ -1,21 +1,25 @@
-# 项目约定
+# Project guidelines
 
-遵循 `SWE_Interview_Prep_Requirements.md` 和用户当前指定的阶段范围，按 P0 → P1 → P2 → P3 推进，不提前实现后续阶段。
+Follow `SWE_Interview_Prep_Requirements.md` and the user's currently authorized scope. Proceed through P0 → P1 → P2 → P3 without implementing later phases early.
 
-## 后续所有 LC 题目的必要条件
+## Requirements for every future LC problem
 
-- 每道新增或更新的 LC 题目都必须提供相应的时间复杂度与额外空间复杂度要求，写入题目 JSON 的 `complexity`，并在题目详情中展示。
-- 说明规模变量、输入存储是否计入空间，以及递归栈、原地修改、平均/最坏复杂度等适用条件。
-- 查核官方题面或官方题解，记录来源链接；区分官方明确要求与本地训练目标。不得把建议的最优复杂度冒充官方硬性要求。
-- 每道题必须提供 `limits.timeLimitMs`、`limits.memoryLimitMb` 和 `limits.outputLimitKb`，Judge 必须实际读取并执行。预算应结合该题数据规模和真实运行验证，不能机械照搬现有题目的数值。
-- 无法核对的官方毫秒/MiB 配额不得编造；本地预算须明确标注。实测时间、进程 RSS 与渐进复杂度是不同指标，不得宣称有限测试自动证明了任意代码的 Big-O 或原地要求。
-- Function / ACM 两种模式共享语义测试，包含最大规模或有代表性的最坏情况用例，以及必要的资源超限回归测试。预期答案须可验证，编译、运行与判题不能使用 Mock 伪造成功。
-- 新题目必须接入题库及通用策略检查测试，验证复杂度元数据、资源配置、双模式适配和正确解法后再视为完成。
+- Every new or updated LC problem must specify time and auxiliary space complexity in the problem JSON's `complexity` field and display it in the problem details.
+- Define size variables, whether input storage counts toward space, and applicable assumptions about recursion stacks, in-place modification, and average/worst-case complexity.
+- Check the official statement or editorial and record source links. Distinguish explicit official requirements from local training goals. Never present a recommended optimal complexity as an official mandatory requirement.
+- Every problem must provide `limits.timeLimitMs`, `limits.memoryLimitMb`, and `limits.outputLimitKb`; the Judge must read and enforce them. Choose budgets using the problem's input scale and real execution results rather than mechanically copying existing values.
+- Do not invent unverified official millisecond/MiB quotas. Clearly label local budgets. Measured execution time, process RSS, and asymptotic complexity are different metrics; finite tests cannot automatically prove arbitrary code's Big-O or in-place behavior.
+- Function and ACM modes must share semantic tests, including maximum-size or representative worst-case inputs and necessary resource-limit regression tests. Expected answers must be verifiable. Never mock successful compilation, execution, or judging.
+- Integrate new problems into the problem library and common policy checks. Verify complexity metadata, resource settings, both mode adapters, and correct solutions before considering a problem complete.
 
-## 当前阶段状态
+## Current phase status
 
-P0 已完成，保留全部 LC 复杂度和资源限制约定。用户已授权 P1，当前已实现 Claude / DeepSeek Technical Deep Dive 的界面、缓存、面试、反馈和失败恢复。用户现指定 Claude Haiku 5.5（claude-haiku-5-5）；Claude 已完成真实出题、追问和五维反馈及重试恢复。DeepSeek 的真实多轮验收仍受 503 / 保活超时影响，不得声称 DeepSeek 已通过。不要开始 P2 或 P3。
+P0 is complete. Preserve all LC complexity and resource-limit requirements. The user authorized P1, which now includes Claude / DeepSeek Technical Deep Dive UI, caching, interviews, feedback, and failure recovery. The currently requested model is Claude Haiku 5.5 (`claude-haiku-5-5`). Claude has passed real question generation, follow-ups, five-dimension feedback, and retry recovery. DeepSeek's real multi-turn acceptance remains affected by HTTP 503 / keepalive timeouts; do not claim that DeepSeek has passed. Do not start P2 or P3.
 
-用户最新明确要求：先将 Key 放在受 Git 忽略、权限 0600 的 `.env` 做测试，测试通过后再写入系统 Keychain。当前运行时只读写 `.env`，不要自动回退系统存储或提前迁移。不同 Provider 的 Key 必须分别保留；不得提交 `.env`、打印实际 Key，或把 Key 写入 SQLite。
+The user explicitly requested storing keys in a Git-ignored `.env` with mode 0600 for testing, before migrating to the system Keychain after tests pass. The current runtime only reads/writes `.env`; do not automatically fall back to system storage or migrate early. Preserve separate keys for each provider. Never commit `.env`, print real keys, or write keys to SQLite.
 
-用户更正了 P1 参考答案功能：点击“AI 参考作答并追问”应让模型代答当前原题/追问，自动提交并继续追问。代答须标记 aiAssisted，反馈不能据此认定用户独立掌握。保留草稿保护；回答提交后追问失败可重试，不得重复生成或追加代答。不再将该按钮实现为只读参考面板。
+The user clarified the P1 reference-answer feature: clicking the AI-assisted answer and follow-up button must make the model answer the current original question or follow-up, automatically submit that answer, and continue the interview. Mark these turns with `aiAssisted`; feedback must not treat them as evidence of the user's independent understanding. Preserve draft protection. If the follow-up fails after submission, retries must not regenerate or append another AI answer. Do not implement this button as a read-only reference panel.
+
+## Language conventions
+
+Write project documentation, developer descriptions, and code comments in English. Keep user-facing UI text, problem statements, interview content, and user-facing error messages in Chinese. Code comments inside starter templates follow the English-comment convention.

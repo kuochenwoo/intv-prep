@@ -50,8 +50,8 @@
     }
   ],
   "cpp": {
-    "functionTemplate": "class Solution {\npublic:\n    int lengthOfLongestSubstring(string s) {\n        return 0; // 实现滑动窗口\n    }\n};",
-    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // 按题目协议读取 stdin 并输出答案\n    return 0;\n}\n",
+    "functionTemplate": "class Solution {\npublic:\n    int lengthOfLongestSubstring(string s) {\n        return 0; // Implement a sliding window.\n    }\n};",
+    "acmTemplate": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\nint main() {\n    // Read stdin and print the answer according to the problem protocol.\n    return 0;\n}\n",
     "functionHarnessId": "substring",
     "acmIoSpec": "stdin：一整行字符串，允许空行和空格。stdout：一个整数。",
     "comparatorId": "integer_sequence"
