@@ -2,310 +2,234 @@
   {
     "id": "cache-selection",
     "category": "Caching",
-    "title": "缓存选型与一致性",
+    "title": "缓存回填与一致性",
     "focus": [
-      "Redis vs 本地缓存",
-      "Cache Aside 与 write-through",
-      "击穿与热点",
-      "缓存/数据库一致性"
+      "Cache Aside 读写步骤",
+      "旧值回填时序",
+      "删除与更新缓存的局部取舍"
     ],
     "scenarioConstraints": [
-      "100k 读 QPS",
-      "p99 < 50ms",
-      "多实例部署"
+      "数据库初值为 v1，缓存初始不存在该 key；写入 v2 后提交",
+      "读请求先读到 v1，写请求提交后删除缓存，读请求再回填 v1"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "Cache Selection and Consistency",
+      "title": "Cache Refill and Consistency",
       "focus": [
-        "Redis vs local cache",
-        "Cache-aside vs write-through",
-        "Cache breakdown and hot keys",
-        "Cache/database consistency"
+        "Cache-aside read/write steps",
+        "Stale refill ordering",
+        "Local trade-offs of deleting vs updating cache"
       ],
       "scenarioConstraints": [
-        "100k read QPS",
-        "p99 < 50ms",
-        "Multi-instance deployment"
+        "Database initially contains v1 and the cache key is absent; a writer commits v2",
+        "A reader fetches v1, the writer commits and deletes the cache, then the reader caches v1"
       ]
     }
   },
   {
     "id": "hot-key-protection",
     "category": "Caching",
-    "title": "热点与缓存故障",
-    "focus": [
-      "热 key 识别",
-      "请求合并",
-      "缓存失效",
-      "降级与限流"
-    ],
+    "title": "缓存过期与请求合并",
+    "focus": ["同一 key 并发 miss", "锁内二次检查", "请求合并的等待边界"],
     "scenarioConstraints": [
-      "热点占 60% 流量",
-      "峰值 10 倍",
-      "缓存集群可能不可用"
+      "单进程内两个线程同时读取一个已过期的 key",
+      "缓存未命中时调用同一个慢速数据库查询"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "Hot Keys and Cache Failures",
+      "title": "Cache Expiry and Request Coalescing",
       "focus": [
-        "Hot-key detection",
-        "Request coalescing",
-        "Cache invalidation",
-        "Degradation and rate limiting"
+        "Concurrent misses for one key",
+        "Rechecking after acquiring a lock",
+        "Waiting boundaries of request coalescing"
       ],
       "scenarioConstraints": [
-        "Hot keys carry 60% of traffic",
-        "10x peak traffic",
-        "Cache cluster may be unavailable"
+        "Two threads in one process read the same expired key",
+        "Each cache miss invokes the same slow database query"
       ]
     }
   },
   {
     "id": "idempotency-retries",
     "category": "Correctness",
-    "title": "幂等、超时与重试",
-    "focus": [
-      "幂等键生命周期",
-      "重复执行",
-      "指数退避与抖动",
-      "未知结果恢复"
-    ],
+    "title": "幂等键与重试结果",
+    "focus": ["幂等键与唯一约束", "并发检查再写入", "超时不等于失败"],
     "scenarioConstraints": [
-      "支付回调可能重复",
-      "网络超时",
-      "不允许重复扣款"
+      "同一订单的两个请求使用相同幂等键",
+      "业务更新与幂等记录写入同一个数据库事务"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "Idempotency, Timeouts and Retries",
+      "title": "Idempotency Keys and Retry Outcomes",
       "focus": [
-        "Idempotency key lifecycle",
-        "Duplicate execution",
-        "Exponential backoff with jitter",
-        "Recovering from unknown outcomes"
+        "Idempotency keys and unique constraints",
+        "Concurrent check-then-insert",
+        "Timeout does not imply failure"
       ],
       "scenarioConstraints": [
-        "Payment callbacks may repeat",
-        "Network timeouts",
-        "No double charging allowed"
+        "Two requests for one order share an idempotency key",
+        "The business update and idempotency record use one database transaction"
       ]
     }
   },
   {
     "id": "message-delivery",
     "category": "Messaging",
-    "title": "消息可靠投递与消费",
-    "focus": [
-      "至少一次 vs 至多一次",
-      "去重与顺序",
-      "事务发件箱",
-      "积压与重放"
-    ],
+    "title": "消费确认与重复消息",
+    "focus": ["ack 时机", "至少一次投递", "业务提交后的崩溃窗口"],
     "scenarioConstraints": [
-      "10k 消息/秒",
-      "消费端可能崩溃",
-      "业务状态与消息必须可对账"
+      "队列使用手动 ack，未确认的消息会重新投递",
+      "消费者已提交数据库事务，但在 ack 前崩溃"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "Reliable Message Delivery and Consumption",
+      "title": "Acknowledgements and Duplicate Messages",
       "focus": [
-        "At-least-once vs at-most-once",
-        "Deduplication and ordering",
-        "Transactional outbox",
-        "Backlog and replay"
+        "Acknowledgement timing",
+        "At-least-once delivery",
+        "Crash window after business commit"
       ],
       "scenarioConstraints": [
-        "10k messages/second",
-        "Consumers may crash",
-        "Business state and messages must reconcile"
+        "The queue uses manual acknowledgements and redelivers unacknowledged messages",
+        "A consumer commits its database transaction, then crashes before acknowledging"
       ]
     }
   },
   {
     "id": "queue-selection",
     "category": "Messaging",
-    "title": "队列选型与背压",
-    "focus": [
-      "Kafka vs RabbitMQ",
-      "分区并发与顺序",
-      "重试队列",
-      "生产消费速率不匹配"
-    ],
+    "title": "分区顺序与消费并发",
+    "focus": ["分区内顺序", "消费并发与完成顺序", "有限缓冲与背压"],
     "scenarioConstraints": [
-      "事件保留 7 天",
-      "5 个消费组",
-      "下游峰值处理能力有限"
+      "Kafka 同一分区依次包含同一订单的创建与取消事件",
+      "消费者按顺序拉取后交给两个工作线程处理"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "Queue Selection and Backpressure",
+      "title": "Partition Ordering and Consumer Concurrency",
       "focus": [
-        "Kafka vs RabbitMQ",
-        "Partition concurrency and ordering",
-        "Retry queues",
-        "Producer/consumer rate mismatch"
+        "Partition ordering",
+        "Processing concurrency and completion order",
+        "Bounded buffers and backpressure"
       ],
       "scenarioConstraints": [
-        "Events retained for 7 days",
-        "5 consumer groups",
-        "Downstream peak capacity is limited"
+        "One Kafka partition contains create then cancel events for the same order",
+        "A consumer fetches in order, then dispatches to two worker threads"
       ]
     }
   },
   {
     "id": "rate-limiting",
     "category": "Concurrency",
-    "title": "限流、熔断与降级",
-    "focus": [
-      "令牌桶 vs 漏桶",
-      "分布式配额",
-      "公平性",
-      "失效时放行还是拒绝"
-    ],
+    "title": "令牌桶与突发请求",
+    "focus": ["令牌补充与桶容量", "突发额度", "检查扣减的原子性"],
     "scenarioConstraints": [
-      "多租户 API",
-      "每租户额度",
-      "依赖服务 p99 抖动"
+      "单进程令牌桶容量为 5，初始满桶，每秒补充 1 个令牌",
+      "同一时刻有 8 个请求，每个请求消耗 1 个令牌，令牌不足立即拒绝"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "Rate Limiting, Circuit Breaking and Degradation",
+      "title": "Token Buckets and Bursts",
       "focus": [
-        "Token bucket vs leaky bucket",
-        "Distributed quotas",
-        "Fairness",
-        "Fail open vs fail closed"
+        "Token refill and bucket capacity",
+        "Burst allowance",
+        "Atomic check-and-decrement"
       ],
       "scenarioConstraints": [
-        "Multi-tenant API",
-        "Per-tenant quotas",
-        "Dependency p99 jitter"
+        "A single-process token bucket starts full with capacity 5 and refills one token per second",
+        "Eight simultaneous requests each require one token; insufficient tokens cause immediate rejection"
       ]
     }
   },
   {
     "id": "database-concurrency",
     "category": "Consistency",
-    "title": "事务隔离与并发正确性",
-    "focus": [
-      "乐观锁 vs 悲观锁",
-      "隔离级别",
-      "写偏差",
-      "库存超卖"
-    ],
+    "title": "库存扣减与事务并发",
+    "focus": ["读改写与丢失更新", "条件更新与受影响行数", "行锁持有至提交"],
     "scenarioConstraints": [
-      "库存不可为负",
-      "高并发扣减",
-      "热点 SKU"
+      "PostgreSQL READ COMMITTED，库存初值为 1",
+      "两个事务分别 SELECT 库存，在应用内减一，再写回计算值"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "Transaction Isolation and Concurrency Correctness",
+      "title": "Inventory Updates and Transaction Concurrency",
       "focus": [
-        "Optimistic vs pessimistic locking",
-        "Isolation levels",
-        "Write skew",
-        "Inventory overselling"
+        "Read-modify-write and lost updates",
+        "Conditional updates and affected-row counts",
+        "Row locks held until commit"
       ],
       "scenarioConstraints": [
-        "Inventory must never go negative",
-        "High-concurrency decrements",
-        "Hot SKUs"
+        "PostgreSQL READ COMMITTED with initial stock 1",
+        "Two transactions each SELECT stock, subtract one in application code, then write back the computed value"
       ]
     }
   },
   {
     "id": "replication-failover",
     "category": "Availability",
-    "title": "副本、故障转移与一致性",
-    "focus": [
-      "同步 vs 异步复制",
-      "读己之写",
-      "脑裂与 fencing",
-      "RPO/RTO"
-    ],
+    "title": "异步复制与读己之写",
+    "focus": ["提交确认与复制延迟", "读己之写", "临时读主库的代价"],
     "scenarioConstraints": [
-      "跨可用区部署",
-      "读多写少",
-      "主节点可能网络分区"
+      "主库提交成功不等待异步副本应用日志",
+      "用户更新昵称成功后，立即从只读副本查询昵称"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "Replication, Failover and Consistency",
+      "title": "Asynchronous Replication and Read-Your-Writes",
       "focus": [
-        "Synchronous vs asynchronous replication",
+        "Commit acknowledgement and replication lag",
         "Read-your-writes",
-        "Split brain and fencing",
-        "RPO/RTO"
+        "Cost of temporarily reading from the primary"
       ],
       "scenarioConstraints": [
-        "Multi-AZ deployment",
-        "Read-heavy, write-light",
-        "Primary may be network-partitioned"
+        "Primary commit acknowledgement does not wait for an asynchronous replica to apply the log",
+        "A user updates a nickname successfully, then immediately reads it from the replica"
       ]
     }
   },
   {
     "id": "sharding-growth",
     "category": "Scalability",
-    "title": "分片、扩容与热点迁移",
-    "focus": [
-      "分片键选择",
-      "一致性哈希 vs 范围",
-      "在线迁移",
-      "跨分片查询"
-    ],
+    "title": "哈希取模与键迁移",
+    "focus": ["hash(key) % N", "扩容后的映射变化", "一致性哈希的基本边界"],
     "scenarioConstraints": [
-      "数据增长 10 倍",
-      "写热点不均匀",
-      "迁移期间持续服务"
+      "路由规则为 hash(key) % N，hash 输出为非负整数",
+      "节点数从 3 改为 4，观察 hash 值为 5 的 key"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "Sharding, Scaling Out and Hot-Spot Migration",
+      "title": "Hash Modulo and Key Remapping",
       "focus": [
-        "Shard key selection",
-        "Consistent hashing vs range",
-        "Online migration",
-        "Cross-shard queries"
+        "hash(key) % N",
+        "Mapping changes when N increases",
+        "Basic boundaries of consistent hashing"
       ],
       "scenarioConstraints": [
-        "10x data growth",
-        "Uneven write hot spots",
-        "Service stays up during migration"
+        "Routing uses hash(key) % N with nonnegative integer hashes",
+        "Node count changes from 3 to 4; inspect a key whose hash is 5"
       ]
     }
   },
   {
     "id": "rpc-tail-latency",
     "category": "Performance",
-    "title": "RPC 与尾延迟优化",
-    "focus": [
-      "超时预算",
-      "连接池与排队",
-      "重试放大",
-      "批处理 vs 并发扇出"
-    ],
+    "title": "RPC 超时与重试放大",
+    "focus": ["超时与服务端执行状态", "重试次数相乘", "截止时间与取消语义"],
     "scenarioConstraints": [
-      "聚合 12 个下游",
-      "端到端 p99 < 200ms",
-      "流量有突发"
+      "调用链 A → B → C，每层失败后最多额外重试 2 次",
+      "C 持续超时；客户端超时不会自动撤销 C 已开始的操作"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "RPC and Tail Latency Optimization",
+      "title": "RPC Timeouts and Retry Amplification",
       "focus": [
-        "Timeout budgets",
-        "Connection pools and queuing",
-        "Retry amplification",
-        "Batching vs concurrent fan-out"
+        "Timeout vs server execution state",
+        "Multiplication of retry counts",
+        "Deadlines and cancellation semantics"
       ],
       "scenarioConstraints": [
-        "Aggregates 12 downstream services",
-        "End-to-end p99 < 200ms",
-        "Bursty traffic"
+        "Call chain A → B → C; each layer allows at most two additional retries",
+        "C keeps timing out; a client timeout does not automatically undo work already started at C"
       ]
     }
   }

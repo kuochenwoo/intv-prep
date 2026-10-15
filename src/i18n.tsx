@@ -2,8 +2,8 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 
 export type Lang = "zh" | "en";
 
-// UI strings only. Problem statements, topics and AI output stay in the
-// language they were written in.
+// UI strings. Problem and topic text has its own `en` blocks in the content files,
+// and backend errors are translated in errors.ts.
 const strings = {
   // App shell
   appTitle: ["SWE 面试准备", "SWE Interview Prep"],
@@ -35,6 +35,14 @@ const strings = {
   detectSave: ["检测并保存", "Detect and save"],
   problems: ["练习题", "Problems"],
   problemCount: ["{n} 道", "{n} problems"],
+  timer: ["计时", "Timer"],
+  timerOff: ["不计时", "No timer"],
+  timerMinutes: ["{n} 分钟", "{n} min"],
+  timerPause: ["暂停", "Pause"],
+  timerResume: ["继续", "Resume"],
+  timerRestart: ["重新计时", "Restart"],
+  timeLeft: ["剩余 {t}", "{t} left"],
+  timeUp: ["时间到", "Time's up"],
   searchProblems: ["搜索题目", "Search problems"],
   searchPlaceholder: ["标题 / 编号 / 标签", "Title, number or tag"],
   difficulty: ["难度", "Difficulty"],
@@ -136,7 +144,10 @@ const strings = {
   keyMissing: ["尚未保存密钥", "No key saved"],
   modelName: ["模型名称", "Model"],
   timeoutSeconds: ["请求超时（秒）", "Request timeout (s)"],
-  apiKeyPlaceholder: ["留空则保留已存 Key", "Leave empty to keep the saved key"],
+  apiKeyPlaceholder: [
+    "留空则保留已存 Key",
+    "Leave empty to keep the saved key",
+  ],
   saveSettings: ["保存设置与密钥", "Save settings and key"],
   deleteKey: ["删除当前 Provider 密钥", "Delete this provider's key"],
   settingsNote: [
@@ -152,8 +163,14 @@ const strings = {
   apiUnverified: ["API 尚未验证", "API not checked yet"],
   requesting: ["正在请求 {p}…", "Calling {p}…"],
   lastOk: ["上次 API 请求成功", "Last API call succeeded"],
-  lastFailed: ["上次联网操作失败，可重试", "Last online action failed; you can retry"],
-  busyNote: ["处理中，请等待完成或超时", "Working; wait for it to finish or time out"],
+  lastFailed: [
+    "上次联网操作失败，可重试",
+    "Last online action failed; you can retry",
+  ],
+  busyNote: [
+    "处理中，请等待完成或超时",
+    "Working; wait for it to finish or time out",
+  ],
   aiWriting: ["AI 正在生成…", "AI is writing…"],
   confirmKey: [
     "确认从 .env 删除 {p} 的密钥？历史记录和其他 Provider 的密钥会保留。",
@@ -174,14 +191,23 @@ const strings = {
   randomTopic: ["随机选主题", "Random topic"],
   history: ["面试历史（本地）", "Interview history (local)"],
   noSessions: ["还没有面试会话。", "No interviews yet."],
-  clearHistory: ["清空面试历史与题目缓存", "Clear history and cached questions"],
+  clearHistory: [
+    "清空面试历史与题目缓存",
+    "Clear history and cached questions",
+  ],
   seedConstraints: ["种子约束：{c}", "Seed constraints: {c}"],
   working: ["处理中…", "Working…"],
-  generateStart: ["生成新题并开始（联网）", "Generate a question and start (online)"],
+  generateStart: [
+    "生成新题并开始（联网）",
+    "Generate a question and start (online)",
+  ],
   cachedQuestions: ["已缓存问题 · {n}", "Cached questions · {n}"],
   pickCached: ["选择已缓存问题", "Pick a cached question"],
   generatedAt: ["生成于 {d} · {m}", "Generated {d} · {m}"],
-  reuseStart: ["复用此题开始新面试（离线）", "Start a new interview with this question (offline)"],
+  reuseStart: [
+    "复用此题开始新面试（离线）",
+    "Start a new interview with this question (offline)",
+  ],
   cacheHint: [
     "首次生成后会保存在本地，再练同一题不必重新生成。",
     "Questions are saved locally after the first generation, so you can practice them again without regenerating.",
@@ -196,11 +222,23 @@ const strings = {
   roleYou: ["你的回答", "Your answer"],
   roleInterviewer: ["面试官追问", "Interviewer"],
   refKeyPoints: ["参考作答要点", "Key points"],
-  refShown: ["AI 参考回答（未提交，仅供参考）", "AI reference answer (not submitted)"],
-  copyToAnswer: ["复制到我的回答（可修改后提交）", "Copy into my answer (edit, then submit)"],
-  submitRef: ["直接提交此回答并追问（联网）", "Submit this answer and continue (online)"],
+  refShown: [
+    "AI 参考回答（未提交，仅供参考）",
+    "AI reference answer (not submitted)",
+  ],
+  copyToAnswer: [
+    "复制到我的回答（可修改后提交）",
+    "Copy into my answer (edit, then submit)",
+  ],
+  submitRef: [
+    "直接提交此回答并追问（联网）",
+    "Submit this answer and continue (online)",
+  ],
   clearDraftFirst: ["请先清空回答草稿", "Clear your draft first"],
-  savedLocally: ["{e} · 内容已保存在本地。", "{e} · Your content is saved locally."],
+  savedLocally: [
+    "{e} · 内容已保存在本地。",
+    "{e} · Your content is saved locally.",
+  ],
   pendingReply: [
     "回答已保存，等待本轮追问。重试不会重复追加回答。",
     "Answer saved; waiting for the follow-up. Retrying will not add the answer twice.",
@@ -210,7 +248,10 @@ const strings = {
     "Finish request saved; waiting for feedback. Retrying will not create a new session.",
   ],
   retryPending: ["重试待处理请求（联网）", "Retry pending request (online)"],
-  yourAnswer: ["你的回答（自动保存，最多 6000 字符）", "Your answer (auto-saved, up to 6000 characters)"],
+  yourAnswer: [
+    "你的回答（自动保存，最多 6000 字符）",
+    "Your answer (auto-saved, up to 6000 characters)",
+  ],
   answerPlaceholder: [
     "说明你的方案、依据、替代方案与失败场景…",
     "Explain your approach, reasoning, alternatives and failure cases…",
@@ -221,7 +262,10 @@ const strings = {
   submitAnswer: ["提交回答并追问（联网）", "Submit and get follow-up (online)"],
   refReady: ["已生成参考回答（见上方）", "Reference answer shown above"],
   aiReference: ["AI 参考回答（联网）", "AI reference answer (online)"],
-  finishFeedback: ["结束并生成反馈（联网）", "Finish and get feedback (online)"],
+  finishFeedback: [
+    "结束并生成反馈（联网）",
+    "Finish and get feedback (online)",
+  ],
   refHint: [
     "AI 参考回答只显示一份简洁答案，不会自动提交或追问。",
     "The AI reference shows one concise answer; it is not submitted and asks no follow-up.",

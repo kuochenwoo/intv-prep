@@ -1,7 +1,9 @@
 # SWE Interview Prep — Local Interview Preparation Requirements
 
-> Version: v0.1 (personal-use MVP)  
-> Audience: Codex / developers  
+> Version: v0.1 (personal-use MVP)
+>
+> Audience: Codex / developers
+>
 > Positioning: A **local-first SWE interview-training desktop application**. Prioritize real personal interview preparation without premature productization.
 
 ---
@@ -148,7 +150,9 @@ This is a logical schema. The implementation may keep C++ harnesses and test fil
 
 ### 5.1 Positioning
 
-Replace memorization questions such as “What is Redis?” or “How is Java HashMap implemented?” with **a concrete scenario → solution selection → rationale → alternatives → failure scenarios/boundaries → deeper follow-ups**.
+Use **a small concrete scenario → one underlying mechanism → execution steps → one boundary or local trade-off**. Ask one question answerable in two to three minutes, rather than combining design, selection, optimization, and disaster recovery. Topic focus items are optional directions, not a mandatory checklist. Capacity planning and complete architectures belong to P2.
+
+For example, a cache-aside reader fetches an old database value, a writer then commits a new value and deletes the cache, and the reader finally caches its old value. Ask why stale reads remain possible. Probe one operation ordering or local fix later, rather than asking for a complete caching service.
 
 Core capabilities:
 
@@ -175,30 +179,29 @@ Example topic seed:
 {
   "id": "cache-selection",
   "category": "Caching",
-  "title": "Cache selection and consistency",
+  "title": "Cache Refill and Consistency",
   "focus": [
-    "Redis vs local cache",
-    "Cache Aside vs write-through",
-    "Hot keys and cache stampedes",
-    "Cache/database consistency"
+    "Cache-aside read/write steps",
+    "Stale refill ordering",
+    "Local trade-offs of deleting vs updating cache"
   ],
   "scenarioConstraints": [
-    "100k read QPS",
-    "p99 < 50ms",
-    "multi-instance deployment"
+    "Database initially contains v1; a writer commits v2",
+    "A reader fetches v1, the writer commits and deletes the cache, then the reader caches v1"
   ],
   "level": "mid-to-senior"
 }
 ```
 
-This JSON defines **topic boundaries**, not a memorized standard answer. Example text here is illustrative; application interview content remains in Chinese.
+This JSON defines topic boundaries, not a memorized standard answer. The application stores Chinese and English versions. Existing cached questions and sessions remain unchanged when seeds or prompts change. Newly generated questions use prompt version `deep-dive-v3-fundamentals`.
 
 ### 5.3 Interview interaction
 
 - Present complete background, goals, and necessary constraints when generating a question.
 - Accept free-text answers across multiple rounds.
 - Generate specific follow-ups based on the user's **actual answer**, without mechanically switching to an unrelated area.
-- Reasonably challenge assumptions, edge cases, technology choices, and failure modes.
+- Follow the answer at its current depth: ask for an execution step after jargon, test a misconception with one minimal counterexample, or narrow to a prerequisite when the user does not know. Probe a boundary only after the mechanism is clear.
+- Introduce at most one explicit changed condition per round, preserving the original assumptions otherwise. Suggest ending after independent explanation of the mechanism and one boundary instead of filling rounds with architecture extensions.
 - Do not proactively reveal a full reference answer during answering; an end-and-review-feedback action is appropriate.
 - At the end, explain strengths, omissions, possibly wrong or disputed judgments, alternatives, and recommended practice.
 
@@ -206,7 +209,7 @@ This JSON defines **topic boundaries**, not a memorized standard answer. Example
 
 `Principles / Selection rationale / Alternative trade-offs / Failure boundaries and correctness / Communication clarity`
 
-Allow multiple reasonable technical solutions rather than enforcing one standard answer. Explain suitability using the problem's constraints.
+Allow multiple reasonable technical solutions rather than enforcing one standard answer. Require causal evidence instead of keyword matching. An unasked dimension with no independent evidence stays `missing`, explicitly described as not assessed rather than a demonstrated weakness. Local choices and trade-offs suffice; full architecture coverage is not expected.
 
 ---
 

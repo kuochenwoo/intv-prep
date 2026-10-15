@@ -26,6 +26,7 @@ import "./style.css";
 import logo from "./assets/logo.png";
 import InterviewApp from "./features/interview/InterviewApp";
 import { LangProvider, lookup, useI18n } from "./i18n";
+import { Timer } from "./Timer";
 import { localizeError } from "./errors";
 // Bundle Monaco locally: editing works without a CDN or network connection.
 (self as unknown as { MonacoEnvironment: unknown }).MonacoEnvironment = {
@@ -451,6 +452,7 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
               />
               <SegmentedControlItem value="acm" label={t("modeAcmFull")} />
             </SegmentedControl>
+            <Timer key={selected} />
             <small className="muted">
               {saving ? t("saving") : t("saved")} ·{" "}
               {mode === "function" ? t("mainProvided") : t("mainYours")}
