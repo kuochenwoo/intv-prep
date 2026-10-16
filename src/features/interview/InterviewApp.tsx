@@ -522,7 +522,7 @@ export default function InterviewApp({
         isActionLoading={busy}
         onAction={async () => {
           // perform() reports failures in the error banner, so the dialog closes either way.
-          await perform(async (current) => {
+          await perform(async () => {
             if (confirm === "history") {
               await invoke("clear_interview_history");
               setSession(null);

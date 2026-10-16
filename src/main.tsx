@@ -31,7 +31,7 @@ import SystemDesignApp from "./features/system-design/SystemDesignApp";
 import { ReviewPage, type ReviewTarget } from "./features/review/ReviewPage";
 
 /** A request from the Review tab to open something; `n` makes each request new. */
-export type Focus = { id: string; session: boolean; n: number };
+type Focus = { id: string; session: boolean; n: number };
 import { LangProvider, lookup, useI18n } from "./i18n";
 import { Timer } from "./Timer";
 import { EmptyState } from "./EmptyState";

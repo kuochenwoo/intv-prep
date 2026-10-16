@@ -131,27 +131,6 @@ const EXACT: [string, string][] = [
   // credentials.rs
   ["未知凭据供应商", "Unknown credential provider"],
   [
-    "无法初始化系统凭据存储",
-    "Could not initialize the system credential store",
-  ],
-  ["API Key 格式无效，请检查输入", "Invalid API key format, please check it"],
-  [
-    "无法写入系统凭据存储，请检查钥匙串权限",
-    "Could not write to the system credential store; check Keychain permissions",
-  ],
-  [
-    "尚未保存此供应商的 API Key，请在设置中配置",
-    "No API key saved for this provider; set one in settings",
-  ],
-  [
-    "无法读取系统凭据存储，请解锁钥匙串并检查访问权限",
-    "Could not read the system credential store; unlock the Keychain and check access",
-  ],
-  [
-    "无法从系统凭据存储删除 Key",
-    "Could not delete the key from the system credential store",
-  ],
-  [
     "Key 格式无效（只接受字母、数字、连字符和下划线）",
     "Invalid key format (only letters, digits, hyphens and underscores)",
   ],

@@ -1,36 +1,5 @@
 use rusqlite::{Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
-const SERVICE: &str = "local.swe.interview-prep.llm";
-// System backend retained for migration after testing; accounts are provider-specific.
-fn entry(provider: &str) -> Result<keyring::Entry, String> {
-    if !["deepseek", "openai", "claude"].contains(&provider) {
-        return Err("未知凭据供应商".into());
-    }
-    keyring::Entry::new(SERVICE, provider).map_err(|_| "无法初始化系统凭据存储".into())
-}
-pub fn save_system_key(provider: &str, key: &str) -> Result<(), String> {
-    let key = key.trim();
-    if key.len() < 10 || key.len() > 512 || !key.is_ascii() || key.chars().any(char::is_whitespace)
-    {
-        return Err("API Key 格式无效，请检查输入".into());
-    }
-    entry(provider)?
-        .set_password(key)
-        .map_err(|_| "无法写入系统凭据存储，请检查钥匙串权限".into())
-}
-pub fn read_system_key(provider: &str) -> Result<String, String> {
-    match entry(provider)?.get_password() {
-        Ok(key) => Ok(key),
-        Err(keyring::Error::NoEntry) => Err("尚未保存此供应商的 API Key，请在设置中配置".into()),
-        Err(_) => Err("无法读取系统凭据存储，请解锁钥匙串并检查访问权限".into()),
-    }
-}
-pub fn delete_system_key(provider: &str) -> Result<(), String> {
-    match entry(provider)?.delete_credential() {
-        Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
-        Err(_) => Err("无法从系统凭据存储删除 Key".into()),
-    }
-}
 // Temporary test mode requested by the user. No automatic Keychain fallback/writes.
 pub fn env_path() -> std::path::PathBuf {
     std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

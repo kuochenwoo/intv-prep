@@ -35,7 +35,8 @@ npm run tauri dev
 ## Build and test
 
 ```sh
-npm run build                         # type-check and build the frontend
+npm run build                         # type-check (including unused code) and build the frontend
+npm run test:review-ui                # offline frontend helper/Markdown tests
 npm test                              # Rust tests: judge, every problem in both modes, storage, AI client (no paid API calls)
 npm run tauri build -- --bundles app  # unsigned macOS .app
 ```

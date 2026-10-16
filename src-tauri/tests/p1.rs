@@ -420,27 +420,6 @@ fn invalid_states_and_twenty_round_limit_are_enforced() {
     assert_eq!(store::session(&c, &s.id).unwrap().turns.len(), 40);
 }
 #[test]
-#[ignore = "Uses OS credential store; writes and deletes an isolated dummy test credential"]
-fn os_keyring_roundtrip() {
-    let account = format!(
-        "test-{}-{}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    );
-    let entry = keyring::Entry::new("local.swe.interview-prep.keychain-test", &account).unwrap();
-    entry
-        .set_password("temporary-fixture-not-an-api-key")
-        .unwrap();
-    let value = entry.get_password().unwrap();
-    entry.delete_credential().unwrap();
-    assert_eq!(value, "temporary-fixture-not-an-api-key");
-    assert!(matches!(entry.get_password(), Err(keyring::Error::NoEntry)));
-}
-
-#[test]
 fn temporary_env_keys_are_private_atomic_and_provider_specific() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join(".env");

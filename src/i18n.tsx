@@ -153,7 +153,6 @@ const strings = {
     "Records each actual HTTP request, including reviews, repairs and retries. Tokens come from the provider; unknown is not zero. Costs use your rates and are estimates, not invoices. Interrupted requests may still be charged.",
   ],
   usageScope: ["记录范围", "Record scope"],
-  usageSession: ["当前面试", "This interview"],
   usageAll: ["全部 API 请求", "All API requests"],
   usageRefresh: ["刷新记录", "Refresh records"],
   usageTotals: [
@@ -390,7 +389,6 @@ const strings = {
   sdFunctions: ["功能范围", "Functional scope"],
   sdScale: ["规模范围", "Scale ranges"],
   sdReliability: ["可靠性约束", "Reliability constraints"],
-  sdDirections: ["可选架构深挖方向", "Optional architecture deep dives"],
   sdCurrent: ["当前设计面试", "Current design interview"],
   sdStage_requirements: ["需求澄清", "Requirements"],
   sdStage_estimation: ["容量估算", "Estimation"],
@@ -509,12 +507,6 @@ const strings = {
     "This deletes the interview and its feedback and cannot be undone. Cached design questions are kept.",
   ],
   sdRetrySave: ["重试保存工作区", "Retry saving workspace"],
-  sdModelSettings: [
-    "模型设置（与技术深挖共享）",
-    "Model settings (shared with Deep Dive)",
-  ],
-  sdProvider: ["模型供应商", "Provider"],
-  sdCounts: ["{n} / {max} 字符", "{n} / {max} characters"],
   sdNoNotes: ["暂无笔记", "No notes yet"],
   sdThread: ["阶段讨论记录", "Stage discussion"],
   sdLoading: ["正在读取本地系统设计数据…", "Loading local system design data…"],
@@ -525,10 +517,6 @@ const strings = {
     "Open the desktop app with npm run tauri dev. The browser preview cannot reach the local compiler.",
   ],
   draftSaveFailed: ["草稿保存失败：{e}", "Could not save the draft: {e}"],
-  compilerDetected: [
-    "已检测到编译器：{path}；判题时使用 -std=c++20 编译。",
-    "Compiler found: {path}. Judging compiles with -std=c++20.",
-  ],
   offlineJudge: ["C++20 · 离线判题", "C++20 · offline judge"],
   compiler: ["编译器", "Compiler"],
   compilerPlaceholder: [
@@ -558,9 +546,6 @@ const strings = {
   allTags: ["全部标签", "All tags"],
   modeFunction: ["函数", "Function"],
   modeAcm: ["ACM", "ACM"],
-  progressDone: ["完成", "done"],
-  progressDoing: ["在做", "started"],
-  progressTodo: ["未做", "not started"],
   noMatch: ["没有符合条件的题目。", "No problems match these filters."],
   constraints: ["约束", "Constraints"],
   complexity: ["时间 / 空间复杂度要求", "Time / space requirements"],
@@ -756,7 +741,6 @@ const strings = {
     "清空面试历史与题目缓存",
     "Clear history and cached questions",
   ],
-  seedConstraints: ["种子约束：{c}", "Seed constraints: {c}"],
   working: ["处理中…", "Working…"],
   generateStart: [
     "生成新题并开始（联网）",

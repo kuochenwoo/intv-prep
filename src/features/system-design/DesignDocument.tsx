@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { Button } from "@astryxdesign/core/Button";
-export { Markdown } from "../../Markdown";
 import { useI18n } from "../../i18n";
 
 export function Diagram({ source, dark }: { source: string; dark: boolean }) {

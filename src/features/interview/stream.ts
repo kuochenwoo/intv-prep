@@ -28,7 +28,7 @@ function unescape(raw: string): string {
 }
 
 /** `field` is the JSON key; the UI translates it for display. */
-export type StreamSection = { field: string; text: string };
+type StreamSection = { field: string; text: string };
 
 export function readablePartialJson(partial: string): StreamSection[] {
   const sections: StreamSection[] = [];

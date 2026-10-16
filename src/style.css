@@ -76,15 +76,6 @@ pre {
 .page-banner {
   padding: 12px 24px 0;
 }
-.toolbar-row {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-background-surface);
-}
 .coding-main {
   display: grid;
   grid-template-columns: 280px minmax(320px, 1fr) minmax(420px, 1.25fr);
@@ -218,8 +209,7 @@ button.problem small {
 .question-preview,
 .turn,
 .shown-reference,
-.feedback,
-.sd-markdown {
+.feedback {
   font-family: var(--font-family-reading);
   font-size: var(--font-size-reading);
   line-height: var(--line-height-reading);
@@ -249,9 +239,7 @@ button.problem small {
 .shown-reference p,
 .shown-reference li,
 .feedback p,
-.feedback li,
-.sd-markdown p,
-.sd-markdown li {
+.feedback li {
   font-family: var(--font-family-reading);
   font-size: inherit;
   line-height: var(--line-height-reading);
