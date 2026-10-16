@@ -1,5 +1,7 @@
 # SWE 面试准备
 
+> Installed Release builds use the runtime application-config `.env`, not the checkout. This guide’s project `.env` instructions apply to Debug development builds. See [release preparation](docs/RELEASING.md) and [preview notes](docs/releases/v0.1.0-preview.1.md) for installation and current licensing.
+
 [English](README.md) · 简体中文
 
 一个用于软件工程师面试练习的本地桌面应用，基于 Tauri 2（Rust）和 React。

@@ -1,18 +1,18 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "SWE Interview Prep",
-  "version": "0.1.0",
+  "productName": "SWE Prep",
+  "version": "0.1.0-preview.1",
   "identifier": "local.swe.interview-prep",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "npm run build && node tools/release/prepare-notices.mjs",
     "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
-        "title": "SWE Interview Prep · P2",
+        "title": "SWE Interview Prep",
         "width": 1280,
         "height": 850,
         "minWidth": 960,
@@ -24,14 +24,19 @@
     }
   },
   "bundle": {
-    "active": false,
-    "macOS": { "entitlements": "Entitlements.plist" },
+    "active": true,
+    "macOS": {
+      "entitlements": "Entitlements.plist",
+      "signingIdentity": "-",
+      "minimumSystemVersion": "13.0"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "targets": ["app", "dmg"]
   }
 }

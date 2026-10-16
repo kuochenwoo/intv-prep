@@ -129,14 +129,24 @@ const EXACT: [string, string][] = [
   ["未知编程模式", "Unknown coding mode"],
   ["无效的草稿", "Invalid draft"],
   // credentials.rs
+  [
+    "密钥配置目录必须是绝对路径",
+    "The credential directory must be an absolute path",
+  ],
+  ["无法创建密钥配置目录", "Could not create the credential directory"],
+  [
+    "密钥存储已初始化，不能更换目录",
+    "Credential storage is already initialized and cannot change directories",
+  ],
+  ["密钥存储尚未初始化", "Credential storage is not initialized"],
   ["未知凭据供应商", "Unknown credential provider"],
   [
     "Key 格式无效（只接受字母、数字、连字符和下划线）",
     "Invalid key format (only letters, digits, hyphens and underscores)",
   ],
   [
-    "无法读取项目 .env，请先配置 API Key",
-    "Could not read the project .env; set an API key first",
+    "无法读取密钥 .env，请先配置 API Key",
+    "Could not read the credential .env; set an API key first",
   ],
   [
     ".env 格式错误，请检查配置（未输出文件内容）",

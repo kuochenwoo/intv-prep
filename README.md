@@ -38,20 +38,22 @@ npm run tauri dev
 npm run build                         # type-check (including unused code) and build the frontend
 npm run test:review-ui                # offline frontend helper/Markdown tests
 npm test                              # Rust tests: judge, every problem in both modes, storage, AI client (no paid API calls)
-npm run tauri build -- --bundles app  # unsigned macOS .app
+npm run check:release                 # version/preview configuration checks
+npm run test:release-tools            # release guard regressions
+npm run build:macos                   # ad-hoc signed arm64 Release app and DMG
 ```
 
-The app is written to `src-tauri/target/release/bundle/macos/`. It still needs a C++ compiler installed.
+The app and DMG are written to `src-tauri/target/aarch64-apple-darwin/release/bundle/`. The preview targets macOS 13+ on Apple Silicon and still needs a local C++20 compiler for LC judging. See [release preparation and CI](docs/RELEASING.md) and [preview notes](docs/releases/v0.1.0-preview.1.md). GitHub Actions creates draft releases only.
 
 ## AI settings
 
-Open **Settings** and pick an interview provider, model and timeout. Then save your API key there, or copy `.env.example` to `.env` and fill it in. Keys are kept only in the project's `.env` (Git-ignored, mode 0600). They are never written to SQLite or sent to the frontend. The default model is `claude-haiku-5-5`.
+Open **Settings** and pick an interview provider, model and timeout. Then save your API key there, or copy `.env.example` to `.env` and fill it in. Debug development builds use the ignored project `.env`. Installed Release builds use the application-config directory’s `.env` (mode 0600); Settings shows the exact path. Existing project keys are not migrated automatically. They are never written to SQLite or sent to the frontend. The default model is `claude-haiku-5-5`.
 
 Generating questions, answering, AI reference answers and feedback call the provider's API and may cost money. Viewing history, reusing cached questions and saving drafts stay offline.
 
 ## Voice input
 
-P1/P2 answer panels include a small microphone icon for optional recording, followed by playback, OpenAI transcription and an editable preview. Record, stop, choose Transcribe, correct the text and append it to your answer draft; submitting the answer remains a separate action. `OPENAI_API_KEY` in the ignored `.env` is used only for `gpt-4o-mini-transcribe`; it never changes the Claude/DeepSeek interview provider. A separate key field lives under Settings → Voice transcription settings. Audio stays in memory until you explicitly request transcription. See [voice input](docs/VOICE_INPUT.md) for limits and pending validation. Core voice validation passed with three real OpenAI transcriptions, native microphone checks and 91 automated checks. The accompanying DeepSeek text batch retains a P2 feedback connection failure; see the report for its limits.
+P1/P2 answer panels include a small microphone icon for optional recording, followed by playback, OpenAI transcription and an editable preview. Record, stop, choose Transcribe, correct the text and append it to your answer draft; submitting the answer remains a separate action. `OPENAI_API_KEY` in the local credential `.env` is used only for `gpt-4o-mini-transcribe`; it never changes the Claude/DeepSeek interview provider. A separate key field lives under Settings → Voice transcription settings. Audio stays in memory until you explicitly request transcription. See [voice input](docs/VOICE_INPUT.md) for limits and pending validation. Core voice validation passed with three real OpenAI transcriptions, native microphone checks and 91 automated checks. The accompanying DeepSeek text batch retains a P2 feedback connection failure; see the report for its limits.
 
 ## Data
 
@@ -83,3 +85,7 @@ tools/leetcode/              Problem generators and authoring guide
 - Time and memory limits are local settings, not LeetCode's official ones. Passing the tests does not prove an algorithm meets its Big-O or in-place requirement.
 - Some large tests are scaled below LeetCode's maximum sizes to keep the app small. Each problem's notes say where.
 - AI questions and feedback can be wrong. Treat them as practice material.
+
+## License
+
+Original project material is proprietary, with personal non-commercial evaluation of authorized preview binaries permitted by [LICENSE](LICENSE). No open-source license is granted. Third-party dependencies retain their own licenses; release assets include dependency notices.

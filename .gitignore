@@ -9,3 +9,6 @@ src-tauri/gen/schemas/
 .env
 .env.*
 !.env.example
+
+# Generated preview release assets (never include credentials or local data)
+release-artifacts/

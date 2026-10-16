@@ -1,0 +1,40 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    name: macOS offline checks
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: src-tauri -> target
+      - run: npm ci
+      - run: npm run check:release
+      - run: npm run audit:release
+      - run: npm run test:release-tools
+      - run: npm run test:review-ui
+      - run: npm run build
+      - name: Real judge, storage and localhost transport tests (no paid APIs)
+        run: cargo test --manifest-path src-tauri/Cargo.toml --no-default-features --locked
+      - name: Actual release-profile credential storage (synthetic keys only)
+        run: cargo test --manifest-path src-tauri/Cargo.toml --no-default-features --release --locked --test release_credentials

@@ -1,0 +1,65 @@
+{
+  "npm:@astryxdesign/core@0.7.0": [
+    "astryx"
+  ],
+  "npm:@stylexjs/stylex@0.19.1": [
+    "stylex"
+  ],
+  "Cargo:alloc-stdlib@0.3.0": [
+    "alloc"
+  ],
+  "Cargo:defmt-parser@1.0.0": [
+    "defmt"
+  ],
+  "Cargo:selectors@0.38.0": [
+    "MPL-2.0"
+  ],
+  "Cargo:block2@0.6.2": [
+    "objc2-b4167b58",
+    "MIT"
+  ],
+  "Cargo:dispatch2@0.3.1": [
+    "objc2-8852b424",
+    "MIT"
+  ],
+  "Cargo:objc2@0.6.5": [
+    "objc2-d7d2fa23",
+    "MIT"
+  ],
+  "Cargo:objc2-app-kit@0.3.2": [
+    "objc2-7b1abfd7",
+    "MIT"
+  ],
+  "Cargo:objc2-core-foundation@0.3.2": [
+    "objc2-7b1abfd7",
+    "MIT"
+  ],
+  "Cargo:objc2-core-graphics@0.3.2": [
+    "objc2-7b1abfd7",
+    "MIT"
+  ],
+  "Cargo:objc2-encode@4.1.0": [
+    "objc2-8d214f54",
+    "MIT"
+  ],
+  "Cargo:objc2-exception-helper@0.1.1": [
+    "objc2-8d214f54",
+    "MIT"
+  ],
+  "Cargo:objc2-foundation@0.3.2": [
+    "objc2-7b1abfd7",
+    "MIT"
+  ],
+  "Cargo:objc2-io-surface@0.3.2": [
+    "objc2-7b1abfd7",
+    "MIT"
+  ],
+  "Cargo:objc2-quartz-core@0.3.2": [
+    "objc2-7b1abfd7",
+    "MIT"
+  ],
+  "Cargo:objc2-web-kit@0.3.2": [
+    "objc2-7b1abfd7",
+    "MIT"
+  ]
+}

@@ -88,8 +88,8 @@ const strings = {
   ],
   voiceSettingsTitle: ["语音转写设置", "Voice transcription settings"],
   voiceSettingsScope: [
-    "OpenAI Key 仅用于语音输入，保存在项目 .env 中。出题、追问、参考回答和反馈仍使用上方配置的 Claude / DeepSeek。",
-    "The OpenAI key is used only for voice input and stored in the project .env. Questions, follow-ups, reference answers and feedback continue using the Claude / DeepSeek configuration above.",
+    "OpenAI Key 仅用于语音输入，保存在本地 .env 文件中。出题、追问、参考回答和反馈仍使用上方配置的 Claude / DeepSeek。",
+    "The OpenAI key is used only for voice input and stored in the local .env file. Questions, follow-ups, reference answers and feedback continue using the Claude / DeepSeek configuration above.",
   ],
   voiceModel: [
     "OpenAI · gpt-4o-mini-transcribe",
@@ -206,7 +206,7 @@ const strings = {
   usageState_interrupted: ["中断 / 未完成", "Interrupted / unfinished"],
 
   // App shell
-  appTitle: ["码农面试准备", "SWE Interview Prep"],
+  appTitle: ["码农面试准备", "SWE Prep"],
   moduleNav: ["训练模块", "Training modules"],
   moduleLc: ["LC 本地判题", "LeetCode Judge"],
   moduleDeepDive: ["技术深挖", "Technical Deep Dive"],
@@ -625,6 +625,7 @@ const strings = {
   ],
   settingsTitle: ["模型与密钥", "Model and API key"],
   providerUnsaved: ["Provider 更改尚未保存", "Provider change not saved"],
+  credentialPath: ["密钥文件：{path}", "Credential file: {path}"],
   keySaved: ["密钥已保存到 .env", "Key saved in .env"],
   keyUnavailable: [
     ".env 暂不可读或配置不完整",
@@ -642,8 +643,8 @@ const strings = {
   saveSettingsShort: ["保存设置", "Save settings"],
   deleteKeyShort: ["删除密钥", "Delete key"],
   settingsNote: [
-    "密钥只保存在项目 .env 中。Claude 和 DeepSeek 的密钥分开保存。新设置用于新会话，已有会话继续使用创建时的模型。",
-    "Keys are stored only in the project's .env, separately for Claude and DeepSeek. New settings apply to new sessions; existing sessions keep their original model.",
+    "密钥只保存在本地 .env 文件中。Claude 和 DeepSeek 的密钥分开保存。新设置用于新会话，已有会话继续使用创建时的模型。",
+    "Keys are stored only in the local .env file, separately for Claude and DeepSeek. New settings apply to new sessions; existing sessions keep their original model.",
   ],
   privacyNote: [
     "生成题目、提交回答和生成反馈会把主题、题目和必要的会话内容发送给 Provider，可能产生 API 费用。查看缓存、复用题目和保存草稿不联网。AI 反馈仅供练习参考。",
