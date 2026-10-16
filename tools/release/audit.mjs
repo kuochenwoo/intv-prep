@@ -11,6 +11,7 @@ export function containsSecret(content) {
 export function forbiddenPath(path) {
   const file = basename(path);
   return (
+    path.split(/[\\/]/).includes(".release-keys") ||
     (file.startsWith(".env") && file !== ".env.example") ||
     /\.(?:sqlite3?|db|p12|pfx|pem|key)(?:-(?:wal|shm))?$/i.test(file)
   );

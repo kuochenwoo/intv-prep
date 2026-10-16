@@ -7,8 +7,9 @@ const tag = process.env.RELEASE_TAG;
 if (!tag) throw Error("RELEASE_TAG is required.");
 const version = readRelease(process.cwd(), tag);
 const sha = execFileSync("git", ["rev-parse", "HEAD"]).toString().trim();
+const artifactDir = resolve(process.env.RELEASE_ARTIFACT_DIR ?? "release-artifacts");
 const manifest = JSON.parse(
-  readFileSync("release-artifacts/release-manifest.json"),
+  readFileSync(resolve(artifactDir, "release-manifest.json")),
 );
 if (manifest.dirty || manifest.commit !== sha || manifest.version !== version)
   throw Error("Draft assets must come from this exact clean commit.");
@@ -49,9 +50,9 @@ if (existing.status === 0) {
     { stdio: "inherit" },
   );
 }
-const files = readdirSync("release-artifacts")
+const files = readdirSync(artifactDir)
   .sort()
-  .map((file) => resolve("release-artifacts", file));
+  .map((file) => resolve(artifactDir, file));
 execFileSync("gh", ["release", "upload", tag, "--clobber", ...files], {
   stdio: "inherit",
 });

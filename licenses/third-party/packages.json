@@ -61,5 +61,12 @@
   "Cargo:objc2-web-kit@0.3.2": [
     "objc2-7b1abfd7",
     "MIT"
+  ],
+  "Cargo:objc2-osa-kit@0.3.2": [
+    "objc2-7b1abfd7",
+    "MIT"
+  ],
+  "Cargo:tauri-plugin@2.7.2": [
+    "tauri-plugin"
   ]
 }

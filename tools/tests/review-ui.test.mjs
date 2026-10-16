@@ -260,3 +260,31 @@ test("a late session or failed draft save cannot replace the chosen view", async
   );
   assert.equal(view, "another topic");
 });
+
+const { registerUpdateGuard, prepareFrontendUpdate } = await sourceModule("../../src/features/updates/guards.ts");
+const { downloadPercent } = await sourceModule("../../src/features/updates/policy.ts");
+test("updates await actual draft-save guards and unregister closed practice pages", async () => {
+  const saved = deferred();
+  let done = false;
+  const unregister = registerUpdateGuard(() => saved.promise);
+  try {
+    const updating = prepareFrontendUpdate().then(() => { done = true; });
+    await Promise.resolve();
+    assert.equal(done, false);
+    saved.resolve(); await updating;
+    assert.equal(done, true);
+  } finally { unregister(); }
+  await prepareFrontendUpdate();
+});
+test("unsaved drafts or temporary voice data stop update preparation", async () => {
+  const unregister = registerUpdateGuard(() => { throw new Error("updateVoicePending"); });
+  try { await assert.rejects(prepareFrontendUpdate(), /updateVoicePending/); }
+  finally { unregister(); }
+  await prepareFrontendUpdate();
+});
+test("update download progress remains indeterminate without a length and never claims verified completion", () => {
+  assert.equal(downloadPercent(500), undefined);
+  assert.equal(downloadPercent(500, 1000), 50);
+  assert.equal(downloadPercent(1000, 1000), 99);
+  assert.equal(downloadPercent(1200, 1000), 99);
+});

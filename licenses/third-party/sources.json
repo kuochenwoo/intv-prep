@@ -42,5 +42,9 @@
   "MPL-2.0": {
     "file": "MPL-2.0.txt",
     "source": "https://github.com/spdx/license-list-data/blob/31ba1a50e5397e00a304dbadc76531740e89ee48/text/MPL-2.0.txt"
+  },
+  "tauri-plugin": {
+    "file": "tauri-plugin.txt",
+    "source": "https://github.com/tauri-apps/tauri/blob/59b63ab500da9859f12d8888c3298bc29bba0b92/LICENSE-MIT"
   }
 }

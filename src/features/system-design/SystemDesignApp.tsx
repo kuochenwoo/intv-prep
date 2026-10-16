@@ -1,3 +1,4 @@
+import { registerUpdateGuard } from "../updates/guards";
 import { ApiKeyBadge, ApiKeyWarning } from "../../ApiKeyStatus";
 import { useEffect, useRef, useState } from "react";
 import { invoke, isTauri } from "@tauri-apps/api/core";
@@ -175,6 +176,11 @@ export default function SystemDesignApp({
     revision = useRef(0),
     running = useRef(false),
     activeId = useRef("");
+  useEffect(() => registerUpdateGuard(async () => {
+    if (busy) throw new Error("updatePracticeBusy");
+    await queue.current;
+    if (saveError.current) throw new Error("updateDraftFailed");
+  }), [busy]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const navigationVersion = useRef(0);
   useEffect(() => {

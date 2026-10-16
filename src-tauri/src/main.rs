@@ -26,6 +26,49 @@ impl AppState {
         db::connect(&self.path)
     }
 }
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AppUpdateInfo {
+    version: String,
+    enabled: bool,
+    auto_check_allowed: bool,
+}
+
+fn update_install_supported() -> bool {
+    cfg!(all(target_os = "macos", target_arch = "aarch64", not(debug_assertions)))
+        && std::env::current_exe().is_ok_and(|path| {
+            !path.starts_with("/Volumes")
+                && path.ancestors().any(|parent| parent.extension().is_some_and(|ext| ext == "app"))
+        })
+}
+
+#[tauri::command]
+fn app_update_info(app: AppHandle) -> AppUpdateInfo {
+    let enabled = update_install_supported();
+    AppUpdateInfo {
+        version: app.package_info().version.to_string(),
+        enabled,
+        // Local QA profiles must not contact the production feed automatically.
+        auto_check_allowed: enabled && app.config().identifier == "local.swe.interview-prep",
+    }
+}
+
+#[tauri::command(async)]
+fn prepare_app_update(state: State<AppState>) -> Result<(), String> {
+    if !update_install_supported() {
+        return Err("当前运行环境不支持应用内更新，请安装正式应用包".into());
+    }
+    // The frontend blocks new actions during the download/install transaction.
+    // Refuse to interrupt an existing judge, model request or transcription.
+    let busy = "请等待判题、面试请求或语音转写完成后再更新";
+    let _judge = state.judge.try_lock().map_err(|_| busy)?;
+    let _interview = state.interview.try_lock().map_err(|_| busy)?;
+    let _transcription = state.transcription.try_lock().map_err(|_| busy)?;
+    state.db().execute_batch("PRAGMA wal_checkpoint(FULL)")
+        .map_err(|_| "无法保存更新前的数据，请稍后重试".to_string())?;
+    Ok(())
+}
+
 #[tauri::command]
 fn list_problems() -> &'static [content::Problem] {
     content::problems()
@@ -731,6 +774,8 @@ fn save_api_prices(
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             credentials::initialize_storage(&app.path().app_config_dir()?)
                 .map_err(std::io::Error::other)?;
@@ -746,6 +791,8 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            app_update_info,
+            prepare_app_update,
             review_overview,
             review_dismiss,
             session_timing,

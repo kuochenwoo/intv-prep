@@ -1,12 +1,12 @@
 [package]
 license-file = "../LICENSE"
 name = "swe-interview-prep"
-version = "0.1.0-preview.1"
+version = "0.1.0-preview.2"
 edition = "2021"
 
 [features]
 default = ["desktop"]
-desktop = ["dep:tauri", "dep:tauri-build"]
+desktop = ["dep:tauri", "dep:tauri-build", "dep:tauri-plugin-updater", "dep:tauri-plugin-process"]
 
 [build-dependencies]
 tauri-build = { version = "2", optional = true , features = [] }
@@ -21,6 +21,8 @@ libc = "0.2"
 reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
 dotenvy = "0.15"
 tokio = { version = "1", features = ["rt", "time"] }
+tauri-plugin-updater = { version = "2.14", optional = true, default-features = false, features = ["rustls-tls", "system-proxy"] }
+tauri-plugin-process = { version = "2.4", optional = true }
 
 [[bin]]
 name = "swe-interview-prep"
@@ -29,3 +31,7 @@ required-features = ["desktop"]
 
 [profile.release]
 strip = true
+
+[dev-dependencies]
+base64 = "0.22"
+minisign-verify = "0.3"

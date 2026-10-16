@@ -25,6 +25,8 @@ import { Banner } from "@astryxdesign/core/Banner";
 import { AlertDialog } from "@astryxdesign/core/AlertDialog";
 import "./style.css";
 import logo from "./assets/logo.png";
+import { registerUpdateGuard } from "./features/updates/guards";
+import { UpdateProvider, UpdateNotice } from "./features/updates/UpdateCenter";
 import SettingsPage from "./features/interview/SettingsPage";
 import InterviewApp from "./features/interview/InterviewApp";
 import SystemDesignApp from "./features/system-design/SystemDesignApp";
@@ -158,6 +160,11 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
   const saveQueue = useRef(Promise.resolve()),
     saveError = useRef(""),
     version = useRef(0);
+  useEffect(() => registerUpdateGuard(async () => {
+    if (busy) throw new Error("updatePracticeBusy");
+    await saveQueue.current;
+    if (saveError.current) throw new Error("updateDraftFailed");
+  }), [busy]);
   useEffect(() => {
     if (!isTauri()) {
       setError(t("needDesktop"));
@@ -677,6 +684,7 @@ function App() {
         messages={{ "zh-CN": zhCN }}
       >
         <div className="app">
+          <UpdateNotice />
           <TopNav
             label={t("moduleNav")}
             heading={
@@ -790,6 +798,6 @@ function App() {
 }
 createRoot(document.getElementById("root")!).render(
   <LangProvider>
-    <App />
+    <UpdateProvider><App /></UpdateProvider>
   </LangProvider>,
 );

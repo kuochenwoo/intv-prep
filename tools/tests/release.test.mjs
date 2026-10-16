@@ -14,7 +14,8 @@ const fixture = () => ({
   tauri: {
     version: "0.1.0-preview.1",
     identifier: "local.swe.interview-prep",
-    bundle: { active: true, macOS: { signingIdentity: "-" } },
+    bundle: { active: true, createUpdaterArtifacts: true, macOS: { signingIdentity: "-" } },
+    plugins: { updater: { pubkey: "public-key-fixture", requireSignedVersion: true, endpoints: ["https://github.com/kuochenwoo/intv-prep/releases/download/updates-preview/latest.json"] } },
   },
 });
 test("release checks reject version drift, wrong tags and accidental stable releases", () => {
@@ -36,6 +37,9 @@ test("preview checks protect identity, packaging and authorization scope", () =>
     (x) => (x.tauri.bundle.active = false),
     (x) => (x.tauri.bundle.macOS.signingIdentity = null),
     (x) => (x.pkg.license = "MIT"),
+    (x) => (x.tauri.plugins.updater.requireSignedVersion = false),
+    (x) => (x.tauri.plugins.updater.dangerousAcceptInvalidCerts = true),
+    (x) => (x.tauri.bundle.createUpdaterArtifacts = false),
   ]) {
     const source = fixture();
     change(source);
@@ -50,6 +54,7 @@ test("private-path checks preserve the empty template but reject credential and 
     "prep.sqlite3-wal",
     "certificate.p12",
     "signing.key",
+    ".release-keys/generate.log",
   ])
     assert.equal(forbiddenPath(path), true, path);
   for (const path of [
@@ -74,4 +79,30 @@ test("secret checks detect credentials without treating test fixture description
     containsSecret("DEEPSEEK_API_KEY=\nCLAUDE_API_KEY=\nOPENAI_API_KEY=\n"),
     false,
   );
+});
+
+const { createUpdateFeed, shouldPublishFeed, validateUpdateFeed } = await import("../release/update-feed.mjs");
+const signatureFor = (version) => Buffer.from(`untrusted comment: fixture\nfixture\ntrusted comment: timestamp:1\tversion:${version}\nfixture\n`).toString("base64");
+const feedFor = (version) => createUpdateFeed(version, signatureFor(version), "Fixture release notes", "2026-10-16T00:00:00Z");
+test("update feeds bind versions to immutable HTTPS download URLs", () => {
+  const feed = feedFor("0.1.0-preview.2");
+  assert.equal(validateUpdateFeed(feed).version, "0.1.0-preview.2");
+  for (const mutate of [
+    (x) => x.version = "0.1.0-preview.3",
+    (x) => x.platforms["darwin-aarch64"].url = "http://example.com/app.tar.gz",
+    (x) => x.platforms["darwin-aarch64"].signature = "",
+  ]) {
+    const changed = structuredClone(feed); mutate(changed);
+    assert.throws(() => validateUpdateFeed(changed));
+  }
+});
+test("update publishing refuses rollback or replacement of the same version", () => {
+  const old = feedFor("0.1.0-preview.2"), next = feedFor("0.1.0-preview.3");
+  assert.equal(shouldPublishFeed(old, null), true);
+  assert.equal(shouldPublishFeed(next, old), true);
+  assert.equal(shouldPublishFeed(old, structuredClone(old)), false);
+  assert.throws(() => shouldPublishFeed(old, next), /backwards/);
+  const replacement = structuredClone(old);
+  replacement.platforms["darwin-aarch64"].signature = Buffer.from(`trusted comment: timestamp:2\tversion:${old.version}\n`).toString("base64");
+  assert.throws(() => shouldPublishFeed(replacement, old), /immutable/);
 });
