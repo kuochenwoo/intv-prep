@@ -109,6 +109,16 @@
   margin: 16px 0 4px;
   font-size: var(--font-size-base);
 }
+/* Keep expanded filters bounded so the topic list retains usable space. */
+.topic-filter-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: min(38dvh, 300px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
 .topic-match-count {
   margin: 4px 0;
   font-size: var(--font-size-sm);

@@ -673,5 +673,230 @@
         "Precision, latency and availability of central counters vs partitioned budgets"
       ]
     }
+  },
+  {
+    "id": "order-lifecycle",
+    "title": "订单、支付与超时关闭",
+    "description": "设计从下单、库存预留、支付到履约的订单平台，处理超时关闭与晚到支付结果。",
+    "functionalRequirements": [
+      "创建和查询订单，管理库存预留与订单状态",
+      "接收可信支付结果，处理重复和乱序通知",
+      "到期关闭未支付订单，处理晚到支付、退款与对账"
+    ],
+    "scaleRanges": [
+      "每日 100万–1000万 笔订单；峰值为日均创建速率的 10–30 倍",
+      "每笔订单基础记录 2 KB，保留 1 年；每单另有 5–20 条平均 500 B 的状态事件"
+    ],
+    "reliabilityConstraints": [
+      "已确认的支付不能静默丢失，重复通知不能导致重复入账或重复履约",
+      "创建订单可用性训练目标 99.95%；允许订单与支付状态短暂不一致，但须定义收敛时限"
+    ],
+    "deepDiveDirections": [
+      "订单、库存与支付的权威状态、事务边界和事件契约",
+      "截止时间、延迟调度、晚到支付与补偿工作流",
+      "按订单分片、热点商品隔离、对账和故障恢复"
+    ],
+    "en": {
+      "title": "Orders, Payments and Expiration",
+      "description": "Design an order platform from creation and stock reservations through payment and fulfillment, including expiration and late payment outcomes.",
+      "functionalRequirements": [
+        "Create/query orders and manage stock reservations and order states",
+        "Accept verified payment outcomes and handle duplicate or reordered events",
+        "Expire unpaid orders and handle late payment, refunds and reconciliation"
+      ],
+      "scaleRanges": [
+        "1–10 million orders/day; peak creation rate is 10–30 times the daily average",
+        "2 KB/order retained for one year; additionally 5–20 events/order averaging 500 B each"
+      ],
+      "reliabilityConstraints": [
+        "Confirmed payments must not disappear silently; duplicates must not double-credit or double-fulfill",
+        "Local training target: 99.95% order-creation availability; define a convergence bound for temporary order/payment disagreement"
+      ],
+      "deepDiveDirections": [
+        "Authoritative order, inventory and payment states, transaction boundaries and event contracts",
+        "Deadlines, delayed scheduling, late payments and compensation workflows",
+        "Order partitioning, hot-product isolation, reconciliation and recovery"
+      ]
+    }
+  },
+  {
+    "id": "leaderboard",
+    "title": "实时排行榜与赛季结算",
+    "description": "设计支持实时分数更新、Top N、个人排名和赛季结算的排行榜平台。",
+    "functionalRequirements": [
+      "接收可校验且可去重的积分事件，更新多个赛季榜单",
+      "查询 Top N、用户排名及附近名次，定义同分规则",
+      "冻结赛季结果并处理迟到事件、撤销和异常积分"
+    ],
+    "scaleRanges": [
+      "1000万 注册用户，每日 100万–500万 活跃用户；峰值 1万–10万 次积分事件/秒",
+      "100 个活动榜单，每个榜单 10万–1000万 条排名；每条基础数据按 64 B 估算，不含索引和副本"
+    ],
+    "reliabilityConstraints": [
+      "榜单查询 p99 低于 150 ms 为本地训练目标；正常情况下更新到可见不超过 3 秒",
+      "冻结结果可重建、可审计；故障后不能靠重放让同一事件重复加分"
+    ],
+    "deepDiveDirections": [
+      "事件权威日志、去重状态与排名索引的数据流",
+      "精确全局名次与分区聚合的成本和新鲜度权衡",
+      "热点榜单、赛季快照、回放恢复和作弊事件撤销"
+    ],
+    "en": {
+      "title": "Real-Time Leaderboards and Season Settlement",
+      "description": "Design live score updates, top-N and personal rank queries, and auditable season settlement.",
+      "functionalRequirements": [
+        "Validate and deduplicate score events across seasonal boards",
+        "Query top N, personal rank and neighbors with a defined tie rule",
+        "Freeze season results and handle late, reversed or suspicious scores"
+      ],
+      "scaleRanges": [
+        "10 million registered users and 1–5 million daily active users; 10k–100k score events/s at peak",
+        "100 active boards with 100k–10m entries each; estimate 64 B of base data/entry before indexes and replicas"
+      ],
+      "reliabilityConstraints": [
+        "Local targets: rank-query p99 below 150 ms and normal update visibility within three seconds",
+        "Frozen results must be rebuildable and auditable; recovery replay must not double-apply events"
+      ],
+      "deepDiveDirections": [
+        "Authoritative event log, deduplication state and ranking-index data flow",
+        "Costs and freshness trade-offs of exact global ranks versus partition aggregation",
+        "Hot-board isolation, season snapshots, replay recovery and score reversals"
+      ]
+    }
+  },
+  {
+    "id": "identity-session",
+    "title": "登录、会话与权限平台",
+    "description": "设计服务于多个业务的登录与会话平台，支持验证码或密码登录、会话撤销和权限变更。",
+    "functionalRequirements": [
+      "提供登录、刷新、退出和多设备会话管理",
+      "向业务服务提供可信身份与权限校验契约",
+      "处理凭据重置、风险限次、账号冻结和审计"
+    ],
+    "scaleRanges": [
+      "1000万–1亿 账号，每日 100万–1000万 登录尝试；登录峰值为平均的 20 倍",
+      "鉴权调用峰值 10万–100万 次/秒；活跃会话按 200 B 基础数据/条估算，保留数量需声明"
+    ],
+    "reliabilityConstraints": [
+      "鉴权 p99 低于 30 ms 是本地训练目标；撤销与权限变更传播需给出可验证的时间界限",
+      "凭据、验证码和令牌不能进入普通日志；依赖故障时须明确拒绝或受限继续服务的策略"
+    ],
+    "deepDiveDirections": [
+      "身份、授权、会话存储与业务服务的信任边界",
+      "有状态会话与自包含令牌的缓存、撤销和密钥轮换权衡",
+      "热点账号攻击、跨区域故障、审计和恢复"
+    ],
+    "en": {
+      "title": "Identity, Sessions and Authorization",
+      "description": "Design a shared login and session platform with password/OTP login, revocation and permission changes.",
+      "functionalRequirements": [
+        "Provide login, refresh, logout and multi-device session management",
+        "Provide trusted identity and authorization contracts to application services",
+        "Handle credential resets, attempt limits, account suspension and auditing"
+      ],
+      "scaleRanges": [
+        "10m–100m accounts and 1m–10m login attempts/day; peak login rate is 20 times average",
+        "100k–1m authorization checks/s at peak; estimate 200 B of base data/active session and state retained session counts"
+      ],
+      "reliabilityConstraints": [
+        "Local target: authorization p99 below 30 ms; define a verifiable propagation bound for revocation and permission changes",
+        "Credentials, OTPs and tokens must not enter ordinary logs; define reject-versus-restricted-service behavior during dependency failures"
+      ],
+      "deepDiveDirections": [
+        "Trust boundaries among identity, authorization, sessions and application services",
+        "Stateful sessions versus self-contained tokens: caching, revocation and key rotation",
+        "Hot-account attacks, regional failure, audit and recovery"
+      ]
+    }
+  },
+  {
+    "id": "payment-ledger",
+    "title": "钱包、提现与资金对账",
+    "description": "设计钱包记账与提现平台，覆盖冻结、外部打款、结果查询、补偿和对账。",
+    "functionalRequirements": [
+      "接受经过授权且幂等的记账请求，展示余额和流水",
+      "冻结可提现资金，向外部支付机构发起打款并跟踪结果",
+      "处理超时未知、失败解冻、重复回调和周期对账"
+    ],
+    "scaleRanges": [
+      "1000万 钱包，100万–1000万 次账务操作/日；峰值为平均速率的 20 倍",
+      "账务记录按 500 B/条、每次操作 2–4 条记账明细估算，保留 7 年是训练假设"
+    ],
+    "reliabilityConstraints": [
+      "金额使用明确币种和最小单位；同一请求不能重复产生资金效果，内部明细需满足记账不变量",
+      "外部超时不能直接视为打款失败；需定义未知状态、对账时限和恢复流程"
+    ],
+    "deepDiveDirections": [
+      "账本、余额投影、冻结资金与提现状态机的权威边界",
+      "外部支付幂等键、状态查询、补偿和对账数据流",
+      "热点账户串行化、分片、审计留存与灾难恢复"
+    ],
+    "en": {
+      "title": "Wallets, Withdrawals and Reconciliation",
+      "description": "Design wallet accounting and withdrawals, including holds, external transfers, uncertain outcomes and reconciliation.",
+      "functionalRequirements": [
+        "Accept authorized idempotent accounting requests and show balances and entries",
+        "Hold withdrawable funds, initiate external transfers and track their outcomes",
+        "Handle unknown timeouts, failed-transfer releases, duplicate callbacks and periodic reconciliation"
+      ],
+      "scaleRanges": [
+        "10m wallets and 1m–10m accounting operations/day; peak is 20 times the average",
+        "Estimate 500 B/entry and 2–4 entries/operation; seven-year retention is a local training assumption"
+      ],
+      "reliabilityConstraints": [
+        "Use explicit currencies and minor units; repeated requests must not duplicate monetary effects and entries must preserve accounting invariants",
+        "An external timeout is not proof of transfer failure; define unknown states, reconciliation deadlines and recovery"
+      ],
+      "deepDiveDirections": [
+        "Authority boundaries among ledger, balance projections, holds and withdrawal state machines",
+        "External transfer idempotency keys, status queries, compensation and reconciliation flows",
+        "Hot-account serialization, partitioning, audit retention and disaster recovery"
+      ]
+    }
+  },
+  {
+    "id": "visitor-analytics",
+    "title": "访问事件与实时 UV 分析",
+    "description": "设计多租户访问统计平台，支持事件采集、分时 UV 查询和离线校正。",
+    "functionalRequirements": [
+      "接收含事件标识、事件时间和租户的访问事件",
+      "查询小时、天和自定义窗口的访问量及 UV，声明身份口径和误差",
+      "处理重复、迟到、删除请求和历史结果重算"
+    ],
+    "scaleRanges": [
+      "每日 1亿–10亿 事件，峰值为平均速率的 10 倍；每条传输记录按 300 B 估算",
+      "1万 租户，原始事件保留 30 天，聚合保留 1 年；窗口数与维度数量由候选人明确"
+    ],
+    "reliabilityConstraints": [
+      "正常实时结果延迟不超过 60 秒为本地目标；精确和近似查询须明确区分",
+      "租户之间不可越权查询，重复和迟到事件的处理须可解释且可重放"
+    ],
+    "deepDiveDirections": [
+      "采集、持久日志、流式聚合、查询与离线回放的数据流",
+      "去重身份、事件时间窗口、水位线与近似草图的合并边界",
+      "高基数维度、热点租户、冷热存储和数据删除传播"
+    ],
+    "en": {
+      "title": "Event Ingestion and Real-Time Visitor Analytics",
+      "description": "Design multi-tenant event collection, windowed unique-visitor queries and offline corrections.",
+      "functionalRequirements": [
+        "Ingest visits with event identity, event time and tenant identity",
+        "Query hourly, daily and custom-window views and unique visitors with defined identity and error contracts",
+        "Handle duplicates, late events, deletion requests and historical recomputation"
+      ],
+      "scaleRanges": [
+        "100m–1bn events/day with 10x peak-to-average rate; estimate 300 B/transmitted event",
+        "10k tenants; raw events retained for 30 days and aggregates for one year; state window and dimension counts"
+      ],
+      "reliabilityConstraints": [
+        "Local target: normal real-time results within 60 seconds; distinguish exact from approximate queries",
+        "Enforce tenant query isolation; duplicate and late-event behavior must be explainable and replayable"
+      ],
+      "deepDiveDirections": [
+        "Collection, durable log, stream aggregation, query and offline replay data flows",
+        "Deduplication identity, event-time windows, watermarks and sketch merge boundaries",
+        "High-cardinality dimensions, hot tenants, storage tiers and deletion propagation"
+      ]
+    }
   }
 ]

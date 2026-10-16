@@ -77,5 +77,54 @@
     "sources": ["https://redis.io/docs/latest/commands/incr/"],
     "reviewNote": "Compare central atomic counters, sharded budgets and gateway leases. Atomic commands on one Redis instance do not yield exact quotas across regions or after asynchronous failover; explicitly bound overshoot and define partition behavior.",
     "capacityExample": "At 1m decisions/s across 100 gateways: 10k decisions/s/gateway if evenly distributed. A hot tenant producing 10% contributes 100k decisions/s and can dominate one key; aggregate throughput does not guarantee balanced partitions."
+  },
+  {
+    "scenarioId": "order-lifecycle",
+    "sources": [
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html",
+      "https://www.postgresql.org/docs/18/transaction-iso.html",
+      "https://www.rabbitmq.com/docs/confirms"
+    ],
+    "reviewNote": "Keep accepted payment, order state, stock reservation and ledger effects separate. Define idempotency and recovery across component boundaries; neither broker confirmation nor a local transaction alone guarantees an end-to-end exactly-once workflow. Newly authored training seed; model quality and numerical consistency have not been acceptance-tested in this iteration.",
+    "capacityExample": "At 1m orders/day: about 11.6 creates/s average and 116–347/s at 10–30x peak. One year of 2 KB/order is 730 GB decimal before indexes/replicas. At 5 events/order and 500 B/event, events add 912.5 GB/year; refunds and archived payloads are additional."
+  },
+  {
+    "scenarioId": "leaderboard",
+    "sources": [
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html",
+      "https://redis.io/docs/latest/develop/data-types/sorted-sets/"
+    ],
+    "reviewNote": "A sorted set can implement one ranking index but is not the complete authoritative scoring platform. Define stable tie-breaking, event identity, exact-versus-approximate rank requirements and season cutover before selecting partition strategies. Newly authored training seed; model quality and numerical consistency have not been acceptance-tested in this iteration.",
+    "capacityExample": "At 100 boards with 100k entries/board and 64 B/entry: 640 MB of base entries, before sorted-set structures, deduplication state and replicas. At 100k peak events/s and 200 B/event, peak ingress is 20 MB/s; daily storage needs a separately stated average rate."
+  },
+  {
+    "scenarioId": "identity-session",
+    "sources": [
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html",
+      "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html",
+      "https://www.rfc-editor.org/rfc/rfc9700.html"
+    ],
+    "reviewNote": "Separate identity from authorization and token transport from storage semantics. Require standard cryptography and explicit revocation/failure contracts; JWT alone does not solve permission freshness, token theft or session revocation. Newly authored training seed; model quality and numerical consistency have not been acceptance-tested in this iteration.",
+    "capacityExample": "At 1m logins/day, average is about 11.6/s and peak at 20x is about 231/s. At 10m active sessions and 200 B/session, base state is 2 GB decimal before indexes, TTL bookkeeping, replication and audit history. Authorization checks have a separate, much larger peak rate."
+  },
+  {
+    "scenarioId": "payment-ledger",
+    "sources": [
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html",
+      "https://www.postgresql.org/docs/18/transaction-iso.html",
+      "https://docs.stripe.com/api/idempotent_requests"
+    ],
+    "reviewNote": "This is a training exercise, not a compliance specification. Require an explicit ledger invariant, currency model and external payment contract. An unknown external result cannot safely trigger an unbounded retry or an unconditional funds release. Newly authored training seed; model quality and numerical consistency have not been acceptance-tested in this iteration.",
+    "capacityExample": "At 1m operations/day and two 500 B entries/operation: 1 GB/day and 2.555 TB over 7x365 days, decimal, before indexes, replicas, audit payloads and backups. Peak at 20x daily average is about 231 operations/s, separate from read traffic."
+  },
+  {
+    "scenarioId": "visitor-analytics",
+    "sources": [
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html",
+      "https://redis.io/docs/latest/develop/data-types/probabilistic/hyperloglogs/",
+      "https://kafka.apache.org/documentation/"
+    ],
+    "reviewNote": "Visitor identity, event identity and aggregation window are distinct. Approximate distinct counts cannot produce an exact membership list or be naively subtracted for arbitrary window deletion. Numerical error and late-data contracts are candidate choices, not hidden mandatory products. Newly authored training seed; model quality and numerical consistency have not been acceptance-tested in this iteration.",
+    "capacityExample": "At 100m events/day and 300 B/event: 30 GB/day and 900 GB for 30 days before indexes/replicas; average is about 1157 events/s and peak about 11574/s at 10x. Aggregate/sketch storage depends on the explicitly selected windows and dimensional cardinality."
   }
 ]

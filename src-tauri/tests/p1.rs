@@ -146,9 +146,9 @@ fn expanded_topics_have_bilingual_content_and_reviewed_sources() {
             "{id}"
         );
     }
-    assert_eq!(reviewed.len(), 30);
+    assert_eq!(reviewed.len(), seeds.len());
     let mut titles = std::collections::HashSet::new();
-    for (index, seed) in seeds.iter().enumerate() {
+    for seed in &seeds {
         assert!(titles.insert(&seed.title), "duplicate title: {}", seed.id);
         assert_eq!(seed.level, "mid-to-senior");
         assert!(seed.en.is_some(), "missing English content: {}", seed.id);
@@ -165,14 +165,37 @@ fn expanded_topics_have_bilingual_content_and_reviewed_sources() {
                 seed.id
             );
         }
-        if index >= 10 {
-            assert!(
-                reviewed.contains(seed.id.as_str()),
-                "missing source review: {}",
-                seed.id
-            );
-        }
+        assert!(
+            reviewed.contains(seed.id.as_str()),
+            "missing source record: {}",
+            seed.id
+        );
+        let review = reviews
+            .iter()
+            .find(|review| review["topicId"] == seed.id)
+            .unwrap();
+        assert_eq!(
+            serde_json::to_value(&seed.sources).unwrap(),
+            review["sources"]
+        );
+        assert!(!serde_json::to_string(seed.en.as_ref().unwrap())
+            .unwrap()
+            .chars()
+            .any(|c| ('\u{4e00}'..='\u{9fff}').contains(&c)));
+        assert!(seed.sources.iter().all(|url| url.starts_with("https://")));
     }
+    for form in [
+        QuestionForm::Foundation,
+        QuestionForm::Scenario,
+        QuestionForm::Troubleshooting,
+    ] {
+        assert!(seeds
+            .iter()
+            .any(|seed| seed.question_form == form && seed.priority == TopicPriority::Core));
+    }
+    assert!(seeds
+        .iter()
+        .any(|seed| seed.priority == TopicPriority::Advanced));
     for (category, minimum) in [
         ("Database", 7),
         ("Networking", 5),
@@ -180,7 +203,12 @@ fn expanded_topics_have_bilingual_content_and_reviewed_sources() {
         ("Concurrency", 6),
         ("Runtime", 4),
         ("Redis", 3),
-        ("Security", 2),
+        ("Security", 7),
+        ("Distributed Systems", 8),
+        ("Data Structures", 5),
+        ("Engineering", 6),
+        ("Business Scenarios", 7),
+        ("Search and Storage", 4),
     ] {
         assert!(
             seeds
@@ -192,6 +220,74 @@ fn expanded_topics_have_bilingual_content_and_reviewed_sources() {
         );
     }
 }
+#[test]
+fn legacy_topic_metadata_defaults_and_localization_preserve_authoring_contracts() {
+    let seed = topic("mysql-index-structure").unwrap();
+    assert_eq!(seed.question_form, QuestionForm::Foundation);
+    let english = seed.localized(Lang::En);
+    assert_eq!(english.question_form, seed.question_form);
+    assert_eq!(english.priority, seed.priority);
+    assert_eq!(english.sources, seed.sources);
+    assert_ne!(english.title, seed.title);
+    let mut legacy = serde_json::to_value(&seed).unwrap();
+    for field in ["questionForm", "priority", "sources"] {
+        legacy.as_object_mut().unwrap().remove(field);
+    }
+    let legacy: Topic = serde_json::from_value(legacy).unwrap();
+    assert_eq!(legacy.question_form, QuestionForm::Scenario);
+    assert_eq!(legacy.priority, TopicPriority::Core);
+    assert!(legacy.sources.is_empty());
+    for id in [
+        "volatile-counter",
+        "safe-publication",
+        "condition-wait",
+        "thread-pool-starvation",
+        "cas-aba",
+        "mutable-hash-key",
+        "resource-cleanup",
+    ] {
+        let ported = topic(id).unwrap();
+        assert!(ported
+            .scenario_constraints
+            .iter()
+            .all(|line| !line.contains("Java 21")));
+    }
+}
+
+#[test]
+fn cache_incident_seed_keeps_diagnoses_private_and_asks_for_evidence() {
+    let seed = topic("redis-cache-failures").unwrap();
+    assert_eq!(seed.question_form, QuestionForm::Troubleshooting);
+    assert_eq!(seed.title, "缓存未命中与数据库压力");
+    assert_eq!(
+        seed.localized(Lang::En).title,
+        "Cache Misses and Database Pressure"
+    );
+    assert!(seed.focus.iter().any(|text| text.contains("穿透")));
+    assert!(seed
+        .scenario_constraints
+        .iter()
+        .any(|text| text.contains("证据")));
+    for label in ["穿透", "击穿", "雪崩"] {
+        assert!(!seed.title.contains(label));
+    }
+}
+
+#[test]
+fn foundation_subject_names_do_not_replace_private_answer_propositions() {
+    let mut q = GeneratedQuestion {
+        question: "为什么数据库常用 B+ 树索引？".into(),
+        background: "讨论磁盘上的数据库索引。".into(),
+        constraints: vec!["比较一次等值查询的访问路径。".into()],
+        follow_up_directions: vec!["范围查询的访问方式。".into()],
+        evaluation_checklist: vec!["解释一次查询需要访问的页数。".into()],
+        answer_terms: vec!["较高扇出降低树高".into(), "减少查询所需页访问".into()],
+    };
+    q.validate_fresh().unwrap();
+    q.background.push_str("较高扇出降低树高");
+    assert!(q.validate_fresh().is_err());
+}
+
 #[test]
 fn cache_reuse_is_offline_and_private_checkpoints_never_enter_candidate_view() {
     let dir = tempfile::tempdir().unwrap();

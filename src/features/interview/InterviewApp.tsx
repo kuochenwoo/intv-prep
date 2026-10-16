@@ -26,6 +26,9 @@ type Topic = {
   title: string;
   focus: string[];
   scenarioConstraints: string[];
+  questionForm?: "foundation" | "scenario" | "troubleshooting";
+  priority?: "core" | "advanced";
+  sources?: string[];
   en?: { title: string; focus: string[]; scenarioConstraints: string[] };
 };
 const hasChinese = (text: string) => /[\u4e00-\u9fff]/.test(text);
@@ -121,12 +124,14 @@ export default function InterviewApp({
 }) {
   const { t, lang } = useI18n();
   const [data, setData] = useState<Overview | null>(null),
-    [topicId, setTopicId] = useState("cache-selection"),
+    [topicId, setTopicId] = useState("mysql-index-structure"),
     [questionId, setQuestionId] = useState("");
   const [session, setSession] = useState<Session | null>(null),
     [draft, setDraft] = useState("");
   const [topicSearch, setTopicSearch] = useState(""),
     [topicCategory, setTopicCategory] = useState("");
+  const [topicForm, setTopicForm] = useState("");
+  const [topicPriority, setTopicPriority] = useState("core");
   const [config, setConfig] = useState<Config>({
     provider: "claude",
     model: "claude-haiku-5-5",
@@ -149,25 +154,42 @@ export default function InterviewApp({
   const locale = lang === "zh" ? "zh-CN" : "en";
   const categoryLabel = (category: string) =>
     lookup(t, "topicCategory_", category);
-  const visibleTopics = (data?.topics ?? []).filter((topic) => {
-    const query = topicSearch.trim().toLocaleLowerCase();
-    const localized = localTopic(topic, lang);
-    return (
-      (!topicCategory || topic.category === topicCategory) &&
-      (!query ||
-        [
-          topic.id,
-          topic.title,
-          topic.en?.title ?? "",
-          categoryLabel(topic.category),
-          ...localized.focus,
-          ...localized.scenarioConstraints,
-        ]
-          .join(" ")
-          .toLocaleLowerCase()
-          .includes(query))
+  const activeTopicFilters = [
+    topicSearch.trim(),
+    topicCategory,
+    topicForm,
+    topicPriority,
+  ].filter(Boolean).length;
+  const formOrder = { foundation: 0, scenario: 1, troubleshooting: 2 };
+  const visibleTopics = (data?.topics ?? [])
+    .filter((topic) => {
+      const query = topicSearch.trim().toLocaleLowerCase();
+      const localized = localTopic(topic, lang);
+      return (
+        (!topicCategory || topic.category === topicCategory) &&
+        (!topicForm || (topic.questionForm ?? "scenario") === topicForm) &&
+        (!topicPriority || (topic.priority ?? "core") === topicPriority) &&
+        (!query ||
+          [
+            topic.id,
+            topic.title,
+            topic.en?.title ?? "",
+            categoryLabel(topic.category),
+            ...localized.focus,
+            ...localized.scenarioConstraints,
+          ]
+            .join(" ")
+            .toLocaleLowerCase()
+            .includes(query))
+      );
+    })
+    .sort(
+      (a, b) =>
+        Number((a.priority ?? "core") === "advanced") -
+          Number((b.priority ?? "core") === "advanced") ||
+        formOrder[a.questionForm ?? "scenario"] -
+          formOrder[b.questionForm ?? "scenario"],
     );
-  });
   const [historyOpen, setHistoryOpen] = useState(false);
   const navigationVersion = useRef(0);
   useEffect(() => {
@@ -193,6 +215,8 @@ export default function InterviewApp({
       } else {
         setTopicSearch("");
         setTopicCategory("");
+        setTopicForm("");
+        setTopicPriority("");
         setTopicId(focus.id);
         setQuestionId("");
       }
@@ -478,47 +502,86 @@ export default function InterviewApp({
             <h2>{t("topics")}</h2>
             <Badge label={t("topicCount", { n: data?.topics.length ?? 0 })} />
           </div>
-          <TextInput
-            label={t("topicSearch")}
-            placeholder={t("topicSearchHint")}
-            size="sm"
-            width="100%"
-            value={topicSearch}
-            onChange={setTopicSearch}
-          />
-          <Selector
-            label={t("topicCategory")}
-            size="sm"
-            width="100%"
-            value={topicCategory}
-            onChange={setTopicCategory}
-            options={[
-              { value: "", label: t("topicAllCategories") },
-              ...Array.from(
-                new Set(data?.topics.map((topic) => topic.category) ?? []),
-              ).map((category) => ({
-                value: category,
-                label: categoryLabel(category),
-              })),
-            ]}
-          />
+          <Collapsible
+            trigger={
+              <strong>{t("topicFilters", { n: activeTopicFilters })}</strong>
+            }
+            defaultIsOpen={false}
+          >
+            <div className="topic-filter-fields">
+              <TextInput
+                label={t("topicSearch")}
+                placeholder={t("topicSearchHint")}
+                size="sm"
+                width="100%"
+                value={topicSearch}
+                onChange={setTopicSearch}
+              />
+              <Selector
+                label={t("topicCategory")}
+                size="sm"
+                width="100%"
+                value={topicCategory}
+                onChange={setTopicCategory}
+                options={[
+                  { value: "", label: t("topicAllCategories") },
+                  ...Array.from(
+                    new Set(data?.topics.map((topic) => topic.category) ?? []),
+                  ).map((category) => ({
+                    value: category,
+                    label: categoryLabel(category),
+                  })),
+                ]}
+              />
+              <Selector
+                label={t("topicForm")}
+                size="sm"
+                width="100%"
+                value={topicForm}
+                onChange={setTopicForm}
+                options={[
+                  { value: "", label: t("topicAllForms") },
+                  ...(
+                    ["foundation", "scenario", "troubleshooting"] as const
+                  ).map((form) => ({
+                    value: form,
+                    label: t(`topicForm_${form}`),
+                  })),
+                ]}
+              />
+              <Selector
+                label={t("topicPriority")}
+                size="sm"
+                width="100%"
+                value={topicPriority}
+                onChange={setTopicPriority}
+                options={[
+                  { value: "", label: t("topicAllPriorities") },
+                  { value: "core", label: t("topicPriority_core") },
+                  { value: "advanced", label: t("topicPriority_advanced") },
+                ]}
+              />
+              {activeTopicFilters > 0 && (
+                <Button
+                  label={t("topicClearFilters")}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setTopicSearch("");
+                    setTopicCategory("");
+                    setTopicForm("");
+                    setTopicPriority("");
+                  }}
+                />
+              )}
+            </div>
+          </Collapsible>
           <p className="muted topic-match-count" role="status">
             {t("topicMatches", {
               n: visibleTopics.length,
               total: data?.topics.length ?? 0,
             })}
           </p>
-          {(topicSearch || topicCategory) && (
-            <Button
-              label={t("topicClearFilters")}
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setTopicSearch("");
-                setTopicCategory("");
-              }}
-            />
-          )}
           <Button
             label={t("randomTopic")}
             variant="secondary"
@@ -554,7 +617,10 @@ export default function InterviewApp({
                   setQuestionId("");
                 }}
               >
-                <small>{categoryLabel(x.category)}</small>
+                <small>
+                  {categoryLabel(x.category)} ·{" "}
+                  {t(`topicForm_${x.questionForm ?? "scenario"}`)}
+                </small>
                 <strong>{localTopic(x, lang).title}</strong>
               </button>
             ))}
@@ -614,6 +680,10 @@ export default function InterviewApp({
             {topic && (
               <>
                 <h2>{topic.title}</h2>
+                <p className="muted">
+                  {t(`topicForm_${topic.questionForm ?? "scenario"}`)} ·{" "}
+                  {t(`topicPriority_${topic.priority ?? "core"}`)}
+                </p>
                 <div className="actions">
                   <Button
                     label={t("generateStart")}

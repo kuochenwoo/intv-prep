@@ -24,7 +24,13 @@
         "Database initially contains v1 and the cache key is absent; a writer commits v2",
         "A reader fetches v1, the writer commits and deletes the cache, then the reader caches v1"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ]
   },
   {
     "id": "hot-key-protection",
@@ -47,7 +53,13 @@
         "Two threads in one process read the same expired key",
         "Each cache miss invokes the same slow database query"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ]
   },
   {
     "id": "idempotency-retries",
@@ -70,7 +82,13 @@
         "Two requests for one order share an idempotency key",
         "The business update and idempotency record use one database transaction"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9110.html"
+    ]
   },
   {
     "id": "message-delivery",
@@ -93,7 +111,13 @@
         "The queue uses manual acknowledgements and redelivers unacknowledged messages",
         "A consumer commits its database transaction, then crashes before acknowledging"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rabbitmq.com/docs/confirms"
+    ]
   },
   {
     "id": "queue-selection",
@@ -116,7 +140,13 @@
         "One Kafka partition contains create then cancel events for the same order",
         "A consumer fetches in order, then dispatches to two worker threads"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://kafka.apache.org/documentation/"
+    ]
   },
   {
     "id": "rate-limiting",
@@ -139,7 +169,13 @@
         "A single-process token bucket starts full with capacity 5 and refills one token per second",
         "Eight simultaneous requests each require one token; insufficient tokens cause immediate rejection"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/commands/incr/"
+    ]
   },
   {
     "id": "database-concurrency",
@@ -162,7 +198,13 @@
         "PostgreSQL READ COMMITTED with initial stock 1",
         "Two transactions each SELECT stock, subtract one in application code, then write back the computed value"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.postgresql.org/docs/18/transaction-iso.html"
+    ]
   },
   {
     "id": "replication-failover",
@@ -185,7 +227,13 @@
         "Primary commit acknowledgement does not wait for an asynchronous replica to apply the log",
         "A user updates a nickname successfully, then immediately reads it from the replica"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.postgresql.org/docs/18/warm-standby.html"
+    ]
   },
   {
     "id": "sharding-growth",
@@ -208,7 +256,13 @@
         "Routing uses hash(key) % N with nonnegative integer hashes",
         "Node count changes from 3 to 4; inspect a key whose hash is 5"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/"
+    ]
   },
   {
     "id": "rpc-tail-latency",
@@ -231,7 +285,13 @@
         "Call chain A → B → C; each layer allows at most two additional retries",
         "C keeps timing out; a client timeout does not automatically undo work already started at C"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/"
+    ]
   },
   {
     "id": "mvcc-snapshots",
@@ -254,7 +314,10 @@
         "PostgreSQL 18 READ COMMITTED; T1 first SELECTs a balance of 100",
         "T2 updates the balance to 80 and commits; T1 then performs another plain SELECT in the same transaction; no other writes"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/transaction-iso.html"]
   },
   {
     "id": "composite-index",
@@ -277,7 +340,10 @@
         "PostgreSQL 18 orders has a B-tree index on (tenant_id, created_at)",
         "Query WHERE tenant_id = 7 AND created_at >= a given timestamp; examine the index scan range without assuming the planner must choose it"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/indexes-multicolumn.html"]
   },
   {
     "id": "covering-index",
@@ -300,7 +366,12 @@
         "PostgreSQL 18 index ON users(id) INCLUDE (name); query SELECT name FROM users WHERE id = 7",
         "The plan uses Index Only Scan, but the target heap page has no all-visible bit set"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://www.postgresql.org/docs/18/indexes-index-only-scans.html"
+    ]
   },
   {
     "id": "database-deadlock",
@@ -323,7 +394,10 @@
         "In PostgreSQL 18, T1 has updated row A and T2 row B; neither has committed",
         "T1 next updates B and T2 next updates A; the rows are distinct and no other transactions exist"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/explicit-locking.html"]
   },
   {
     "id": "pagination-offset",
@@ -346,7 +420,10 @@
         "Paginate by immutable unique id ascending; page one returned ids 10 and 20 with page size 2",
         "Insert id 15 before fetching page two using ORDER BY id LIMIT 2 OFFSET 2; each query has a separate snapshot"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/queries-limit.html"]
   },
   {
     "id": "transaction-rollback",
@@ -373,7 +450,10 @@
         "A PostgreSQL 18 table uses a sequence for primary keys; T1 obtains sequence value 42 and rolls back",
         "T2 then obtains the next value from that sequence; there are no concurrent calls, resets or lost sequence caches"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/transaction-iso.html"]
   },
   {
     "id": "tcp-framing",
@@ -396,7 +476,10 @@
         "A client sends two messages over one TCP connection, each with a four-byte length prefix followed by a body",
         "The server uses ordinary recv with a buffer of at most 1024 bytes; there are no delimiters or other protocols"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9293.html"]
   },
   {
     "id": "tcp-half-close",
@@ -419,7 +502,10 @@
         "On Linux a client sends its request then calls shutdown(SHUT_WR), keeping its read direction open",
         "After consuming all request bytes, server recv returns zero before the response is sent; no RST or network error occurs"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9293.html"]
   },
   {
     "id": "http-conditional",
@@ -442,7 +528,13 @@
         "A client cached a GET /profile body with ETag \"v1\"; that cached response is now stale",
         "A new GET carries If-None-Match: \"v1\"; the origin reports no change with a bodyless 304 response"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://www.rfc-editor.org/rfc/rfc9110.html#section-15.4.5",
+      "https://www.rfc-editor.org/rfc/rfc9111.html"
+    ]
   },
   {
     "id": "http-cache-control",
@@ -465,7 +557,10 @@
         "A browser receives an otherwise cacheable GET response with Cache-Control: no-cache and an ETag; no other caching restrictions apply",
         "The user requests the same resource again with network available; consider only the browser private cache, not shared proxies"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9111.html#section-5.2.2.4"]
   },
   {
     "id": "tls-identity",
@@ -488,7 +583,10 @@
         "An HTTPS client connects to api.example.com; the certificate chain is trusted but its only identity is other.example.com",
         "There is no proxy, custom trust policy or other matching name; the client proposes disabling hostname verification to resolve the error"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9110.html#section-4.3.4"]
   },
   {
     "id": "file-descriptor-offset",
@@ -511,7 +609,10 @@
         "On Linux open a regular file containing abcdef as fd1, then obtain fd2 with dup(fd1)",
         "Sequentially read two bytes from fd1 then two from fd2; initial offset is zero with no concurrent access, seeks or other reads"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": ["https://man7.org/linux/man-pages/man2/dup.2.html"]
   },
   {
     "id": "unlink-open-file",
@@ -538,7 +639,10 @@
         "On a local Linux filesystem a log file has one hard link and a process still holds its open descriptor",
         "After unlink removes the path, the file is absent from the directory but its descriptor remains open; no other links or mappings exist"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": ["https://man7.org/linux/man-pages/man2/unlink.2.html"]
   },
   {
     "id": "epoll-edge-trigger",
@@ -565,122 +669,135 @@
         "A nonblocking Linux pipe read end uses EPOLLIN | EPOLLET; its writer writes 100 bytes once and stays open without further writes",
         "After receiving readiness the reader consumes only ten bytes and calls epoll_wait again; there are no other readers, closes or error events"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": ["https://man7.org/linux/man-pages/man7/epoll.7.html"]
   },
   {
     "id": "volatile-counter",
     "category": "Concurrency",
-    "title": "volatile 可见性与计数原子性",
-    "focus": ["读改写的执行步骤", "可见性与原子性的区别", "原子计数与互斥"],
+    "title": "共享计数与读改写原子性",
+    "focus": ["读、修改、写回的区别", "单步原子与复合操作原子性"],
     "scenarioConstraints": [
-      "Java 21 中 volatile int count = 0，两个线程分别执行一次 count++",
-      "主线程 start 两个线程并 join 后读取 count；无其他写入或同步保护"
+      "语言无关伪代码：计数初值为 0，两个工作线程各做一次 load、加一、store",
+      "每次 load/store 均为顺序一致的原子操作，但没有原子 read-modify-write；等待两线程结束后读计数"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "volatile Visibility and Counter Atomicity",
+      "title": "Shared Counters and Read-Modify-Write Atomicity",
       "focus": [
-        "Read-modify-write steps",
-        "Visibility vs atomicity",
-        "Atomic counters vs mutual exclusion"
+        "Read, modify and write steps",
+        "Atomic steps versus atomic compound operations"
       ],
       "scenarioConstraints": [
-        "In Java 21, volatile int count = 0 and two threads each execute count++ once",
-        "The main thread starts both, joins them and reads count; no other writes or synchronization protect the increments"
+        "Language-neutral pseudocode: a counter starts at zero and two workers each load, add one and store",
+        "Each load/store is sequentially consistent and atomic, but the compound update is not; read after both workers finish"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"]
   },
   {
     "id": "safe-publication",
     "category": "Concurrency",
-    "title": "安全发布与 happens-before",
-    "focus": ["发布标志与先行发生", "普通字段的可见性", "发布后继续修改的边界"],
+    "title": "共享配置的安全发布",
+    "focus": ["初始化与发布顺序", "同步契约与发布后修改"],
     "scenarioConstraints": [
-      "Java 21 共享普通字段 data 初值为 0，volatile boolean ready 初值为 false",
-      "写线程依次 data = 42、ready = true；读线程读 ready 为 true 后读取 data；发布后无其他修改"
+      "一个线程初始化只读配置，再通过有明确 release/acquire 语义的发布接口交给另一线程",
+      "只讨论一次发布，不要求 Java 内存模型或任何语言的数据竞争未定义行为"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "Safe Publication and Happens-Before",
+      "title": "Safely Publishing Shared Configuration",
       "focus": [
-        "Publication flags and happens-before",
-        "Visibility of ordinary fields",
-        "Mutations after publication"
+        "Initialization versus publication order",
+        "Synchronization contracts and mutation after publication"
       ],
       "scenarioConstraints": [
-        "In Java 21 shared ordinary field data starts at zero and volatile boolean ready starts false",
-        "The writer sets data = 42 then ready = true; the reader observes ready true then reads data; no mutations follow publication"
+        "One thread initializes read-only configuration and passes it to another using an interface with explicit release/acquire semantics",
+        "Discuss one publication, not Java memory-model trivia or undefined behavior from language-level data races"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"]
   },
   {
     "id": "condition-wait",
     "category": "Concurrency",
-    "title": "条件等待与唤醒后重检",
-    "focus": ["监视器与 wait 释放锁", "虚假唤醒与竞争消费", "while 条件重检"],
+    "title": "条件变量与等待谓词",
+    "focus": ["等待时释放互斥锁", "唤醒后重新验证条件"],
     "scenarioConstraints": [
-      "Java 21 消费者在 synchronized(lock) 内用 if (queue.isEmpty()) lock.wait()，随后 remove；生产者使用同一锁并 notifyAll",
-      "有两个消费者等待，生产者只加入一个元素；被唤醒线程需重新竞争同一监视器"
+      "使用 POSIX 风格互斥锁和条件变量，等待操作释放锁并在返回前重新获取锁",
+      "两个消费者等待同一队列，生产者加入一个元素并广播；只有持锁者可以访问队列"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "Condition Waiting and Predicate Rechecks",
+      "title": "Condition Variables and Wait Predicates",
       "focus": [
-        "Monitors and releasing locks in wait",
-        "Spurious wakeups and competing consumers",
-        "Rechecking predicates in a while loop"
+        "Releasing the mutex while waiting",
+        "Rechecking conditions after wakeup"
       ],
       "scenarioConstraints": [
-        "A Java 21 consumer uses if (queue.isEmpty()) lock.wait() then remove inside synchronized(lock); the producer uses the same lock and notifyAll",
-        "Two consumers are waiting and the producer adds only one item; awakened threads must compete for the same monitor again"
+        "Use a POSIX-style mutex and condition variable; waiting releases the lock and reacquires it before returning",
+        "Two consumers wait on one queue; a producer adds one item and broadcasts; access to the queue requires the mutex"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"]
   },
   {
     "id": "thread-pool-starvation",
     "category": "Concurrency",
     "title": "线程池中的嵌套等待",
-    "focus": ["工作线程与任务队列", "Future.get 的阻塞", "线程饥饿与等待依赖"],
+    "focus": ["工作槽位与等待依赖", "阻塞等待和任务排队"],
     "scenarioConstraints": [
-      "Java 21 ThreadPoolExecutor 固定为 2 个工作线程，使用无界队列且不启用超时",
-      "两个正在运行的父任务各向同一池提交一个子任务，并调用 Future.get 无限等待；子任务本身可立即完成"
+      "固定工作池只有两个工作线程，队列无界且不创建额外线程",
+      "两个父任务同时运行，各提交一个子任务到同一池并无限阻塞等待；子任务无外部依赖"
     ],
     "level": "mid-to-senior",
     "en": {
       "title": "Nested Waiting in Thread Pools",
       "focus": [
-        "Worker threads and task queues",
-        "Blocking in Future.get",
-        "Thread starvation and wait dependencies"
+        "Worker slots and wait dependencies",
+        "Blocking waits and queued tasks"
       ],
       "scenarioConstraints": [
-        "A Java 21 ThreadPoolExecutor has exactly two workers, an unbounded queue and no timeouts",
-        "Both running parent tasks submit a child to that same pool then wait indefinitely in Future.get; each child could finish immediately if scheduled"
+        "A fixed pool has exactly two workers, an unbounded queue and no extra workers",
+        "Both running parent tasks enqueue one child in the same pool and block indefinitely for it; children have no external dependencies"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"]
   },
   {
     "id": "cas-aba",
     "category": "Concurrency",
-    "title": "CAS 与 ABA 变化",
-    "focus": ["值比较与变化历史", "版本戳与引用一起比较", "CAS 成功的语义边界"],
+    "title": "CAS 比较与状态变化历史",
+    "focus": ["比较当前值的保证", "版本标记与状态转换"],
     "scenarioConstraints": [
-      "Java 21 AtomicReference 初值指向对象 A；T1 读取 A 后暂停，期间对象均保持存活",
-      "T2 将引用从 A 改为 B 再改回同一个 A；T1 恢复后 compareAndSet(A, C)；无后续写入"
+      "共享槽位用顺序一致的 CAS 更新，A、B、C 是不同且存活的状态标识",
+      "T1 读取 A 后暂停；T2 将 A 改 B 再改回 A，随后 T1 执行 CAS(A,C)；不涉及内存回收"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "CAS and ABA Changes",
+      "title": "CAS Comparisons and State History",
       "focus": [
-        "Value comparisons vs change history",
-        "Comparing a stamp with a reference",
-        "What successful CAS guarantees"
+        "What comparing the current value guarantees",
+        "Version tags and state transitions"
       ],
       "scenarioConstraints": [
-        "A Java 21 AtomicReference initially holds object A; T1 reads A then pauses, and all objects remain alive",
-        "T2 changes the reference A to B then back to the identical A; T1 resumes with compareAndSet(A, C); no later writes occur"
+        "A shared slot uses sequentially consistent CAS; A, B and C are distinct live state identifiers",
+        "T1 reads A and pauses; T2 changes A to B and back to A before T1 runs CAS(A,C); memory reclamation is excluded"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"]
   },
   {
     "id": "javascript-event-loop",
@@ -707,61 +824,59 @@
         "One browser script executes console.log(\"A\"), setTimeout(() => console.log(\"B\"), 0), Promise.resolve().then(() => console.log(\"C\")), then console.log(\"D\")",
         "There are no other tasks or exceptions; compare only these four logs, not actual millisecond delays or Node.js behavior"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model"
+    ]
   },
   {
     "id": "mutable-hash-key",
     "category": "Runtime",
-    "title": "HashMap 可变键与查找失败",
-    "focus": [
-      "equals 与 hashCode 契约",
-      "插入后的键状态变化",
-      "不可变键的局部取舍"
-    ],
+    "title": "可变哈希键与查找契约",
+    "focus": ["哈希与相等性的一致性", "键状态变化与访问路径"],
     "scenarioConstraints": [
-      "Java 21 HashMap 的键 User 以可变 id 字段实现 equals 与 hashCode；插入时 id = 1",
-      "随后同一对象 id 改为 2；两次 hashCode 不同，且没有重插入、扩容或并发操作，再用该对象 get"
+      "使用教学哈希表模型：插入时按键的 id 哈希选择桶，查询时按当前 id 重新选择桶，只在桶内比较",
+      "插入对象后修改 id，使它映射到不同桶；没有重插入、扩容或并发，不推广为所有语言容器的固定结果"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "Mutable HashMap Keys and Failed Lookups",
-      "focus": [
-        "The equals and hashCode contract",
-        "Changing keys after insertion",
-        "Local trade-offs of immutable keys"
-      ],
+      "title": "Mutable Hash Keys and Lookup Contracts",
+      "focus": ["Hash/equality consistency", "Key mutation and lookup paths"],
       "scenarioConstraints": [
-        "A Java 21 HashMap key User implements equals and hashCode using mutable id; it is inserted with id = 1",
-        "The same object changes id to 2 with a different hashCode; get uses that object without reinsertion, resizing or concurrent operations"
+        "Use a teaching hash-table model: insertion selects a bucket using key.id; lookup recomputes that bucket and compares keys only within it",
+        "After insertion change id so it selects a different bucket; no reinsertion, resizing or concurrency; do not generalize a fixed result to every language container"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://opendatastructures.org/"]
   },
   {
     "id": "resource-cleanup",
     "category": "Runtime",
-    "title": "异常路径与资源关闭",
-    "focus": [
-      "try-with-resources 的关闭时机",
-      "主异常与 suppressed 异常",
-      "确定性关闭与垃圾回收"
-    ],
+    "title": "异常退出与资源生命周期",
+    "focus": ["确定性清理与垃圾回收", "资源所有权和错误处理"],
     "scenarioConstraints": [
-      "Java 21 try-with-resources 成功创建一个 AutoCloseable 资源，try 主体抛出异常 E1",
-      "该资源 close() 也抛出异常 E2；无其他资源、catch、finally 或异常包装"
+      "语言无关伪代码打开文件或获取连接后执行可能失败的操作，调用方负责释放资源",
+      "比较显式作用域清理与仅在正常返回前关闭；不要求 Java 专属异常合并规则"
     ],
     "level": "mid-to-senior",
     "en": {
-      "title": "Exception Paths and Resource Cleanup",
+      "title": "Resource Lifetimes on Exceptional Exit",
       "focus": [
-        "When try-with-resources closes resources",
-        "Primary vs suppressed exceptions",
-        "Deterministic cleanup vs garbage collection"
+        "Deterministic cleanup versus garbage collection",
+        "Resource ownership and error handling"
       ],
       "scenarioConstraints": [
-        "Java 21 try-with-resources successfully creates one AutoCloseable resource and its body throws E1",
-        "That resource close() also throws E2; there are no other resources, catch/finally blocks or exception wrappers"
+        "Language-neutral pseudocode opens a file or acquires a connection before a fallible operation; the caller owns cleanup",
+        "Compare scope-based cleanup with closing only before normal return; exclude Java-specific exception-merging rules"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://en.cppreference.com/w/cpp/language/raii.html"]
   },
   {
     "id": "redis-pipeline",
@@ -784,7 +899,12 @@
         "On one Redis instance client A pipelines SET x 1 and GET x without MULTI or Lua",
         "Client B may execute SET x 2; command order is preserved within each connection with no assumed scheduling order across connections"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://redis.io/docs/latest/develop/using-commands/pipelining/"
+    ]
   },
   {
     "id": "redis-lock-lease",
@@ -811,7 +931,12 @@
         "On one Redis instance A acquires a lock with SET lock tokenA NX PX 1000 then pauses for over one second",
         "After expiry B acquires the same lock with tokenB; A resumes intending to DEL lock directly; no Redis failure or clock jump occurs"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/"
+    ]
   },
   {
     "id": "redis-eviction",
@@ -838,7 +963,10 @@
         "Redis uses maxmemory with allkeys-lru; key K has no TTL and has rarely been accessed recently",
         "New writes trigger memory eviction; there are no explicit deletes, restarts or expiration operations"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://redis.io/docs/latest/develop/reference/eviction/"]
   },
   {
     "id": "sql-parameters",
@@ -865,7 +993,12 @@
         "Java JDBC uses PreparedStatement for SELECT id FROM users WHERE name = ? with setString binding",
         "Input contains quotes and SQL fragments; there is no input concatenation or dynamic substitution of table, column or sort identifiers"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html"
+    ]
   },
   {
     "id": "csrf-cors",
@@ -892,7 +1025,12 @@
         "The victim site uses a Secure; SameSite=None session cookie; browser policy does not block cross-site cookies",
         "An attacker submits an HTML form POST with application/x-www-form-urlencoded to change a nickname; the server has no CSRF token or origin check and does not permit cross-origin response reads"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/CSRF"
+    ]
   },
   {
     "id": "sql-null",
@@ -915,7 +1053,10 @@
         "A PostgreSQL 18 users table has only two rows, with age NULL and 20",
         "Query SELECT age FROM users WHERE age <> 18; there are no other predicates or casts"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/functions-comparison.html"]
   },
   {
     "id": "fork-copy-on-write",
@@ -938,7 +1079,10 @@
         "A single-threaded Linux parent has ordinary private heap variable x = 1 and successfully forks",
         "The child sets its x to 2 then exits; the parent reads x after waitpid; there is no shared memory or other writer"
       ]
-    }
+    },
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": ["https://man7.org/linux/man-pages/man2/fork.2.html"]
   },
   {
     "id": "async-exceptions",
@@ -964,6 +1108,2219 @@
       "scenarioConstraints": [
         "In browser JavaScript, async function f() { throw new Error(\"E\"); }",
         "Caller executes try { f(); console.log(\"after\"); } catch { console.log(\"caught\"); }; it neither awaits nor attaches catch, with no other error handling"
+      ]
+    },
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function"
+    ]
+  },
+  {
+    "id": "mysql-index-structure",
+    "category": "Database",
+    "title": "B+ 树索引为什么适合数据库",
+    "focus": ["页访问与树高", "范围查询与索引维护成本"],
+    "scenarioConstraints": [
+      "用一次等值查询或范围查询说明，不考察存储页结构背诵",
+      "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "en": {
+      "title": "Why Databases Use B+ Tree Indexes",
+      "focus": [
+        "Page access and tree height",
+        "range scans and index maintenance"
+      ],
+      "scenarioConstraints": [
+        "Explain one equality or range lookup without memorizing page layouts",
+        "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+      ]
+    }
+  },
+  {
+    "id": "mysql-clustered-secondary",
+    "category": "Database",
+    "title": "主键索引、二级索引与回表",
+    "focus": ["InnoDB 行存储", "二级索引访问路径"],
+    "scenarioConstraints": [
+      "明确采用 InnoDB，比较一条具体 SELECT 的访问路径",
+      "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "en": {
+      "title": "Primary and Secondary Index Lookups",
+      "focus": ["InnoDB row storage", "secondary-index access paths"],
+      "scenarioConstraints": [
+        "Use InnoDB and compare the access paths for one concrete SELECT",
+        "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+      ]
+    }
+  },
+  {
+    "id": "sql-explain-slow-query",
+    "category": "Database",
+    "title": "慢 SQL 应先看哪些证据",
+    "focus": ["执行计划与实际扫描", "选择性与统计信息"],
+    "scenarioConstraints": [
+      "给出查询和观测，不能仅凭慢就断言缺少索引",
+      "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "en": {
+      "title": "Investigating a Slow SQL Query",
+      "focus": [
+        "Execution plans and actual scanning",
+        "selectivity and statistics"
+      ],
+      "scenarioConstraints": [
+        "Supply a query and observations; slowness alone does not prove a missing index",
+        "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+      ]
+    }
+  },
+  {
+    "id": "mysql-index-predicates",
+    "category": "Database",
+    "title": "索引与函数、类型转换",
+    "focus": ["谓词能否形成扫描范围", "计划与数据分布"],
+    "scenarioConstraints": [
+      "给出字段类型、查询和索引，不宣称所有函数都使所有索引失效",
+      "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "en": {
+      "title": "Indexes, Functions and Type Conversion",
+      "focus": ["Predicate scan bounds", "plans and data distribution"],
+      "scenarioConstraints": [
+        "Specify types, query and index; do not claim every function disables every index",
+        "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+      ]
+    }
+  },
+  {
+    "id": "transaction-acid",
+    "category": "Database",
+    "title": "事务的 ACID 到底保证什么",
+    "focus": ["原子性与持久性", "数据库约束和业务不变量"],
+    "scenarioConstraints": [
+      "用一个转账事务解释，不把一致性等同于所有副本实时相同",
+      "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "en": {
+      "title": "What ACID Transactions Guarantee",
+      "focus": [
+        "Atomicity and durability",
+        "database constraints and business invariants"
+      ],
+      "scenarioConstraints": [
+        "Use one transfer transaction; do not equate consistency with instantly identical replicas",
+        "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+      ]
+    }
+  },
+  {
+    "id": "isolation-anomalies",
+    "category": "Database",
+    "title": "隔离级别与并发异常",
+    "focus": ["脏读、不可重复读与幻读", "标准与具体实现"],
+    "scenarioConstraints": [
+      "开场只比较两个相关级别，不要求背全表或跨引擎同义",
+      "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "en": {
+      "title": "Isolation Levels and Concurrent Anomalies",
+      "focus": [
+        "Dirty reads, nonrepeatable reads and phantoms",
+        "standards versus implementations"
+      ],
+      "scenarioConstraints": [
+        "Compare two relevant levels initially; do not demand a full table or identical engine behavior",
+        "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+      ]
+    }
+  },
+  {
+    "id": "mysql-redo-undo-binlog",
+    "category": "Database",
+    "title": "redo、undo 与 binlog 的职责",
+    "focus": ["恢复、回滚与复制", "提交和刷盘边界"],
+    "scenarioConstraints": [
+      "限定 MySQL/InnoDB，开场只问一种故障下两类日志的区别",
+      "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "en": {
+      "title": "Roles of Redo, Undo and Binary Logs",
+      "focus": [
+        "Recovery, rollback and replication",
+        "commit and flush boundaries"
+      ],
+      "scenarioConstraints": [
+        "Use MySQL/InnoDB; initially compare two logs for one failure case",
+        "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+      ]
+    }
+  },
+  {
+    "id": "mysql-lock-range",
+    "category": "Database",
+    "title": "行锁、范围锁与阻塞",
+    "focus": ["访问路径与锁范围", "隔离级别与并发写入"],
+    "scenarioConstraints": [
+      "明确索引、隔离级别与谓词，不能只按 SQL 文本推断锁范围",
+      "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "en": {
+      "title": "Row Locks, Range Locks and Blocking",
+      "focus": [
+        "Access paths and lock scope",
+        "isolation level and concurrent writes"
+      ],
+      "scenarioConstraints": [
+        "State index, isolation and predicate; SQL text alone does not determine lock scope",
+        "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+      ]
+    }
+  },
+  {
+    "id": "read-replica-lag",
+    "category": "Database",
+    "title": "为什么刚写完读副本还是旧值",
+    "focus": ["复制延迟证据", "读己之写的局部保证"],
+    "scenarioConstraints": [
+      "限定一次写后读，不要求设计整套数据库容灾",
+      "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "en": {
+      "title": "Why a Replica Can Return an Older Value",
+      "focus": [
+        "Evidence of replication lag",
+        "local read-your-writes guarantees"
+      ],
+      "scenarioConstraints": [
+        "Limit the discussion to one write followed by a read, not complete database failover",
+        "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+      ]
+    }
+  },
+  {
+    "id": "schema-online-change",
+    "category": "Database",
+    "title": "大表加字段或索引前看什么",
+    "focus": ["元数据锁与操作算法", "兼容发布与回滚"],
+    "scenarioConstraints": [
+      "注明数据库版本与变更类型，不声称所有 ALTER 都无锁",
+      "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "en": {
+      "title": "Planning an Online Schema Change",
+      "focus": [
+        "Metadata locking and operation algorithms",
+        "compatible rollout and rollback"
+      ],
+      "scenarioConstraints": [
+        "Specify database version and change type; not every ALTER is lock-free",
+        "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+      ]
+    }
+  },
+  {
+    "id": "connection-pool-exhaustion",
+    "category": "Database",
+    "title": "连接池满了就该加连接吗",
+    "focus": ["排队与持有时间", "慢查询和事务边界"],
+    "scenarioConstraints": [
+      "先给池等待和数据库负载证据，不预设扩大池就是修复",
+      "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "en": {
+      "title": "Diagnosing an Exhausted Connection Pool",
+      "focus": [
+        "Queueing and connection hold time",
+        "slow queries and transaction boundaries"
+      ],
+      "scenarioConstraints": [
+        "Start with pool-wait and database-load evidence; a larger pool is not an assumed fix",
+        "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+      ]
+    }
+  },
+  {
+    "id": "sql-join-grouping",
+    "category": "Database",
+    "title": "JOIN、聚合与重复计数",
+    "focus": ["一对多连接的行数", "聚合粒度与 NULL"],
+    "scenarioConstraints": [
+      "给小表及业务口径，讨论一条统计 SQL，不要求完整报表架构",
+      "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "en": {
+      "title": "Joins, Aggregation and Duplicate Counts",
+      "focus": [
+        "Row multiplication in one-to-many joins",
+        "aggregation grain and NULL"
+      ],
+      "scenarioConstraints": [
+        "Use small tables and a counting rule; discuss one query, not a reporting architecture",
+        "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+      ]
+    }
+  },
+  {
+    "id": "redis-data-types",
+    "category": "Redis",
+    "title": "Redis 数据类型怎么选",
+    "focus": ["访问操作与数据类型", "局部复杂度和内存代价"],
+    "scenarioConstraints": [
+      "每题只比较满足同一需求的两种类型，不要求背全部命令",
+      "说明 Redis 版本、数据类型和持久化假设；不把内存原子操作等同于端到端可靠性"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "en": {
+      "title": "Choosing Redis Data Types",
+      "focus": [
+        "Access operations and data types",
+        "local complexity and memory costs"
+      ],
+      "scenarioConstraints": [
+        "Compare two types for one need; do not ask for every command",
+        "Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability"
+      ]
+    }
+  },
+  {
+    "id": "redis-single-thread",
+    "category": "Redis",
+    "title": "Redis 单线程为什么仍可能很快",
+    "focus": ["命令执行与网络 I/O", "阻塞操作和多线程边界"],
+    "scenarioConstraints": [
+      "区分命令执行、I/O 与后台任务，不泛称 Redis 所有工作都单线程",
+      "说明 Redis 版本、数据类型和持久化假设；不把内存原子操作等同于端到端可靠性"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "en": {
+      "title": "Redis Command Execution and Performance",
+      "focus": [
+        "Command execution versus network I/O",
+        "blocking operations and threading boundaries"
+      ],
+      "scenarioConstraints": [
+        "Distinguish command execution, I/O and background work; avoid claiming all work is single-threaded",
+        "Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability"
+      ]
+    }
+  },
+  {
+    "id": "redis-persistence",
+    "category": "Redis",
+    "title": "RDB 与 AOF 如何选择",
+    "focus": ["恢复点与恢复耗时", "刷盘和重写代价"],
+    "scenarioConstraints": [
+      "只讨论一个明确的丢失窗口需求，不宣称默认配置零丢失",
+      "说明 Redis 版本、数据类型和持久化假设；不把内存原子操作等同于端到端可靠性"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "en": {
+      "title": "Choosing Between RDB and AOF",
+      "focus": [
+        "Recovery point and recovery time",
+        "flushing and rewrite costs"
+      ],
+      "scenarioConstraints": [
+        "Use one explicit loss-window requirement; never assume zero loss by default",
+        "Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability"
+      ]
+    }
+  },
+  {
+    "id": "redis-cache-failures",
+    "category": "Redis",
+    "title": "缓存未命中与数据库压力",
+    "focus": [
+      "从键分布、过期分布和数据库命中结果区分回源原因",
+      "缓存穿透、击穿、雪崩作为内部诊断方向，不要求复述分类名称"
+    ],
+    "scenarioConstraints": [
+      "开场只提供一次回源异常的有限观测，不同时列出多个故障的完整触发条件，也不提前给出原因或分类选项",
+      "先问下一项诊断证据及其判断依据；未知的键有效性、热点分布和过期情况留待候选人主动询问，不添加无关版本、值类型或持久化背景"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "en": {
+      "title": "Cache Misses and Database Pressure",
+      "focus": [
+        "Distinguish origin-traffic causes using key distributions, expiry distributions and database hit results",
+        "Cache penetration, hot-key expiry and mass expiry are private diagnostic directions, not required labels"
+      ],
+      "scenarioConstraints": [
+        "Open with limited observations of one origin-traffic incident, not complete trigger descriptions of several failures; supply neither a root cause nor a menu of diagnoses",
+        "Ask for the next diagnostic evidence and reasoning; leave unknown key validity, popularity and expiry behavior for the candidate to ask about, and omit irrelevant version, value-type or persistence context"
+      ]
+    }
+  },
+  {
+    "id": "redis-hot-big-key",
+    "category": "Redis",
+    "title": "慢请求是热键还是大键",
+    "focus": ["访问频次与对象大小", "单命令耗时和分片热点"],
+    "scenarioConstraints": [
+      "提供命令延迟与键观测，不能要求在生产执行阻塞式全量扫描",
+      "说明 Redis 版本、数据类型和持久化假设；不把内存原子操作等同于端到端可靠性"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "en": {
+      "title": "Hot Keys Versus Large Keys",
+      "focus": [
+        "Access frequency versus object size",
+        "command latency and shard hotspots"
+      ],
+      "scenarioConstraints": [
+        "Provide command latency and key observations; do not require a blocking production-wide scan",
+        "Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability"
+      ]
+    }
+  },
+  {
+    "id": "redis-zset-ranking",
+    "category": "Redis",
+    "title": "用 ZSet 做排行榜的边界",
+    "focus": ["分数与同分顺序", "更新和分页语义"],
+    "scenarioConstraints": [
+      "限定一个榜单的更新与读榜，不设计全站排行榜平台",
+      "说明 Redis 版本、数据类型和持久化假设；不把内存原子操作等同于端到端可靠性"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "en": {
+      "title": "Ranking with a Sorted Set",
+      "focus": ["Scores and tie ordering", "updates and pagination semantics"],
+      "scenarioConstraints": [
+        "Limit scope to updating and reading one board, not the whole platform",
+        "Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability"
+      ]
+    }
+  },
+  {
+    "id": "redis-lua-atomicity",
+    "category": "Redis",
+    "title": "Lua 原子执行等于事务回滚吗",
+    "focus": ["串行执行与错误后状态", "脚本时长与阻塞"],
+    "scenarioConstraints": [
+      "用两次写入中的运行时错误区分原子执行与回滚，不混用数据库事务保证",
+      "说明 Redis 版本、数据类型和持久化假设；不把内存原子操作等同于端到端可靠性"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "en": {
+      "title": "Atomic Lua Execution Versus Rollback",
+      "focus": [
+        "Serialized execution versus state after errors",
+        "script duration and blocking"
+      ],
+      "scenarioConstraints": [
+        "Use a runtime error across two writes to distinguish atomic execution from rollback",
+        "Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability"
+      ]
+    }
+  },
+  {
+    "id": "redis-cluster-routing",
+    "category": "Redis",
+    "title": "Redis Cluster 键路由与多键命令",
+    "focus": ["哈希槽与重定向", "多键操作的同槽边界"],
+    "scenarioConstraints": [
+      "限定原生 Redis Cluster，明确键和操作，不扩成完整集群选型",
+      "说明 Redis 版本、数据类型和持久化假设；不把内存原子操作等同于端到端可靠性"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "en": {
+      "title": "Redis Cluster Routing and Multi-Key Operations",
+      "focus": [
+        "Hash slots and redirection",
+        "same-slot limits of multi-key operations"
+      ],
+      "scenarioConstraints": [
+        "Use native Redis Cluster with explicit keys and operations, not full cluster selection",
+        "Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability"
+      ]
+    }
+  },
+  {
+    "id": "http-request-journey",
+    "category": "Networking",
+    "title": "输入 URL 后请求经历什么",
+    "focus": ["DNS、建连与 HTTP", "缓存和连接复用的条件"],
+    "scenarioConstraints": [
+      "先限定一次 HTTPS 请求，追问逐层展开，不要求背完整网络栈",
+      "说明协议版本、客户端和代理边界，不把浏览器策略等同于服务端认证"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9110.html"
+    ],
+    "en": {
+      "title": "The Path of a Browser Request",
+      "focus": [
+        "DNS, connection setup and HTTP",
+        "conditions for caching and connection reuse"
+      ],
+      "scenarioConstraints": [
+        "Start with one HTTPS request; follow up layer by layer rather than reciting the whole stack",
+        "State protocol version and client/proxy boundaries; browser policy is not server authentication"
+      ]
+    }
+  },
+  {
+    "id": "http-method-semantics",
+    "category": "Networking",
+    "title": "GET、POST 与幂等语义",
+    "focus": ["安全方法与幂等", "协议语义与应用实现"],
+    "scenarioConstraints": [
+      "讨论方法语义，不把 POST 必然不幂等或 GET 必然没有副作用当事实",
+      "说明协议版本、客户端和代理边界，不把浏览器策略等同于服务端认证"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9110.html"
+    ],
+    "en": {
+      "title": "HTTP Methods and Idempotency",
+      "focus": [
+        "Safe methods and idempotency",
+        "protocol semantics versus application behavior"
+      ],
+      "scenarioConstraints": [
+        "Discuss method semantics; do not assume every POST is non-idempotent or every GET has no effects",
+        "State protocol version and client/proxy boundaries; browser policy is not server authentication"
+      ]
+    }
+  },
+  {
+    "id": "http-status-retry",
+    "category": "Networking",
+    "title": "HTTP 状态码与重试判断",
+    "focus": ["客户端与服务端错误", "重试条件和 Retry-After"],
+    "scenarioConstraints": [
+      "只针对一个接口失败做判断，结合业务幂等性，不按状态码机械重试",
+      "说明协议版本、客户端和代理边界，不把浏览器策略等同于服务端认证"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9110.html"
+    ],
+    "en": {
+      "title": "HTTP Status Codes and Retry Decisions",
+      "focus": [
+        "Client versus server errors",
+        "retry conditions and Retry-After"
+      ],
+      "scenarioConstraints": [
+        "Judge one endpoint failure with business idempotency, not status-code-only retry rules",
+        "State protocol version and client/proxy boundaries; browser policy is not server authentication"
+      ]
+    }
+  },
+  {
+    "id": "http-version-multiplexing",
+    "category": "Networking",
+    "title": "HTTP/1.1、HTTP/2 与 HTTP/3",
+    "focus": ["连接复用与多路复用", "传输层阻塞边界"],
+    "scenarioConstraints": [
+      "开场比较两种协议在一个丢包场景的差异，不要求设计协议",
+      "说明协议版本、客户端和代理边界，不把浏览器策略等同于服务端认证"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9113.html",
+      "https://www.rfc-editor.org/rfc/rfc9114.html"
+    ],
+    "en": {
+      "title": "HTTP/1.1, HTTP/2 and HTTP/3",
+      "focus": [
+        "Connection reuse and multiplexing",
+        "transport-level blocking boundaries"
+      ],
+      "scenarioConstraints": [
+        "Compare two versions in one packet-loss situation, not protocol design",
+        "State protocol version and client/proxy boundaries; browser policy is not server authentication"
+      ]
+    }
+  },
+  {
+    "id": "https-handshake",
+    "category": "Networking",
+    "title": "HTTPS 握手验证了什么",
+    "focus": ["证书信任与密钥协商", "身份验证和加密边界"],
+    "scenarioConstraints": [
+      "注明 TLS 1.3，无需背消息字段或手算密码学",
+      "说明协议版本、客户端和代理边界，不把浏览器策略等同于服务端认证"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc8446.html"
+    ],
+    "en": {
+      "title": "What an HTTPS Handshake Verifies",
+      "focus": [
+        "Certificate trust and key agreement",
+        "authentication and encryption boundaries"
+      ],
+      "scenarioConstraints": [
+        "Use TLS 1.3 without memorizing message fields or computing cryptography",
+        "State protocol version and client/proxy boundaries; browser policy is not server authentication"
+      ]
+    }
+  },
+  {
+    "id": "network-dns-cache",
+    "category": "Networking",
+    "title": "DNS 缓存与切流延迟",
+    "focus": ["解析路径与 TTL", "递归缓存和客户端缓存"],
+    "scenarioConstraints": [
+      "给切流现象和解析观测，不把 TTL 当所有连接的强制失效时间",
+      "说明协议版本、客户端和代理边界，不把浏览器策略等同于服务端认证"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc1034.html"
+    ],
+    "en": {
+      "title": "DNS Caches and Traffic Cutover",
+      "focus": ["Resolution paths and TTL", "recursive and client caches"],
+      "scenarioConstraints": [
+        "Give cutover symptoms and resolver observations; TTL does not forcibly expire every connection",
+        "State protocol version and client/proxy boundaries; browser policy is not server authentication"
+      ]
+    }
+  },
+  {
+    "id": "network-tcp-reliability",
+    "category": "Networking",
+    "title": "TCP 可靠传输保证到哪里",
+    "focus": ["序号、确认与重传", "字节送达和业务提交的区别"],
+    "scenarioConstraints": [
+      "只解释一次超时或断连，不把 ACK 当订单已提交",
+      "说明协议版本、客户端和代理边界，不把浏览器策略等同于服务端认证"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9293.html"
+    ],
+    "en": {
+      "title": "The Scope of TCP Reliability",
+      "focus": [
+        "Sequence numbers, acknowledgements and retransmission",
+        "bytes delivered versus business commit"
+      ],
+      "scenarioConstraints": [
+        "Explain one timeout or disconnect; an ACK does not establish an order commit",
+        "State protocol version and client/proxy boundaries; browser policy is not server authentication"
+      ]
+    }
+  },
+  {
+    "id": "network-time-wait",
+    "category": "Networking",
+    "title": "TIME_WAIT 多就一定有故障吗",
+    "focus": ["主动关闭与连接状态", "端口和连接复用证据"],
+    "scenarioConstraints": [
+      "注明 Linux 网络栈，先看端口和失败指标，不默认改内核参数",
+      "说明协议版本、客户端和代理边界，不把浏览器策略等同于服务端认证"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9293.html",
+      "https://man7.org/linux/man-pages/man7/tcp.7.html"
+    ],
+    "en": {
+      "title": "Interpreting Many TIME_WAIT Connections",
+      "focus": [
+        "Active close and connection states",
+        "port and connection reuse evidence"
+      ],
+      "scenarioConstraints": [
+        "Use Linux and examine ports and failures before assuming kernel tuning is needed",
+        "State protocol version and client/proxy boundaries; browser policy is not server authentication"
+      ]
+    }
+  },
+  {
+    "id": "network-websocket",
+    "category": "Networking",
+    "title": "WebSocket、SSE 与轮询",
+    "focus": ["双向通信与单向推送", "重连和消息恢复"],
+    "scenarioConstraints": [
+      "只比较一个通知需求下的两种方式，可靠重放需应用层约定",
+      "说明协议版本、客户端和代理边界，不把浏览器策略等同于服务端认证"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc6455.html",
+      "https://html.spec.whatwg.org/multipage/server-sent-events.html"
+    ],
+    "en": {
+      "title": "WebSocket, SSE and Polling",
+      "focus": [
+        "Bidirectional communication versus server push",
+        "reconnection and message recovery"
+      ],
+      "scenarioConstraints": [
+        "Compare two approaches for one notification need; reliable replay needs an application contract",
+        "State protocol version and client/proxy boundaries; browser policy is not server authentication"
+      ]
+    }
+  },
+  {
+    "id": "os-process-thread",
+    "category": "Operating Systems",
+    "title": "进程与线程有哪些资源边界",
+    "focus": ["地址空间与共享资源", "隔离和切换代价"],
+    "scenarioConstraints": [
+      "用一个服务的工作单元作例子，不背平台专属结构体",
+      "以 Linux 为示例，说明影响结果的内核和文件系统假设，不要求命令背诵"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/"
+    ],
+    "en": {
+      "title": "Resource Boundaries of Processes and Threads",
+      "focus": [
+        "Address spaces and shared resources",
+        "isolation and switching costs"
+      ],
+      "scenarioConstraints": [
+        "Use a service worker example without platform-specific structure trivia",
+        "Use Linux as the example and state relevant kernel/filesystem assumptions; command memorization is not required"
+      ]
+    }
+  },
+  {
+    "id": "os-virtual-memory",
+    "category": "Operating Systems",
+    "title": "虚拟内存、缺页与 OOM",
+    "focus": ["地址映射与按需分配", "缺页不等于磁盘换入"],
+    "scenarioConstraints": [
+      "区分虚拟地址、常驻内存和容器限制，不把分配成功当物理内存已到位",
+      "以 Linux 为示例，说明影响结果的内核和文件系统假设，不要求命令背诵"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/"
+    ],
+    "en": {
+      "title": "Virtual Memory, Page Faults and OOM",
+      "focus": [
+        "Address translation and demand allocation",
+        "page faults do not always mean swap I/O"
+      ],
+      "scenarioConstraints": [
+        "Distinguish virtual addresses, resident memory and container limits; allocation need not populate pages",
+        "Use Linux as the example and state relevant kernel/filesystem assumptions; command memorization is not required"
+      ]
+    }
+  },
+  {
+    "id": "os-io-models",
+    "category": "Operating Systems",
+    "title": "阻塞、非阻塞与 I/O 多路复用",
+    "focus": ["等待就绪与执行读写", "同步和异步的区分"],
+    "scenarioConstraints": [
+      "比较一个 socket 的等待方式，不把 epoll 就绪通知等同于读操作完成",
+      "以 Linux 为示例，说明影响结果的内核和文件系统假设，不要求命令背诵"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/"
+    ],
+    "en": {
+      "title": "Blocking, Nonblocking and Multiplexed I/O",
+      "focus": [
+        "Waiting for readiness versus reading",
+        "synchronous versus asynchronous behavior"
+      ],
+      "scenarioConstraints": [
+        "Compare waiting on one socket; epoll readiness does not mean the read is complete",
+        "Use Linux as the example and state relevant kernel/filesystem assumptions; command memorization is not required"
+      ]
+    }
+  },
+  {
+    "id": "os-page-cache",
+    "category": "Operating Systems",
+    "title": "文件写入成功等于数据落盘吗",
+    "focus": ["页缓存与刷盘", "进程崩溃和断电边界"],
+    "scenarioConstraints": [
+      "明确本地文件系统与故障类型，区分 write、fsync 和应用提交",
+      "以 Linux 为示例，说明影响结果的内核和文件系统假设，不要求命令背诵"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/"
+    ],
+    "en": {
+      "title": "Does a Successful Write Mean Durable Data",
+      "focus": [
+        "Page cache and flushing",
+        "process crash versus power failure"
+      ],
+      "scenarioConstraints": [
+        "Specify a local filesystem and failure type; distinguish write, fsync and application commit",
+        "Use Linux as the example and state relevant kernel/filesystem assumptions; command memorization is not required"
+      ]
+    }
+  },
+  {
+    "id": "os-cpu-load",
+    "category": "Operating Systems",
+    "title": "CPU 不高但负载很高如何排查",
+    "focus": ["可运行与不可中断等待", "CPU、I/O 和容器指标"],
+    "scenarioConstraints": [
+      "给监控现象，要求下一项证据，不把 load average 直接等同 CPU 使用率",
+      "以 Linux 为示例，说明影响结果的内核和文件系统假设，不要求命令背诵"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/"
+    ],
+    "en": {
+      "title": "High Load with Low CPU Utilization",
+      "focus": [
+        "Runnable and uninterruptible tasks",
+        "CPU, I/O and container metrics"
+      ],
+      "scenarioConstraints": [
+        "Give observations and ask for next evidence; load average is not CPU utilization",
+        "Use Linux as the example and state relevant kernel/filesystem assumptions; command memorization is not required"
+      ]
+    }
+  },
+  {
+    "id": "os-zero-copy",
+    "category": "Operating Systems",
+    "title": "零拷贝减少了哪些开销",
+    "focus": ["用户态内核态数据路径", "适用条件与剩余拷贝"],
+    "scenarioConstraints": [
+      "明确 sendfile 或具体路径，不把零拷贝当绝无数据移动",
+      "以 Linux 为示例，说明影响结果的内核和文件系统假设，不要求命令背诵"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/"
+    ],
+    "en": {
+      "title": "What Zero-Copy I/O Actually Saves",
+      "focus": ["User/kernel data paths", "applicability and remaining copies"],
+      "scenarioConstraints": [
+        "Name sendfile or a specific path; zero-copy does not mean no data movement at all",
+        "Use Linux as the example and state relevant kernel/filesystem assumptions; command memorization is not required"
+      ]
+    }
+  },
+  {
+    "id": "concurrency-lock-types",
+    "category": "Concurrency",
+    "title": "互斥锁、自旋锁和读写锁",
+    "focus": ["等待成本与临界区长度", "读写比例和公平性"],
+    "scenarioConstraints": [
+      "只比较一个工作负载的两种锁，不保证读多时读写锁总更快",
+      "使用语言无关的锁和线程池语义；不考 JMM、JDK API 或无同步数据竞争的未定义结果"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/man7/pthreads.7.html"
+    ],
+    "en": {
+      "title": "Mutexes, Spinlocks and Reader-Writer Locks",
+      "focus": [
+        "Waiting costs and critical-section duration",
+        "read/write mix and fairness"
+      ],
+      "scenarioConstraints": [
+        "Compare two locks for one workload; read-heavy does not always make reader-writer locks faster",
+        "Use language-neutral lock and pool contracts; exclude JMM/JDK APIs and unspecified results of data races"
+      ]
+    }
+  },
+  {
+    "id": "concurrency-deadlock",
+    "category": "Concurrency",
+    "title": "死锁、活锁和饥饿如何区分",
+    "focus": ["等待依赖与进展", "锁顺序和公平性"],
+    "scenarioConstraints": [
+      "开场用一个具体症状区分两类问题，不扩成系统容灾",
+      "使用语言无关的锁和线程池语义；不考 JMM、JDK API 或无同步数据竞争的未定义结果"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/man7/pthreads.7.html"
+    ],
+    "en": {
+      "title": "Deadlock, Livelock and Starvation",
+      "focus": ["Wait dependencies and progress", "lock order and fairness"],
+      "scenarioConstraints": [
+        "Use one symptom to distinguish two problems, not a disaster-recovery design",
+        "Use language-neutral lock and pool contracts; exclude JMM/JDK APIs and unspecified results of data races"
+      ]
+    }
+  },
+  {
+    "id": "concurrency-backpressure",
+    "category": "Concurrency",
+    "title": "任务队列满了如何处理",
+    "focus": ["有界队列与排队延迟", "拒绝、阻塞和降级"],
+    "scenarioConstraints": [
+      "限定本地工作池，不要求分布式任务平台或背线程池参数",
+      "使用语言无关的锁和线程池语义；不考 JMM、JDK API 或无同步数据竞争的未定义结果"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/man7/pthreads.7.html"
+    ],
+    "en": {
+      "title": "Handling a Full Task Queue",
+      "focus": [
+        "Bounded queues and waiting latency",
+        "rejection, blocking and degradation"
+      ],
+      "scenarioConstraints": [
+        "Limit scope to a local worker pool, not a distributed scheduler or API parameter recall",
+        "Use language-neutral lock and pool contracts; exclude JMM/JDK APIs and unspecified results of data races"
+      ]
+    }
+  },
+  {
+    "id": "concurrency-cancellation",
+    "category": "Concurrency",
+    "title": "超时取消后任务真的停止了吗",
+    "focus": ["等待超时和实际执行", "协作取消和副作用"],
+    "scenarioConstraints": [
+      "明确取消契约和可中断点，不能把超时异常当远端撤销",
+      "使用语言无关的锁和线程池语义；不考 JMM、JDK API 或无同步数据竞争的未定义结果"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/man7/pthreads.7.html"
+    ],
+    "en": {
+      "title": "Does Timeout Cancellation Stop the Work",
+      "focus": [
+        "Wait timeouts versus execution",
+        "cooperative cancellation and side effects"
+      ],
+      "scenarioConstraints": [
+        "State cancellation contracts and interruption points; a timeout exception does not undo remote work",
+        "Use language-neutral lock and pool contracts; exclude JMM/JDK APIs and unspecified results of data races"
+      ]
+    }
+  },
+  {
+    "id": "mq-why-queue",
+    "category": "Messaging",
+    "title": "为什么使用消息队列",
+    "focus": ["异步、解耦与削峰", "延迟与运维代价"],
+    "scenarioConstraints": [
+      "只比较一个调用链同步与异步的取舍，不要求架构图",
+      "明确 broker、生产者、消费者和业务提交边界；不将单一组件保证推广到端到端"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rabbitmq.com/docs/confirms"
+    ],
+    "en": {
+      "title": "Why Introduce a Message Queue",
+      "focus": [
+        "Asynchrony, decoupling and burst buffering",
+        "latency and operational costs"
+      ],
+      "scenarioConstraints": [
+        "Compare synchronous and asynchronous handling in one call chain, not an architecture diagram",
+        "State broker, producer, consumer and business-commit boundaries; a component guarantee is not an end-to-end guarantee"
+      ]
+    }
+  },
+  {
+    "id": "mq-publisher-confirm",
+    "category": "Messaging",
+    "title": "发送成功、确认与消费成功",
+    "focus": ["发布确认与消费确认", "故障窗口和持久化条件"],
+    "scenarioConstraints": [
+      "明确 RabbitMQ 的发布确认，不把它当消费者业务已完成",
+      "明确 broker、生产者、消费者和业务提交边界；不将单一组件保证推广到端到端"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rabbitmq.com/docs/confirms"
+    ],
+    "en": {
+      "title": "Sending, Broker Confirmation and Business Completion",
+      "focus": [
+        "Publisher versus consumer acknowledgements",
+        "failure windows and durability conditions"
+      ],
+      "scenarioConstraints": [
+        "Use RabbitMQ publisher confirms; they do not establish consumer business completion",
+        "State broker, producer, consumer and business-commit boundaries; a component guarantee is not an end-to-end guarantee"
+      ]
+    }
+  },
+  {
+    "id": "mq-backlog-diagnosis",
+    "category": "Messaging",
+    "title": "消息积压先查哪里",
+    "focus": ["生产速率和消费耗时", "分区、顺序和下游瓶颈"],
+    "scenarioConstraints": [
+      "给速率与耗时指标，不默认加消费者就能解决",
+      "明确 broker、生产者、消费者和业务提交边界；不将单一组件保证推广到端到端"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rabbitmq.com/docs/confirms"
+    ],
+    "en": {
+      "title": "Diagnosing a Message Backlog",
+      "focus": [
+        "Production rate and processing time",
+        "partitions, ordering and downstream bottlenecks"
+      ],
+      "scenarioConstraints": [
+        "Supply rate and latency metrics; more consumers are not an assumed fix",
+        "State broker, producer, consumer and business-commit boundaries; a component guarantee is not an end-to-end guarantee"
+      ]
+    }
+  },
+  {
+    "id": "mq-kafka-rebalance",
+    "category": "Messaging",
+    "title": "Kafka 消费组再均衡影响什么",
+    "focus": ["分区归属与进度提交", "重复处理和暂停"],
+    "scenarioConstraints": [
+      "注明 Kafka 客户端组协议，开场不要求背全部再均衡算法",
+      "明确 broker、生产者、消费者和业务提交边界；不将单一组件保证推广到端到端"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://kafka.apache.org/documentation/"
+    ],
+    "en": {
+      "title": "Effects of Kafka Consumer Rebalancing",
+      "focus": [
+        "Partition ownership and offset commits",
+        "duplicate processing and pauses"
+      ],
+      "scenarioConstraints": [
+        "State the Kafka group protocol; do not demand every rebalance algorithm initially",
+        "State broker, producer, consumer and business-commit boundaries; a component guarantee is not an end-to-end guarantee"
+      ]
+    }
+  },
+  {
+    "id": "mq-poison-message",
+    "category": "Messaging",
+    "title": "失败消息与死信重放",
+    "focus": ["有界重试和隔离", "修复后重放与幂等"],
+    "scenarioConstraints": [
+      "只处理一类永久失败消息，不把死信队列当自动修复",
+      "明确 broker、生产者、消费者和业务提交边界；不将单一组件保证推广到端到端"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rabbitmq.com/docs/confirms"
+    ],
+    "en": {
+      "title": "Poison Messages and Dead-Letter Replay",
+      "focus": [
+        "Bounded retries and isolation",
+        "replay after repair and idempotency"
+      ],
+      "scenarioConstraints": [
+        "Handle one permanent failure class; dead-lettering is not automatic repair",
+        "State broker, producer, consumer and business-commit boundaries; a component guarantee is not an end-to-end guarantee"
+      ]
+    }
+  },
+  {
+    "id": "mq-outbox",
+    "category": "Messaging",
+    "title": "数据库提交后消息没发出去怎么办",
+    "focus": ["双写窗口与事务发件箱", "重复投递和清理"],
+    "scenarioConstraints": [
+      "从一个本地事务与一次发布的失败窗口出发，不预设分布式事务必需",
+      "明确 broker、生产者、消费者和业务提交边界；不将单一组件保证推广到端到端"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rabbitmq.com/docs/confirms"
+    ],
+    "en": {
+      "title": "When a Database Commit Outlives Message Publishing",
+      "focus": [
+        "Dual-write windows and transactional outboxes",
+        "duplicate delivery and cleanup"
+      ],
+      "scenarioConstraints": [
+        "Start from one local transaction and publication failure; distributed transactions are not presumed necessary",
+        "State broker, producer, consumer and business-commit boundaries; a component guarantee is not an end-to-end guarantee"
+      ]
+    }
+  },
+  {
+    "id": "distributed-cap",
+    "category": "Distributed Systems",
+    "title": "CAP 讨论的分区到底是什么",
+    "focus": ["一致性与可用性的定义", "分区时的选择"],
+    "scenarioConstraints": [
+      "用两个副本的请求说明，不把 CAP 简化成平时任意选两个",
+      "明确网络分区、故障模型和一致性目标；只考局部机制，不要求完整平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "en": {
+      "title": "What a Partition Means in CAP",
+      "focus": [
+        "Definitions of consistency and availability",
+        "choices during a partition"
+      ],
+      "scenarioConstraints": [
+        "Use requests to two replicas; CAP is not an unrestricted everyday choice of two properties",
+        "State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform"
+      ]
+    }
+  },
+  {
+    "id": "distributed-consistency-models",
+    "category": "Distributed Systems",
+    "title": "最终一致、因果一致与线性一致",
+    "focus": ["可观察读写历史", "保证范围和代价"],
+    "scenarioConstraints": [
+      "每次比较两个保证及一个读写例子，不把事务隔离与分布式一致性混为一谈",
+      "明确网络分区、故障模型和一致性目标；只考局部机制，不要求完整平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "en": {
+      "title": "Eventual, Causal and Linearizable Consistency",
+      "focus": ["Observable read/write histories", "guarantee scope and cost"],
+      "scenarioConstraints": [
+        "Compare two guarantees on one history; transaction isolation is not identical to distributed consistency",
+        "State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform"
+      ]
+    }
+  },
+  {
+    "id": "distributed-consensus",
+    "category": "Distributed Systems",
+    "title": "选主、多数派与已提交数据",
+    "focus": ["任期和多数派", "选主与提交保证的区别"],
+    "scenarioConstraints": [
+      "以 Raft 为例讨论一个故障窗口，不考协议代码或声称任意多数派系统都等价",
+      "明确网络分区、故障模型和一致性目标；只考局部机制，不要求完整平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "en": {
+      "title": "Leadership, Quorums and Committed Data",
+      "focus": [
+        "Terms and majorities",
+        "leader election versus commit guarantees"
+      ],
+      "scenarioConstraints": [
+        "Use Raft for one failure window; avoid protocol-code trivia or equivalence of all quorum systems",
+        "State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform"
+      ]
+    }
+  },
+  {
+    "id": "distributed-lease-fencing",
+    "category": "Distributed Systems",
+    "title": "锁过期后旧持有者还能写吗",
+    "focus": ["租约与实际执行", "下游校验和 fencing"],
+    "scenarioConstraints": [
+      "注明租约时间来源与写入方能力，只讨论一次旧写入",
+      "明确网络分区、故障模型和一致性目标；只考局部机制，不要求完整平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "en": {
+      "title": "Can an Expired Lock Holder Still Write",
+      "focus": ["Leases versus execution", "downstream validation and fencing"],
+      "scenarioConstraints": [
+        "State lease time source and write-target capabilities; discuss one stale write",
+        "State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform"
+      ]
+    }
+  },
+  {
+    "id": "distributed-id",
+    "category": "Distributed Systems",
+    "title": "自增、UUID 与分布式 ID",
+    "focus": ["唯一性与排序", "时钟、索引和信息泄露"],
+    "scenarioConstraints": [
+      "只比较同一业务需求的两种 ID，不预设全局严格递增",
+      "明确网络分区、故障模型和一致性目标；只考局部机制，不要求完整平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "en": {
+      "title": "Auto-Increment, UUIDs and Distributed IDs",
+      "focus": [
+        "Uniqueness and ordering",
+        "clocks, indexes and information leakage"
+      ],
+      "scenarioConstraints": [
+        "Compare two IDs for one requirement without assuming strict global monotonicity",
+        "State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform"
+      ]
+    }
+  },
+  {
+    "id": "distributed-consistent-hash",
+    "category": "Distributed Systems",
+    "title": "一致性哈希解决哪种迁移问题",
+    "focus": ["增减节点和键迁移", "虚拟节点与负载分布"],
+    "scenarioConstraints": [
+      "给少量节点与键的变化，不承诺自动解决热键或数据复制",
+      "明确网络分区、故障模型和一致性目标；只考局部机制，不要求完整平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "en": {
+      "title": "What Consistent Hashing Helps Migrate",
+      "focus": [
+        "Membership changes and key movement",
+        "virtual nodes and load distribution"
+      ],
+      "scenarioConstraints": [
+        "Use a small membership change; it does not automatically solve hot keys or replication",
+        "State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform"
+      ]
+    }
+  },
+  {
+    "id": "distributed-retry-budget",
+    "category": "Distributed Systems",
+    "title": "重试、退避与熔断的区别",
+    "focus": ["瞬时故障与过载", "重试预算和业务幂等"],
+    "scenarioConstraints": [
+      "只分析一个上下游链路的超时，不要求整站高可用方案",
+      "明确网络分区、故障模型和一致性目标；只考局部机制，不要求完整平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "en": {
+      "title": "Retries, Backoff and Circuit Breaking",
+      "focus": [
+        "Transient failure versus overload",
+        "retry budgets and business idempotency"
+      ],
+      "scenarioConstraints": [
+        "Analyze timeouts on one dependency, not whole-site availability",
+        "State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform"
+      ]
+    }
+  },
+  {
+    "id": "distributed-saga",
+    "category": "Distributed Systems",
+    "title": "补偿事务能撤销所有副作用吗",
+    "focus": ["补偿与数据库回滚", "重试和不可逆副作用"],
+    "scenarioConstraints": [
+      "用支付后发货的局部例子，明确补偿是业务动作而非时间倒流",
+      "明确网络分区、故障模型和一致性目标；只考局部机制，不要求完整平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "en": {
+      "title": "What a Compensating Transaction Can Undo",
+      "focus": [
+        "Compensation versus database rollback",
+        "retries and irreversible effects"
+      ],
+      "scenarioConstraints": [
+        "Use one payment/shipping example; compensation is a business action, not time reversal",
+        "State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform"
+      ]
+    }
+  },
+  {
+    "id": "auth-cookie-session-token",
+    "category": "Security",
+    "title": "Cookie、Session 与 JWT",
+    "focus": ["载体与会话状态", "撤销、过期和验证边界"],
+    "scenarioConstraints": [
+      "比较一个登录会话，不把 JWT 当加密或天然可撤销",
+      "使用公开安全协议和威胁模型；题面不要求真实凭据、攻击第三方或自创密码算法"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html"
+    ],
+    "en": {
+      "title": "Cookies, Sessions and JWTs",
+      "focus": [
+        "Transport versus session state",
+        "revocation, expiration and verification"
+      ],
+      "scenarioConstraints": [
+        "Compare one login session; JWTs are not necessarily encrypted or inherently revocable",
+        "Use public security protocols and threat models; never request credentials, third-party attacks or custom cryptography"
+      ]
+    }
+  },
+  {
+    "id": "auth-oauth-oidc",
+    "category": "Security",
+    "title": "OAuth 授权与用户身份",
+    "focus": ["授权与认证", "回调、state 与 PKCE"],
+    "scenarioConstraints": [
+      "以授权码流程为例，不把 access token 默认当任意客户端的身份证明",
+      "使用公开安全协议和威胁模型；题面不要求真实凭据、攻击第三方或自创密码算法"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9700.html",
+      "https://openid.net/specs/openid-connect-core-1_0.html"
+    ],
+    "en": {
+      "title": "OAuth Authorization and User Identity",
+      "focus": [
+        "Authorization versus authentication",
+        "callbacks, state and PKCE"
+      ],
+      "scenarioConstraints": [
+        "Use an authorization-code flow; an access token is not a universal identity assertion",
+        "Use public security protocols and threat models; never request credentials, third-party attacks or custom cryptography"
+      ]
+    }
+  },
+  {
+    "id": "security-password-storage",
+    "category": "Security",
+    "title": "密码存储为什么不能只做哈希",
+    "focus": ["离线猜测与盐", "专用口令哈希的成本"],
+    "scenarioConstraints": [
+      "从泄露后的攻击模型解释，不要求自选未经验证的加密方案",
+      "使用公开安全协议和威胁模型；题面不要求真实凭据、攻击第三方或自创密码算法"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"
+    ],
+    "en": {
+      "title": "Why Plain Fast Hashing Is Not Password Storage",
+      "focus": ["Offline guessing and salts", "costs of password hashing"],
+      "scenarioConstraints": [
+        "Explain the post-breach threat model without inventing cryptographic schemes",
+        "Use public security protocols and threat models; never request credentials, third-party attacks or custom cryptography"
+      ]
+    }
+  },
+  {
+    "id": "security-xss-output",
+    "category": "Security",
+    "title": "XSS 与输出编码的上下文",
+    "focus": ["不可信数据与执行上下文", "编码、清洗和 CSP"],
+    "scenarioConstraints": [
+      "只讨论一个输出位置，不把通用替换尖括号当完整防护",
+      "使用公开安全协议和威胁模型；题面不要求真实凭据、攻击第三方或自创密码算法"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://cheatsheetseries.owasp.org/"
+    ],
+    "en": {
+      "title": "XSS and Context-Specific Output Encoding",
+      "focus": [
+        "Untrusted data and execution contexts",
+        "encoding, sanitization and CSP"
+      ],
+      "scenarioConstraints": [
+        "Use one output context; replacing angle brackets is not complete protection",
+        "Use public security protocols and threat models; never request credentials, third-party attacks or custom cryptography"
+      ]
+    }
+  },
+  {
+    "id": "security-ssrf",
+    "category": "Security",
+    "title": "服务端抓取 URL 的 SSRF 风险",
+    "focus": ["地址校验和重定向", "内网访问与 DNS 变化"],
+    "scenarioConstraints": [
+      "仅用本地示意地址描述边界，不实际请求内部服务",
+      "使用公开安全协议和威胁模型；题面不要求真实凭据、攻击第三方或自创密码算法"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://cheatsheetseries.owasp.org/"
+    ],
+    "en": {
+      "title": "SSRF Risks in Server-Side URL Fetching",
+      "focus": [
+        "Address validation and redirects",
+        "internal access and DNS changes"
+      ],
+      "scenarioConstraints": [
+        "Use illustrative local addresses; do not make actual internal-service requests",
+        "Use public security protocols and threat models; never request credentials, third-party attacks or custom cryptography"
+      ]
+    }
+  },
+  {
+    "id": "ds-hash-collision",
+    "category": "Data Structures",
+    "title": "哈希冲突与平均复杂度",
+    "focus": ["冲突处理与负载因子", "平均和最坏情况"],
+    "scenarioConstraints": [
+      "使用一般哈希表模型，不考 Java HashMap 扩容或树化阈值",
+      "这是机制和业务适用性问答，不新增 LC 编码题；说明输入规模和复杂度假设"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opendatastructures.org/"
+    ],
+    "en": {
+      "title": "Hash Collisions and Average Complexity",
+      "focus": [
+        "Collision handling and load factor",
+        "average versus worst case"
+      ],
+      "scenarioConstraints": [
+        "Use a generic hash table, not Java HashMap resizing or treeification thresholds",
+        "These are mechanism/application questions, not new LC coding tasks; state size and complexity assumptions"
+      ]
+    }
+  },
+  {
+    "id": "ds-lru-lfu",
+    "category": "Data Structures",
+    "title": "LRU 与 LFU 适用场景",
+    "focus": ["时间局部性与访问频度", "扫描污染和元数据成本"],
+    "scenarioConstraints": [
+      "比较一段访问序列，不要求实现完整缓存系统",
+      "这是机制和业务适用性问答，不新增 LC 编码题；说明输入规模和复杂度假设"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opendatastructures.org/"
+    ],
+    "en": {
+      "title": "When LRU and LFU Differ",
+      "focus": [
+        "Recency versus frequency",
+        "scan pollution and metadata costs"
+      ],
+      "scenarioConstraints": [
+        "Compare one access sequence, not a complete cache implementation",
+        "These are mechanism/application questions, not new LC coding tasks; state size and complexity assumptions"
+      ]
+    }
+  },
+  {
+    "id": "ds-bloom-filter",
+    "category": "Data Structures",
+    "title": "布隆过滤器能否证明存在",
+    "focus": ["误判方向与空间取舍", "删除和实现变体"],
+    "scenarioConstraints": [
+      "限定标准只插入 Bloom filter，无漏写，不把可能存在当一定存在",
+      "这是机制和业务适用性问答，不新增 LC 编码题；说明输入规模和复杂度假设"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opendatastructures.org/"
+    ],
+    "en": {
+      "title": "What a Bloom Filter Can Prove",
+      "focus": [
+        "Error direction and space trade-offs",
+        "deletion and variants"
+      ],
+      "scenarioConstraints": [
+        "Use a standard insert-only filter with no missed inserts; possible presence is not certainty",
+        "These are mechanism/application questions, not new LC coding tasks; state size and complexity assumptions"
+      ]
+    }
+  },
+  {
+    "id": "ds-top-k-stream",
+    "category": "Data Structures",
+    "title": "海量数据的 Top K 与内存边界",
+    "focus": ["堆、分区与流式处理", "精确与近似的区别"],
+    "scenarioConstraints": [
+      "明确求最大值还是高频项、是否允许近似；只讨论一个计算步骤",
+      "这是机制和业务适用性问答，不新增 LC 编码题；说明输入规模和复杂度假设"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opendatastructures.org/"
+    ],
+    "en": {
+      "title": "Top K with Bounded Memory",
+      "focus": [
+        "Heaps, partitioning and streams",
+        "exact versus approximate answers"
+      ],
+      "scenarioConstraints": [
+        "Specify largest values versus frequent items and approximation allowance; discuss one processing step",
+        "These are mechanism/application questions, not new LC coding tasks; state size and complexity assumptions"
+      ]
+    }
+  },
+  {
+    "id": "ds-bitmap-dedup",
+    "category": "Data Structures",
+    "title": "位图去重与取值空间",
+    "focus": ["基数与值域", "精确去重和内存预算"],
+    "scenarioConstraints": [
+      "给 ID 范围和内存上限，不把任意字符串直接当位图下标",
+      "这是机制和业务适用性问答，不新增 LC 编码题；说明输入规模和复杂度假设"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opendatastructures.org/"
+    ],
+    "en": {
+      "title": "Bitmap Deduplication and Key Domains",
+      "focus": [
+        "Cardinality versus value domain",
+        "exact deduplication and memory budgets"
+      ],
+      "scenarioConstraints": [
+        "Supply an ID range and memory bound; arbitrary strings are not direct bitmap positions",
+        "These are mechanism/application questions, not new LC coding tasks; state size and complexity assumptions"
+      ]
+    }
+  },
+  {
+    "id": "engineering-logs-metrics-traces",
+    "category": "Engineering",
+    "title": "日志、指标与链路追踪怎么配合",
+    "focus": ["聚合趋势与单次请求", "关联标识和采样"],
+    "scenarioConstraints": [
+      "围绕一次接口变慢，不要求接入特定监控厂商",
+      "限定一个服务或一次发布的可观察行为，不扩展为完整研发平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opentelemetry.io/docs/concepts/signals/"
+    ],
+    "en": {
+      "title": "Combining Logs, Metrics and Traces",
+      "focus": [
+        "Aggregate trends versus individual requests",
+        "correlation and sampling"
+      ],
+      "scenarioConstraints": [
+        "Use one slow endpoint without vendor-specific integration requirements",
+        "Limit scope to one service or rollout and its observable behavior, not a full engineering platform"
+      ]
+    }
+  },
+  {
+    "id": "engineering-cardinality",
+    "category": "Engineering",
+    "title": "监控标签为什么不能随便加",
+    "focus": ["时间序列数量", "用户维度与聚合成本"],
+    "scenarioConstraints": [
+      "给标签维度和基数，不把高基数等同所有日志字段都禁止",
+      "限定一个服务或一次发布的可观察行为，不扩展为完整研发平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opentelemetry.io/docs/concepts/signals/"
+    ],
+    "en": {
+      "title": "Why Metric Label Cardinality Matters",
+      "focus": ["Time-series counts", "per-user labels and aggregation costs"],
+      "scenarioConstraints": [
+        "Give dimensions and cardinalities; high cardinality does not prohibit all log fields",
+        "Limit scope to one service or rollout and its observable behavior, not a full engineering platform"
+      ]
+    }
+  },
+  {
+    "id": "engineering-p99",
+    "category": "Engineering",
+    "title": "平均延迟很好为什么用户还卡",
+    "focus": ["分位数与分布", "采样和聚合口径"],
+    "scenarioConstraints": [
+      "给延迟分布与请求量，不平均各实例 p99 充当全局 p99",
+      "限定一个服务或一次发布的可观察行为，不扩展为完整研发平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opentelemetry.io/docs/concepts/signals/"
+    ],
+    "en": {
+      "title": "Good Average Latency but Slow Users",
+      "focus": [
+        "Percentiles and distributions",
+        "sampling and aggregation scope"
+      ],
+      "scenarioConstraints": [
+        "Give a distribution and counts; averaging instance p99 values does not produce a global p99",
+        "Limit scope to one service or rollout and its observable behavior, not a full engineering platform"
+      ]
+    }
+  },
+  {
+    "id": "engineering-safe-rollout",
+    "category": "Engineering",
+    "title": "滚动发布与兼容性",
+    "focus": ["新旧版本共存", "数据库和协议兼容"],
+    "scenarioConstraints": [
+      "只讨论一个字段变更和回滚窗口，不设计完整部署平台",
+      "限定一个服务或一次发布的可观察行为，不扩展为完整研发平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
+    ],
+    "en": {
+      "title": "Rolling Deployments and Compatibility",
+      "focus": ["Mixed versions", "database and protocol compatibility"],
+      "scenarioConstraints": [
+        "Discuss one field change and rollback window, not a deployment platform",
+        "Limit scope to one service or rollout and its observable behavior, not a full engineering platform"
+      ]
+    }
+  },
+  {
+    "id": "engineering-test-boundaries",
+    "category": "Engineering",
+    "title": "单元、集成与契约测试",
+    "focus": ["测试边界与真实依赖", "模拟对象能证明什么"],
+    "scenarioConstraints": [
+      "用一个外部支付调用说明，不把 mock 成功当真实服务可用",
+      "限定一个服务或一次发布的可观察行为，不扩展为完整研发平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://docs.pytest.org/en/stable/how-to/monkeypatch.html"
+    ],
+    "en": {
+      "title": "Unit, Integration and Contract Tests",
+      "focus": [
+        "Test boundaries and real dependencies",
+        "what mocks can establish"
+      ],
+      "scenarioConstraints": [
+        "Use an external payment call; a successful mock does not establish real service availability",
+        "Limit scope to one service or rollout and its observable behavior, not a full engineering platform"
+      ]
+    }
+  },
+  {
+    "id": "engineering-incident-evidence",
+    "category": "Engineering",
+    "title": "错误率上升如何形成排障假设",
+    "focus": ["时间线与变更相关性", "对照和可证伪假设"],
+    "scenarioConstraints": [
+      "给有限观测，接受多个合理假设，但要求下一项证据",
+      "限定一个服务或一次发布的可观察行为，不扩展为完整研发平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opentelemetry.io/docs/concepts/signals/"
+    ],
+    "en": {
+      "title": "Evidence-Driven Incident Diagnosis",
+      "focus": [
+        "Timelines and change correlation",
+        "comparisons and falsifiable hypotheses"
+      ],
+      "scenarioConstraints": [
+        "Give limited observations; allow multiple hypotheses but ask for the next evidence",
+        "Limit scope to one service or rollout and its observable behavior, not a full engineering platform"
+      ]
+    }
+  },
+  {
+    "id": "business-order-expiry",
+    "category": "Business Scenarios",
+    "title": "订单超时关闭与晚到支付",
+    "focus": ["状态转换条件", "重复事件与晚到结果"],
+    "scenarioConstraints": [
+      "只分析一笔订单的并发事件，不要求设计整个电商平台",
+      "仅讨论一个明确技术步骤或业务不变量；完整架构、容量估算和跨组件方案留给 P2"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html"
+    ],
+    "en": {
+      "title": "Order Expiration and Late Payment",
+      "focus": [
+        "State-transition preconditions",
+        "duplicate events and late outcomes"
+      ],
+      "scenarioConstraints": [
+        "Analyze concurrent events on one order, not an entire commerce platform",
+        "Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2"
+      ]
+    }
+  },
+  {
+    "id": "business-upload-resume",
+    "category": "Business Scenarios",
+    "title": "文件分片、断点续传与校验",
+    "focus": ["分片标识与重试", "完整性校验和完成条件"],
+    "scenarioConstraints": [
+      "只讨论单文件一次分片重试，服务端权限校验不能省略",
+      "仅讨论一个明确技术步骤或业务不变量；完整架构、容量估算和跨组件方案留给 P2"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html"
+    ],
+    "en": {
+      "title": "Upload Chunks, Resume and Verification",
+      "focus": [
+        "Chunk identity and retries",
+        "integrity checks and completion conditions"
+      ],
+      "scenarioConstraints": [
+        "Discuss one chunk retry for one file; server-side authorization remains necessary",
+        "Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2"
+      ]
+    }
+  },
+  {
+    "id": "business-otp-login",
+    "category": "Business Scenarios",
+    "title": "验证码登录的重放与限次",
+    "focus": ["有效期与一次性消费", "并发验证与限次范围"],
+    "scenarioConstraints": [
+      "只考一次验证码验证流程，不实现短信平台或索取真实验证码",
+      "仅讨论一个明确技术步骤或业务不变量；完整架构、容量估算和跨组件方案留给 P2"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html"
+    ],
+    "en": {
+      "title": "OTP Login Replay and Attempt Limits",
+      "focus": [
+        "Expiration and one-time consumption",
+        "concurrent validation and attempt scope"
+      ],
+      "scenarioConstraints": [
+        "Discuss one verification flow, not an SMS platform or real codes",
+        "Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2"
+      ]
+    }
+  },
+  {
+    "id": "business-payment-callback",
+    "category": "Business Scenarios",
+    "title": "支付回调与重复入账",
+    "focus": ["事件真实性与业务幂等", "本地事务和唯一约束"],
+    "scenarioConstraints": [
+      "限定可信验签方式及一条入账记录，不设计完整支付平台",
+      "仅讨论一个明确技术步骤或业务不变量；完整架构、容量估算和跨组件方案留给 P2"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html"
+    ],
+    "en": {
+      "title": "Payment Callbacks and Duplicate Credits",
+      "focus": [
+        "Event authenticity and business idempotency",
+        "local transactions and unique constraints"
+      ],
+      "scenarioConstraints": [
+        "State a trusted verification contract and one ledger entry, not a full payment platform",
+        "Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2"
+      ]
+    }
+  },
+  {
+    "id": "business-uv-count",
+    "category": "Business Scenarios",
+    "title": "UV 统计的精确与近似",
+    "focus": ["去重身份与时间窗口", "误差和内存预算"],
+    "scenarioConstraints": [
+      "先明确访客口径及允许误差，不把近似计数当精确名单",
+      "仅讨论一个明确技术步骤或业务不变量；完整架构、容量估算和跨组件方案留给 P2"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html"
+    ],
+    "en": {
+      "title": "Exact Versus Approximate Unique Visitor Counts",
+      "focus": ["Identity and time windows", "error and memory budgets"],
+      "scenarioConstraints": [
+        "Define visitor identity and tolerated error; an approximate count is not an exact membership list",
+        "Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2"
+      ]
+    }
+  },
+  {
+    "id": "business-unread-cursor",
+    "category": "Business Scenarios",
+    "title": "未读数与已读游标",
+    "focus": ["重复事件与多端已读", "顺序和游标边界"],
+    "scenarioConstraints": [
+      "只给一个会话的消息和已读事件，不要求全站消息架构",
+      "仅讨论一个明确技术步骤或业务不变量；完整架构、容量估算和跨组件方案留给 P2"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html"
+    ],
+    "en": {
+      "title": "Unread Counts and Read Cursors",
+      "focus": [
+        "Duplicate events and multi-device reads",
+        "ordering and cursor boundaries"
+      ],
+      "scenarioConstraints": [
+        "Use messages and read events in one conversation, not a whole messaging architecture",
+        "Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2"
+      ]
+    }
+  },
+  {
+    "id": "business-content-dedup",
+    "category": "Business Scenarios",
+    "title": "文件摘要去重与权限",
+    "focus": ["摘要与完整内容验证", "秒传和跨租户存在性泄露"],
+    "scenarioConstraints": [
+      "只讨论一次去重命中，不把知道摘要当有权读取文件",
+      "仅讨论一个明确技术步骤或业务不变量；完整架构、容量估算和跨组件方案留给 P2"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/content-hash"
+    ],
+    "en": {
+      "title": "Content Hash Deduplication and Authorization",
+      "focus": [
+        "Hashes and full-content verification",
+        "instant uploads and cross-tenant existence leaks"
+      ],
+      "scenarioConstraints": [
+        "Discuss one deduplication hit; knowing a digest does not authorize reading a file",
+        "Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2"
+      ]
+    }
+  },
+  {
+    "id": "search-inverted-index",
+    "category": "Search and Storage",
+    "title": "倒排索引与数据库索引",
+    "focus": ["词项到文档的映射", "分词和精确查询"],
+    "scenarioConstraints": [
+      "只比较一个文本检索需求，不要求设计搜索引擎",
+      "注明存储或检索引擎及一致性边界，只解释一个访问或更新路径"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.elastic.co/docs/manage-data/data-store/near-real-time-search"
+    ],
+    "en": {
+      "title": "Inverted Indexes Versus Database Indexes",
+      "focus": ["Term-to-document mappings", "tokenization and exact queries"],
+      "scenarioConstraints": [
+        "Compare one text search need, not a complete search engine",
+        "State the storage/search engine and consistency boundary; explain one access or update path"
+      ]
+    }
+  },
+  {
+    "id": "search-refresh-delay",
+    "category": "Search and Storage",
+    "title": "写入成功为什么暂时搜不到",
+    "focus": ["写入确认与搜索可见", "refresh 和持久化边界"],
+    "scenarioConstraints": [
+      "以 Elasticsearch 为例区分 refresh、flush 和检索，避免通用数据库类比",
+      "注明存储或检索引擎及一致性边界，只解释一个访问或更新路径"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.elastic.co/docs/manage-data/data-store/near-real-time-search"
+    ],
+    "en": {
+      "title": "Why a Successful Write Is Not Immediately Searchable",
+      "focus": [
+        "Write acknowledgement versus search visibility",
+        "refresh and durability boundaries"
+      ],
+      "scenarioConstraints": [
+        "Use Elasticsearch and distinguish refresh, flush and search visibility",
+        "State the storage/search engine and consistency boundary; explain one access or update path"
+      ]
+    }
+  },
+  {
+    "id": "storage-object-local",
+    "category": "Search and Storage",
+    "title": "对象存储与本地文件系统",
+    "focus": ["对象访问与文件操作", "更新语义和权限"],
+    "scenarioConstraints": [
+      "指定所用对象服务契约，不宣称所有对象存储都最终一致",
+      "注明存储或检索引擎及一致性边界，只解释一个访问或更新路径"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html"
+    ],
+    "en": {
+      "title": "Object Storage Versus a Local Filesystem",
+      "focus": [
+        "Object APIs versus file operations",
+        "update semantics and authorization"
+      ],
+      "scenarioConstraints": [
+        "Name the object service contract; not all object stores are eventually consistent",
+        "State the storage/search engine and consistency boundary; explain one access or update path"
+      ]
+    }
+  },
+  {
+    "id": "storage-document-model",
+    "category": "Search and Storage",
+    "title": "文档模型与关系模型",
+    "focus": ["嵌入与引用", "访问路径、更新和约束"],
+    "scenarioConstraints": [
+      "用一条业务读写对比，不以 SQL 或 NoSQL 标签决定所有一致性保证",
+      "注明存储或检索引擎及一致性边界，只解释一个访问或更新路径"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "advanced",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.mongodb.com/docs/manual/data-modeling/"
+    ],
+    "en": {
+      "title": "Document Versus Relational Data Models",
+      "focus": [
+        "Embedding versus references",
+        "access paths, updates and constraints"
+      ],
+      "scenarioConstraints": [
+        "Compare one business read/write; SQL/NoSQL labels do not determine every consistency guarantee",
+        "State the storage/search engine and consistency boundary; explain one access or update path"
       ]
     }
   }

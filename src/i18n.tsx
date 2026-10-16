@@ -635,8 +635,8 @@ const strings = {
 
   // Deep dive
   ddTagline: [
-    "具体场景 → 方案 → 追问 → 反馈",
-    "Scenario → solution → follow-ups → feedback",
+    "基础知识与场景 → 回答 → 追问 → 反馈",
+    "Fundamentals and scenarios → answers → follow-ups → feedback",
   ],
   settingsTitle: ["模型与密钥", "Model and API key"],
   providerUnsaved: ["Provider 更改尚未保存", "Provider change not saved"],
@@ -703,6 +703,27 @@ const strings = {
     "Title, concept or scenario keyword",
   ],
   topicCategory: ["主题分类", "Topic category"],
+  topicFilters: ["筛选主题 · {n} 项条件", "Filter topics · {n} active"],
+  topicForm: ["提问方式", "Question style"],
+  topicAllForms: ["全部方式", "All styles"],
+  topicForm_foundation: ["基础问答", "Fundamentals"],
+  topicForm_scenario: ["场景应用", "Applied scenarios"],
+  topicForm_troubleshooting: ["排障分析", "Troubleshooting"],
+  topicPriority: ["练习层次", "Practice priority"],
+  topicAllPriorities: ["全部层次", "All priorities"],
+  topicPriority_core: ["高频必会", "Core fundamentals"],
+  topicPriority_advanced: ["进阶补充", "Further practice"],
+  "topicCategory_Distributed Systems": [
+    "分布式基础",
+    "Distributed fundamentals",
+  ],
+  "topicCategory_Data Structures": [
+    "数据结构与工程应用",
+    "Applied data structures",
+  ],
+  topicCategory_Engineering: ["工程实践", "Engineering"],
+  "topicCategory_Business Scenarios": ["业务场景", "Business scenarios"],
+  "topicCategory_Search and Storage": ["搜索与存储", "Search and storage"],
   topicAllCategories: ["全部分类", "All categories"],
   topicMatches: [
     "显示 {n} / {total} 个主题 · 随机选择遵循筛选",

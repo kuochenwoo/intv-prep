@@ -14,6 +14,19 @@ This list records the agreed next step and future feature ideas. Recording an it
 
 These completed workflows do not imply that every model-generated question or judgement is correct.
 
+## Practical P1/P2 content update — implementation only (2026-10-16)
+
+- [x] Develop 120 bilingual P1 topics (40 foundation, 68 scenario, 12 troubleshooting) with local core/further-practice priorities, source records and sidebar filters.
+- [x] Replace Java-only seed assumptions with explicit language-neutral technical contracts while preserving IDs.
+- [x] Adapt opening, follow-up and review policies for natural technical questions; keep answer propositions private and feedback evidence-based.
+- [x] Add five complete P2 scenarios (20 total): orders/payment expiration, leaderboards, identity/sessions, wallets/withdrawals and visitor analytics. Document matching P1 prerequisites.
+- [x] Correct overly leading diagnostic openings: neutral cache topic title, one-incident evidence-first questions, private diagnosis labels and matching reviewer rules.
+- [x] Update existing automated test definitions for the changed content and compatibility contracts.
+- [ ] Run affected automated tests and frontend/native builds. The user explicitly deferred tests in this development step.
+- [ ] Perform bilingual UI/UX acceptance and separately scoped live text quality review of the new styles/scenarios. Earlier acceptance does not validate this iteration.
+
+See [implementation scope and module mapping](docs/P1_PRACTICAL_FUNDAMENTALS.md). The 40/15-topic entries above and the calibration report below describe the previously accepted baseline.
+
 ## AI calibration: completed for the agreed Claude baseline
 
 - [x] Improve P1 question generation: assess one core mechanism in a concrete scenario, avoid giving away the answer in visible constraints, and keep optional extensions out of mandatory opening-question criteria.

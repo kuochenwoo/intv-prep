@@ -112,11 +112,11 @@ fn start(c: &rusqlite::Connection) -> DesignSession {
     store::start(c, &q.id, &config()).unwrap()
 }
 #[test]
-fn fifteen_bilingual_scenarios_and_distinct_system_design_prompts() {
+fn twenty_bilingual_scenarios_and_distinct_system_design_prompts() {
     let seeds = scenarios();
-    assert_eq!(seeds.len(), 15);
+    assert_eq!(seeds.len(), 20);
     let unique: std::collections::HashSet<_> = seeds.iter().map(|s| s.id.as_str()).collect();
-    assert_eq!(unique.len(), 15);
+    assert_eq!(unique.len(), 20);
     for id in [
         "url-shortener",
         "flash-sale",
@@ -182,7 +182,7 @@ fn expanded_scenarios_have_sources_and_roundtrip_bilingual_caches_offline() {
             .iter()
             .all(|url| url.as_str().unwrap().starts_with("https://")));
     }
-    assert_eq!(reviewed.len(), 10);
+    assert_eq!(reviewed.len(), seeds.len() - 5);
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("expanded-scenarios.sqlite3");
     let c = db::open(&path).unwrap();
@@ -210,7 +210,7 @@ fn expanded_scenarios_have_sources_and_roundtrip_bilingual_caches_offline() {
     }
     drop(c);
     let c = db::open(&path).unwrap();
-    assert_eq!(store::questions(&c).unwrap().len(), 30);
+    assert_eq!(store::questions(&c).unwrap().len(), seeds.len() * 2);
     for (id, seed_id, lang) in cached_ids {
         let restored = store::question(&c, &id).unwrap();
         assert_eq!(restored.seed_id, seed_id);

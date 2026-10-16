@@ -9,8 +9,30 @@ pub struct Topic {
     pub focus: Vec<String>,
     pub scenario_constraints: Vec<String>,
     pub level: String,
+    #[serde(default)]
+    pub question_form: QuestionForm,
+    #[serde(default)]
+    pub priority: TopicPriority,
+    #[serde(default)]
+    pub sources: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub en: Option<TopicEnglish>,
+}
+/// Opening style; older authored topics retain their scenario-based behavior.
+#[derive(Clone, Copy, Default, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum QuestionForm {
+    Foundation,
+    #[default]
+    Scenario,
+    Troubleshooting,
+}
+#[derive(Clone, Copy, Default, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TopicPriority {
+    #[default]
+    Core,
+    Advanced,
 }
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -58,7 +80,7 @@ pub struct GeneratedQuestion {
     pub constraints: Vec<String>,
     pub follow_up_directions: Vec<String>,
     pub evaluation_checklist: Vec<String>,
-    /// Interviewer-only mechanism terms the candidate should supply. Questions
+    /// Interviewer-only answer propositions, excluding neutral subject names. Questions
     /// cached before this field existed have none.
     #[serde(default)]
     pub answer_terms: Vec<String>,

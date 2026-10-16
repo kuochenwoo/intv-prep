@@ -1,5 +1,85 @@
 [
   {
+    "topicId": "cache-selection",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "reviewNote": "Keep the existing local-mechanism scope and explicitly stated assumptions. No complete system-design or mandatory unasked extensions. Existing cached questions are unchanged."
+  },
+  {
+    "topicId": "hot-key-protection",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "reviewNote": "Keep the existing local-mechanism scope and explicitly stated assumptions. No complete system-design or mandatory unasked extensions. Existing cached questions are unchanged."
+  },
+  {
+    "topicId": "idempotency-retries",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9110.html"
+    ],
+    "reviewNote": "Keep the existing local-mechanism scope and explicitly stated assumptions. No complete system-design or mandatory unasked extensions. Existing cached questions are unchanged."
+  },
+  {
+    "topicId": "message-delivery",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rabbitmq.com/docs/confirms"
+    ],
+    "reviewNote": "Keep the existing local-mechanism scope and explicitly stated assumptions. No complete system-design or mandatory unasked extensions. Existing cached questions are unchanged."
+  },
+  {
+    "topicId": "queue-selection",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://kafka.apache.org/documentation/"
+    ],
+    "reviewNote": "Keep the existing local-mechanism scope and explicitly stated assumptions. No complete system-design or mandatory unasked extensions. Existing cached questions are unchanged."
+  },
+  {
+    "topicId": "rate-limiting",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/commands/incr/"
+    ],
+    "reviewNote": "Keep the existing local-mechanism scope and explicitly stated assumptions. No complete system-design or mandatory unasked extensions. Existing cached questions are unchanged."
+  },
+  {
+    "topicId": "database-concurrency",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.postgresql.org/docs/18/transaction-iso.html"
+    ],
+    "reviewNote": "Keep the existing local-mechanism scope and explicitly stated assumptions. No complete system-design or mandatory unasked extensions. Existing cached questions are unchanged."
+  },
+  {
+    "topicId": "replication-failover",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.postgresql.org/docs/18/warm-standby.html"
+    ],
+    "reviewNote": "Keep the existing local-mechanism scope and explicitly stated assumptions. No complete system-design or mandatory unasked extensions. Existing cached questions are unchanged."
+  },
+  {
+    "topicId": "sharding-growth",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/"
+    ],
+    "reviewNote": "Keep the existing local-mechanism scope and explicitly stated assumptions. No complete system-design or mandatory unasked extensions. Existing cached questions are unchanged."
+  },
+  {
+    "topicId": "rpc-tail-latency",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/"
+    ],
+    "reviewNote": "Keep the existing local-mechanism scope and explicitly stated assumptions. No complete system-design or mandatory unasked extensions. Existing cached questions are unchanged."
+  },
+  {
     "topicId": "mvcc-snapshots",
     "sources": ["https://www.postgresql.org/docs/18/transaction-iso.html"],
     "reviewNote": "READ COMMITTED uses a fresh statement snapshot; do not generalize to every Repeatable Read implementation."
@@ -76,38 +156,28 @@
   },
   {
     "topicId": "volatile-counter",
-    "sources": [
-      "https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html"
-    ],
-    "reviewNote": "A volatile read/write is not an atomic increment; join establishes visibility of completed work but does not repair lost updates."
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"],
+    "reviewNote": "Language-neutral authoring model; preserve the stated synchronization/container/ownership contract rather than importing Java/JDK guarantees. Each load/store is sequentially consistent and atomic, but the compound update is not; read after both workers finish"
   },
   {
     "topicId": "safe-publication",
-    "sources": [
-      "https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html"
-    ],
-    "reviewNote": "The observed volatile flag orders preceding writes; the seed deliberately excludes later mutations."
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"],
+    "reviewNote": "Language-neutral authoring model; preserve the stated synchronization/container/ownership contract rather than importing Java/JDK guarantees. Discuss one publication, not Java memory-model trivia or undefined behavior from language-level data races"
   },
   {
     "topicId": "condition-wait",
-    "sources": [
-      "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait()"
-    ],
-    "reviewNote": "wait releases the monitor and reacquires it before return; notifications do not reserve queue items, and spurious wakeups are permitted."
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"],
+    "reviewNote": "Language-neutral authoring model; preserve the stated synchronization/container/ownership contract rather than importing Java/JDK guarantees. Two consumers wait on one queue; a producer adds one item and broadcasts; access to the queue requires the mutex"
   },
   {
     "topicId": "thread-pool-starvation",
-    "sources": [
-      "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html"
-    ],
-    "reviewNote": "All workers wait for queued children. Do not claim an unbounded queue causes more workers to be created beyond the configured core count."
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"],
+    "reviewNote": "Language-neutral authoring model; preserve the stated synchronization/container/ownership contract rather than importing Java/JDK guarantees. Both running parent tasks enqueue one child in the same pool and block indefinitely for it; children have no external dependencies"
   },
   {
     "topicId": "cas-aba",
-    "sources": [
-      "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicStampedReference.html"
-    ],
-    "reviewNote": "Identity-only comparison cannot detect A-B-A history; a stamp helps only when updated consistently. This is not a native-memory reclamation question."
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"],
+    "reviewNote": "Language-neutral authoring model; preserve the stated synchronization/container/ownership contract rather than importing Java/JDK guarantees. T1 reads A and pauses; T2 changes A to B and back to A before T1 runs CAS(A,C); memory reclamation is excluded"
   },
   {
     "topicId": "javascript-event-loop",
@@ -118,17 +188,13 @@
   },
   {
     "topicId": "mutable-hash-key",
-    "sources": [
-      "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html"
-    ],
-    "reviewNote": "The Map contract leaves behavior unspecified when mutations affect equality; explain why lookup becomes unreliable without promising that every such get must return null."
+    "sources": ["https://opendatastructures.org/"],
+    "reviewNote": "Language-neutral authoring model; preserve the stated synchronization/container/ownership contract rather than importing Java/JDK guarantees. After insertion change id so it selects a different bucket; no reinsertion, resizing or concurrency; do not generalize a fixed result to every language container"
   },
   {
     "topicId": "resource-cleanup",
-    "sources": [
-      "https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html"
-    ],
-    "reviewNote": "With successful initialization, the body exception remains primary and close failure is suppressed; GC is not deterministic resource closure."
+    "sources": ["https://en.cppreference.com/w/cpp/language/raii.html"],
+    "reviewNote": "Language-neutral authoring model; preserve the stated synchronization/container/ownership contract rather than importing Java/JDK guarantees. Compare scope-based cleanup with closing only before normal return; exclude Java-specific exception-merging rules"
   },
   {
     "topicId": "redis-pipeline",
@@ -179,5 +245,649 @@
       "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function"
     ],
     "reviewNote": "An async throw rejects the returned Promise, including before its first await; an outer synchronous catch does not catch that rejection."
+  },
+  {
+    "topicId": "mysql-index-structure",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "reviewNote": "Explain one equality or range lookup without memorizing page layouts State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "mysql-clustered-secondary",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "reviewNote": "Use InnoDB and compare the access paths for one concrete SELECT State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "sql-explain-slow-query",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "reviewNote": "Supply a query and observations; slowness alone does not prove a missing index State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "mysql-index-predicates",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "reviewNote": "Specify types, query and index; do not claim every function disables every index State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "transaction-acid",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "reviewNote": "Use one transfer transaction; do not equate consistency with instantly identical replicas State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "isolation-anomalies",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "reviewNote": "Compare two relevant levels initially; do not demand a full table or identical engine behavior State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "mysql-redo-undo-binlog",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "reviewNote": "Use MySQL/InnoDB; initially compare two logs for one failure case State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "mysql-lock-range",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "reviewNote": "State index, isolation and predicate; SQL text alone does not determine lock scope State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "read-replica-lag",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "reviewNote": "Limit the discussion to one write followed by a read, not complete database failover State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "schema-online-change",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "reviewNote": "Specify database version and change type; not every ALTER is lock-free State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "connection-pool-exhaustion",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "reviewNote": "Start with pool-wait and database-load evidence; a larger pool is not an assumed fix State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "sql-join-grouping",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ],
+    "reviewNote": "Use small tables and a counting rule; discuss one query, not a reporting architecture State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "redis-data-types",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "reviewNote": "Compare two types for one need; do not ask for every command Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "redis-single-thread",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "reviewNote": "Distinguish command execution, I/O and background work; avoid claiming all work is single-threaded Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "redis-persistence",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "reviewNote": "Use one explicit loss-window requirement; never assume zero loss by default Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "redis-cache-failures",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "reviewNote": "Start with limited observations of one cache-miss incident. Fault labels and complete canonical trigger descriptions are private diagnostic directions, not opening hints. Ask for discriminating evidence before assuming key validity, hot-key expiry or broad expiry. Equivalent causal reasoning is sufficient without taxonomy recall; do not require irrelevant Redis version, value-type or persistence details. This revised seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "redis-hot-big-key",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "reviewNote": "Provide command latency and key observations; do not require a blocking production-wide scan Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "redis-zset-ranking",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "reviewNote": "Limit scope to updating and reading one board, not the whole platform Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "redis-lua-atomicity",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "reviewNote": "Use a runtime error across two writes to distinguish atomic execution from rollback Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "redis-cluster-routing",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://redis.io/docs/latest/develop/"
+    ],
+    "reviewNote": "Use native Redis Cluster with explicit keys and operations, not full cluster selection Specify Redis version, data type and persistence assumptions; in-memory atomicity is not end-to-end reliability Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "http-request-journey",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9110.html"
+    ],
+    "reviewNote": "Start with one HTTPS request; follow up layer by layer rather than reciting the whole stack State protocol version and client/proxy boundaries; browser policy is not server authentication Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "http-method-semantics",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9110.html"
+    ],
+    "reviewNote": "Discuss method semantics; do not assume every POST is non-idempotent or every GET has no effects State protocol version and client/proxy boundaries; browser policy is not server authentication Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "http-status-retry",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9110.html"
+    ],
+    "reviewNote": "Judge one endpoint failure with business idempotency, not status-code-only retry rules State protocol version and client/proxy boundaries; browser policy is not server authentication Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "http-version-multiplexing",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9113.html",
+      "https://www.rfc-editor.org/rfc/rfc9114.html"
+    ],
+    "reviewNote": "Compare two versions in one packet-loss situation, not protocol design State protocol version and client/proxy boundaries; browser policy is not server authentication Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "https-handshake",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc8446.html"
+    ],
+    "reviewNote": "Use TLS 1.3 without memorizing message fields or computing cryptography State protocol version and client/proxy boundaries; browser policy is not server authentication Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "network-dns-cache",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc1034.html"
+    ],
+    "reviewNote": "Give cutover symptoms and resolver observations; TTL does not forcibly expire every connection State protocol version and client/proxy boundaries; browser policy is not server authentication Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "network-tcp-reliability",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9293.html"
+    ],
+    "reviewNote": "Explain one timeout or disconnect; an ACK does not establish an order commit State protocol version and client/proxy boundaries; browser policy is not server authentication Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "network-time-wait",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9293.html",
+      "https://man7.org/linux/man-pages/man7/tcp.7.html"
+    ],
+    "reviewNote": "Use Linux and examine ports and failures before assuming kernel tuning is needed State protocol version and client/proxy boundaries; browser policy is not server authentication Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "network-websocket",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc6455.html",
+      "https://html.spec.whatwg.org/multipage/server-sent-events.html"
+    ],
+    "reviewNote": "Compare two approaches for one notification need; reliable replay needs an application contract State protocol version and client/proxy boundaries; browser policy is not server authentication Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "os-process-thread",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/"
+    ],
+    "reviewNote": "Use a service worker example without platform-specific structure trivia Use Linux as the example and state relevant kernel/filesystem assumptions; command memorization is not required Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "os-virtual-memory",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/"
+    ],
+    "reviewNote": "Distinguish virtual addresses, resident memory and container limits; allocation need not populate pages Use Linux as the example and state relevant kernel/filesystem assumptions; command memorization is not required Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "os-io-models",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/"
+    ],
+    "reviewNote": "Compare waiting on one socket; epoll readiness does not mean the read is complete Use Linux as the example and state relevant kernel/filesystem assumptions; command memorization is not required Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "os-page-cache",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/"
+    ],
+    "reviewNote": "Specify a local filesystem and failure type; distinguish write, fsync and application commit Use Linux as the example and state relevant kernel/filesystem assumptions; command memorization is not required Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "os-cpu-load",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/"
+    ],
+    "reviewNote": "Give observations and ask for next evidence; load average is not CPU utilization Use Linux as the example and state relevant kernel/filesystem assumptions; command memorization is not required Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "os-zero-copy",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/"
+    ],
+    "reviewNote": "Name sendfile or a specific path; zero-copy does not mean no data movement at all Use Linux as the example and state relevant kernel/filesystem assumptions; command memorization is not required Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "concurrency-lock-types",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/man7/pthreads.7.html"
+    ],
+    "reviewNote": "Compare two locks for one workload; read-heavy does not always make reader-writer locks faster Use language-neutral lock and pool contracts; exclude JMM/JDK APIs and unspecified results of data races Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "concurrency-deadlock",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/man7/pthreads.7.html"
+    ],
+    "reviewNote": "Use one symptom to distinguish two problems, not a disaster-recovery design Use language-neutral lock and pool contracts; exclude JMM/JDK APIs and unspecified results of data races Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "concurrency-backpressure",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/man7/pthreads.7.html"
+    ],
+    "reviewNote": "Limit scope to a local worker pool, not a distributed scheduler or API parameter recall Use language-neutral lock and pool contracts; exclude JMM/JDK APIs and unspecified results of data races Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "concurrency-cancellation",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://man7.org/linux/man-pages/man7/pthreads.7.html"
+    ],
+    "reviewNote": "State cancellation contracts and interruption points; a timeout exception does not undo remote work Use language-neutral lock and pool contracts; exclude JMM/JDK APIs and unspecified results of data races Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "mq-why-queue",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rabbitmq.com/docs/confirms"
+    ],
+    "reviewNote": "Compare synchronous and asynchronous handling in one call chain, not an architecture diagram State broker, producer, consumer and business-commit boundaries; a component guarantee is not an end-to-end guarantee Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "mq-publisher-confirm",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rabbitmq.com/docs/confirms"
+    ],
+    "reviewNote": "Use RabbitMQ publisher confirms; they do not establish consumer business completion State broker, producer, consumer and business-commit boundaries; a component guarantee is not an end-to-end guarantee Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "mq-backlog-diagnosis",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rabbitmq.com/docs/confirms"
+    ],
+    "reviewNote": "Supply rate and latency metrics; more consumers are not an assumed fix State broker, producer, consumer and business-commit boundaries; a component guarantee is not an end-to-end guarantee Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "mq-kafka-rebalance",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://kafka.apache.org/documentation/"
+    ],
+    "reviewNote": "State the Kafka group protocol; do not demand every rebalance algorithm initially State broker, producer, consumer and business-commit boundaries; a component guarantee is not an end-to-end guarantee Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "mq-poison-message",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rabbitmq.com/docs/confirms"
+    ],
+    "reviewNote": "Handle one permanent failure class; dead-lettering is not automatic repair State broker, producer, consumer and business-commit boundaries; a component guarantee is not an end-to-end guarantee Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "mq-outbox",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rabbitmq.com/docs/confirms"
+    ],
+    "reviewNote": "Start from one local transaction and publication failure; distributed transactions are not presumed necessary State broker, producer, consumer and business-commit boundaries; a component guarantee is not an end-to-end guarantee Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "distributed-cap",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "reviewNote": "Use requests to two replicas; CAP is not an unrestricted everyday choice of two properties State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "distributed-consistency-models",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "reviewNote": "Compare two guarantees on one history; transaction isolation is not identical to distributed consistency State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "distributed-consensus",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "reviewNote": "Use Raft for one failure window; avoid protocol-code trivia or equivalence of all quorum systems State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "distributed-lease-fencing",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "reviewNote": "State lease time source and write-target capabilities; discuss one stale write State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "distributed-id",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "reviewNote": "Compare two IDs for one requirement without assuming strict global monotonicity State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "distributed-consistent-hash",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "reviewNote": "Use a small membership change; it does not automatically solve hot keys or replication State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "distributed-retry-budget",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "reviewNote": "Analyze timeouts on one dependency, not whole-site availability State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "distributed-saga",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+    ],
+    "reviewNote": "Use one payment/shipping example; compensation is a business action, not time reversal State partitions, failure model and consistency goal; assess a local mechanism rather than a whole platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "auth-cookie-session-token",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html"
+    ],
+    "reviewNote": "Compare one login session; JWTs are not necessarily encrypted or inherently revocable Use public security protocols and threat models; never request credentials, third-party attacks or custom cryptography Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "auth-oauth-oidc",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.rfc-editor.org/rfc/rfc9700.html",
+      "https://openid.net/specs/openid-connect-core-1_0.html"
+    ],
+    "reviewNote": "Use an authorization-code flow; an access token is not a universal identity assertion Use public security protocols and threat models; never request credentials, third-party attacks or custom cryptography Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "security-password-storage",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"
+    ],
+    "reviewNote": "Explain the post-breach threat model without inventing cryptographic schemes Use public security protocols and threat models; never request credentials, third-party attacks or custom cryptography Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "security-xss-output",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://cheatsheetseries.owasp.org/"
+    ],
+    "reviewNote": "Use one output context; replacing angle brackets is not complete protection Use public security protocols and threat models; never request credentials, third-party attacks or custom cryptography Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "security-ssrf",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://cheatsheetseries.owasp.org/"
+    ],
+    "reviewNote": "Use illustrative local addresses; do not make actual internal-service requests Use public security protocols and threat models; never request credentials, third-party attacks or custom cryptography Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "ds-hash-collision",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opendatastructures.org/"
+    ],
+    "reviewNote": "Use a generic hash table, not Java HashMap resizing or treeification thresholds These are mechanism/application questions, not new LC coding tasks; state size and complexity assumptions Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "ds-lru-lfu",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opendatastructures.org/"
+    ],
+    "reviewNote": "Compare one access sequence, not a complete cache implementation These are mechanism/application questions, not new LC coding tasks; state size and complexity assumptions Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "ds-bloom-filter",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opendatastructures.org/"
+    ],
+    "reviewNote": "Use a standard insert-only filter with no missed inserts; possible presence is not certainty These are mechanism/application questions, not new LC coding tasks; state size and complexity assumptions Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "ds-top-k-stream",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opendatastructures.org/"
+    ],
+    "reviewNote": "Specify largest values versus frequent items and approximation allowance; discuss one processing step These are mechanism/application questions, not new LC coding tasks; state size and complexity assumptions Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "ds-bitmap-dedup",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opendatastructures.org/"
+    ],
+    "reviewNote": "Supply an ID range and memory bound; arbitrary strings are not direct bitmap positions These are mechanism/application questions, not new LC coding tasks; state size and complexity assumptions Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "engineering-logs-metrics-traces",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opentelemetry.io/docs/concepts/signals/"
+    ],
+    "reviewNote": "Use one slow endpoint without vendor-specific integration requirements Limit scope to one service or rollout and its observable behavior, not a full engineering platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "engineering-cardinality",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opentelemetry.io/docs/concepts/signals/"
+    ],
+    "reviewNote": "Give dimensions and cardinalities; high cardinality does not prohibit all log fields Limit scope to one service or rollout and its observable behavior, not a full engineering platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "engineering-p99",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opentelemetry.io/docs/concepts/signals/"
+    ],
+    "reviewNote": "Give a distribution and counts; averaging instance p99 values does not produce a global p99 Limit scope to one service or rollout and its observable behavior, not a full engineering platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "engineering-safe-rollout",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
+    ],
+    "reviewNote": "Discuss one field change and rollback window, not a deployment platform Limit scope to one service or rollout and its observable behavior, not a full engineering platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "engineering-test-boundaries",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://docs.pytest.org/en/stable/how-to/monkeypatch.html"
+    ],
+    "reviewNote": "Use an external payment call; a successful mock does not establish real service availability Limit scope to one service or rollout and its observable behavior, not a full engineering platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "engineering-incident-evidence",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://opentelemetry.io/docs/concepts/signals/"
+    ],
+    "reviewNote": "Give limited observations; allow multiple hypotheses but ask for the next evidence Limit scope to one service or rollout and its observable behavior, not a full engineering platform Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "business-order-expiry",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html"
+    ],
+    "reviewNote": "Analyze concurrent events on one order, not an entire commerce platform Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2 Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "business-upload-resume",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html"
+    ],
+    "reviewNote": "Discuss one chunk retry for one file; server-side authorization remains necessary Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2 Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "business-otp-login",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html"
+    ],
+    "reviewNote": "Discuss one verification flow, not an SMS platform or real codes Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2 Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "business-payment-callback",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html"
+    ],
+    "reviewNote": "State a trusted verification contract and one ledger entry, not a full payment platform Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2 Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "business-uv-count",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html"
+    ],
+    "reviewNote": "Define visitor identity and tolerated error; an approximate count is not an exact membership list Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2 Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "business-unread-cursor",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html"
+    ],
+    "reviewNote": "Use messages and read events in one conversation, not a whole messaging architecture Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2 Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "business-content-dedup",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/content-hash"
+    ],
+    "reviewNote": "Discuss one deduplication hit; knowing a digest does not authorize reading a file Discuss one technical step or business invariant; full architecture, estimation and cross-component choices belong in P2 Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "search-inverted-index",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.elastic.co/docs/manage-data/data-store/near-real-time-search"
+    ],
+    "reviewNote": "Compare one text search need, not a complete search engine State the storage/search engine and consistency boundary; explain one access or update path Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "search-refresh-delay",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.elastic.co/docs/manage-data/data-store/near-real-time-search"
+    ],
+    "reviewNote": "Use Elasticsearch and distinguish refresh, flush and search visibility State the storage/search engine and consistency boundary; explain one access or update path Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "storage-object-local",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html"
+    ],
+    "reviewNote": "Name the object service contract; not all object stores are eventually consistent State the storage/search engine and consistency boundary; explain one access or update path Sources guide the authoring scope; this seed has not undergone live-model acceptance."
+  },
+  {
+    "topicId": "storage-document-model",
+    "sources": [
+      "https://javaguide.cn/home.html",
+      "https://www.mongodb.com/docs/manual/data-modeling/"
+    ],
+    "reviewNote": "Compare one business read/write; SQL/NoSQL labels do not determine every consistency guarantee State the storage/search engine and consistency boundary; explain one access or update path Sources guide the authoring scope; this seed has not undergone live-model acceptance."
   }
 ]
