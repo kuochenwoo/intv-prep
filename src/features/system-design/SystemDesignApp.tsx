@@ -206,6 +206,7 @@ export default function SystemDesignApp({
         setScenarioSearch("");
         setScenarioId(focus.id);
         setQuestionId("");
+        forget();
       }
     })().catch((e) => {
       if (current()) setError(String(e));
@@ -365,12 +366,23 @@ export default function SystemDesignApp({
       true,
     );
   }
-  // Clears the open session after it is deleted on disk.
+  // Close the displayed session without deleting its persisted history.
   function forget() {
+    navigationVersion.current += 1;
     activeId.current = "";
     setSession(null);
     workRef.current = emptyWorkspace();
     setWorkspace(emptyWorkspace());
+  }
+  // Switching scenarios closes the open session (it stays in history), so the new
+  // scenario starts empty instead of showing another scenario's interview.
+  function chooseScenario(id: string) {
+    if (busy || running.current || id === scenarioId) return;
+    void perform(async () => {
+      setScenarioId(id);
+      setQuestionId("");
+      forget();
+    });
   }
   const connectionText =
     connection.kind === "requesting"
@@ -588,10 +600,9 @@ export default function SystemDesignApp({
                 (x) => x.id !== scenarioId,
               );
               const candidates = others.length ? others : visibleScenarios;
-              setScenarioId(
+              chooseScenario(
                 candidates[Math.floor(Math.random() * candidates.length)].id,
               );
-              setQuestionId("");
             }}
           />
           <div
@@ -609,10 +620,7 @@ export default function SystemDesignApp({
                 key={s.id}
                 disabled={busy}
                 aria-pressed={s.id === scenarioId}
-                onClick={() => {
-                  setScenarioId(s.id);
-                  setQuestionId("");
-                }}
+                onClick={() => chooseScenario(s.id)}
               >
                 <strong>{lang === "en" ? s.en.title : s.title}</strong>
               </button>

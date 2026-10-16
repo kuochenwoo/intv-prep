@@ -57,6 +57,11 @@ key and real signatures; no successful application install is simulated.
 
 ## Publishing a preview
 
+Merged PRs with a strictly increased version and versioned release notes now publish
+automatically after successful main CI. See `AUTOMATIC_RELEASES.md`; the steps below
+describe the retained manual tag/draft path. Both paths use the same signed build
+and verified feed publication.
+
 The feed is a public `latest.json` asset on the `updates-preview` prerelease:
 
 `https://github.com/kuochenwoo/intv-prep/releases/download/updates-preview/latest.json`
