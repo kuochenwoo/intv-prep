@@ -42,7 +42,7 @@ called with a matching tag (manual dispatch becomes available after the workflow
 exists on the default branch). It first calls CI, then:
 
 1. Verifies the requested tag equals all application/lockfile versions.
-2. Builds a Release arm64 `.app` and `.dmg`, with ad-hoc signing enabled in Tauri.
+2. Embeds license notices and MPL dependency sources in application assets, then builds a Release arm64 `.app` and `.dmg`, with ad-hoc signing enabled in Tauri.
 3. Checks the real signature and architecture and scans the app for private files,
    credential patterns and a compiled-in checkout `.env` path.
 4. Prepares the app ZIP, DMG, proprietary license, versioned release notes, dependency

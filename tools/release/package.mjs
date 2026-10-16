@@ -4,15 +4,13 @@ import {
   mkdirSync,
   copyFileSync,
   writeFileSync,
-  mkdtempSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readRelease } from "./check.mjs";
 import { containsSecret, forbiddenPath } from "./audit.mjs";
-import { dependencyNotices } from "./notices.mjs";
+import { writeDependencyNotices } from "./notices.mjs";
 
 const root = process.cwd(),
   version = readRelease(root);
@@ -72,18 +70,7 @@ copyFileSync(
   resolve(`docs/releases/v${version}.md`),
   join(out, "RELEASE_NOTES.md"),
 );
-const notices = dependencyNotices(root);
-if (notices.missing.length) throw Error(`Missing license notices: ${notices.missing.join(", ")}`);
-writeFileSync(join(out, "THIRD_PARTY_NOTICES.txt"), notices.text);
-const sourceDir = mkdtempSync(join(tmpdir(), "swe-preview-mpl-"));
-const sourceIndex = [];
-for (const pkg of notices.sourcePackages) {
-  const filename = `${pkg.name}-${pkg.version}`;
-  execFileSync("ditto", [pkg.directory, join(sourceDir, filename)]);
-  sourceIndex.push(`${filename}: unmodified Cargo registry source; https://crates.io/api/v1/crates/${pkg.name}/${pkg.version}/download`);
-}
-writeFileSync(join(sourceDir, "SOURCES.txt"), "Unmodified MPL-covered dependency sources. These retain upstream licenses and are not governed by the proprietary application license.\n\n" + sourceIndex.join("\n") + "\n");
-execFileSync("ditto", ["-c", "-k", sourceDir, join(out, "MPL_SOURCES.zip")]);
+const notices = writeDependencyNotices(out, root);
 const commit = execFileSync("git", ["rev-parse", "HEAD"]).toString().trim();
 const dirty = !!execFileSync("git", ["status", "--porcelain"])
   .toString()

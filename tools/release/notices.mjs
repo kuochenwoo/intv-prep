@@ -1,5 +1,6 @@
-import { readFileSync, readdirSync, existsSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { readFileSync, readdirSync, existsSync, mkdirSync, mkdtempSync, writeFileSync, copyFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { resolve, dirname, join } from "node:path";
 import { execFileSync } from "node:child_process";
 
 function licenseTexts(directory, explicit) {
@@ -111,4 +112,23 @@ ${readFileSync(resolve(noticeDir, record.file), "utf8")}`;
     sourcePackages,
     missing,
   };
+}
+
+// Also embed notices in the frontend assets so each standalone app/DMG carries them.
+export function writeDependencyNotices(out, root = process.cwd()) {
+  const notices = dependencyNotices(root);
+  if (notices.missing.length) throw Error(`Missing license notices: ${notices.missing.join(", ")}`);
+  mkdirSync(out, { recursive: true });
+  writeFileSync(join(out, "THIRD_PARTY_NOTICES.txt"), notices.text);
+  copyFileSync(resolve(root, "LICENSE"), join(out, "LICENSE.txt"));
+  const sourceDir = mkdtempSync(join(tmpdir(), "swe-preview-mpl-"));
+  const sourceIndex = [];
+  for (const pkg of notices.sourcePackages) {
+    const filename = `${pkg.name}-${pkg.version}`;
+    execFileSync("ditto", [pkg.directory, join(sourceDir, filename)]);
+    sourceIndex.push(`${filename}: unmodified Cargo registry source; https://crates.io/api/v1/crates/${pkg.name}/${pkg.version}/download`);
+  }
+  writeFileSync(join(sourceDir, "SOURCES.txt"), "Unmodified MPL-covered dependency sources. These retain upstream licenses and are not governed by the proprietary application license.\n\n" + sourceIndex.join("\n") + "\n");
+  execFileSync("ditto", ["-c", "-k", sourceDir, join(out, "MPL_SOURCES.zip")]);
+  return notices;
 }
