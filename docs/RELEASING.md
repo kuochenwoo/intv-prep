@@ -1,6 +1,6 @@
 # macOS preview release
 
-The first release is `0.1.0-preview.1`, targeting macOS 13+ on Apple Silicon. It is
+The first release was `0.1.0-preview.1`; the updater-enabled candidate is `0.1.0-preview.2`, targeting macOS 13+ on Apple Silicon. It is
 ad-hoc signed and not Apple-notarized. Original project material remains proprietary;
 see LICENSE. Intel, other operating systems, automatic updates and Developer ID
 signing/notarization are outside this preview.
@@ -52,13 +52,13 @@ exists on the default branch). It first calls CI, then:
 Only the final release job receives `contents: write`; its `GH_TOKEN` is GitHub's
 workflow token. No Claude, DeepSeek or OpenAI key belongs in repository secrets for
 this pipeline. The workflow refuses public-release overwrites and drafts from a
-different commit. It does not create an updater feed or publish a release.
+different commit. It does not publish an application release. Signed updater artifacts are included; after a human publishes the versioned prerelease, a separate workflow advances the preview feed. See `UPDATES.md`.
 
 After review, create a version tag at the tested commit and push it:
 
 ```sh
-git tag v0.1.0-preview.1 <tested-commit>
-git push origin v0.1.0-preview.1
+git tag v0.1.0-preview.2 <tested-commit>
+git push origin v0.1.0-preview.2
 ```
 
 Preview assets are generated in ignored `release-artifacts/`. To build locally:
@@ -71,7 +71,7 @@ npm run test:release-tools
 npm run test:review-ui
 cargo test --manifest-path src-tauri/Cargo.toml --no-default-features --locked
 cargo test --manifest-path src-tauri/Cargo.toml --no-default-features --release --locked --test release_credentials
-npm run build:macos
+TAURI_SIGNING_PRIVATE_KEY="$PWD/.release-keys/updater.key" npm run build:macos
 node tools/release/package.mjs
 ```
 

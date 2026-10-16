@@ -10,6 +10,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readRelease } from "./check.mjs";
 import { containsSecret, forbiddenPath } from "./audit.mjs";
+import { createUpdateFeed, updaterFile } from "./update-feed.mjs";
 import { writeDependencyNotices } from "./notices.mjs";
 
 const root = process.cwd(),
@@ -45,7 +46,7 @@ function auditApp(dir) {
   }
 }
 auditApp(app);
-const out = resolve("release-artifacts");
+const out = resolve(process.env.RELEASE_ARTIFACT_DIR ?? "release-artifacts");
 mkdirSync(out, { recursive: true });
 if (readdirSync(out).length)
   throw Error(
@@ -70,6 +71,12 @@ copyFileSync(
   resolve(`docs/releases/v${version}.md`),
   join(out, "RELEASE_NOTES.md"),
 );
+const archive = join(bundle, "macos", `${product}.app.tar.gz`);
+const signature = `${archive}.sig`;
+execFileSync("cargo", ["run", "--manifest-path", "src-tauri/Cargo.toml", "--no-default-features", "--locked", "--example", "verify_update", "--", "src-tauri/tauri.conf.json", archive, signature, version], { stdio: "inherit" });
+copyFileSync(archive, join(out, updaterFile(version)));
+copyFileSync(signature, join(out, `${updaterFile(version)}.sig`));
+writeFileSync(join(out, "latest.json"), JSON.stringify(createUpdateFeed(version, readFileSync(signature, "utf8"), readFileSync(resolve(`docs/releases/v${version}.md`), "utf8")), null, 2) + "\n");
 const notices = writeDependencyNotices(out, root);
 const commit = execFileSync("git", ["rev-parse", "HEAD"]).toString().trim();
 const dirty = !!execFileSync("git", ["status", "--porcelain"])

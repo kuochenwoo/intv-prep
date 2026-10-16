@@ -1,3 +1,4 @@
+import { registerUpdateGuard } from "../updates/guards";
 import { ApiKeyBadge, ApiKeyWarning } from "../../ApiKeyStatus";
 import { useEffect, useRef, useState } from "react";
 import { invoke, isTauri } from "@tauri-apps/api/core";
@@ -153,6 +154,11 @@ export default function InterviewApp({
   const queue = useRef(Promise.resolve()),
     saveError = useRef(""),
     revision = useRef(0);
+  useEffect(() => registerUpdateGuard(async () => {
+    if (busy) throw new Error("updatePracticeBusy");
+    await queue.current;
+    if (saveError.current) throw new Error("updateDraftFailed");
+  }), [busy]);
   const locale = lang === "zh" ? "zh-CN" : "en";
   const categoryLabel = (category: string) =>
     lookup(t, "topicCategory_", category);

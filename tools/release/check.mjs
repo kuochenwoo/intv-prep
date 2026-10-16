@@ -34,6 +34,12 @@ export function validateRelease({ pkg, lock, cargo, cargoLock, tauri }, tag) {
     throw Error(
       "The preview must retain its proprietary/private-package declaration.",
     );
+  const updater = tauri.plugins?.updater;
+  if (tauri.bundle.createUpdaterArtifacts !== true || !updater?.pubkey?.trim() ||
+      updater.requireSignedVersion !== true || updater.allowDowngrades ||
+      updater.dangerousInsecureTransportProtocol || updater.dangerousAcceptInvalidCerts ||
+      JSON.stringify(updater.endpoints) !== JSON.stringify(["https://github.com/kuochenwoo/intv-prep/releases/download/updates-preview/latest.json"]))
+    throw Error("Updater artifacts, signed versions and the fixed HTTPS preview feed are required.");
   return version;
 }
 export function readRelease(root = process.cwd(), tag) {

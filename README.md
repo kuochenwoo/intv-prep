@@ -40,10 +40,10 @@ npm run test:review-ui                # offline frontend helper/Markdown tests
 npm test                              # Rust tests: judge, every problem in both modes, storage, AI client (no paid API calls)
 npm run check:release                 # version/preview configuration checks
 npm run test:release-tools            # release guard regressions
-npm run build:macos                   # ad-hoc signed arm64 Release app and DMG
+TAURI_SIGNING_PRIVATE_KEY="$PWD/.release-keys/updater.key" npm run build:macos # signed update bundle plus app/DMG
 ```
 
-The app and DMG are written to `src-tauri/target/aarch64-apple-darwin/release/bundle/`. The preview targets macOS 13+ on Apple Silicon and still needs a local C++20 compiler for LC judging. See [release preparation and CI](docs/RELEASING.md) and [preview notes](docs/releases/v0.1.0-preview.1.md). GitHub Actions creates draft releases only.
+The app and DMG are written to `src-tauri/target/aarch64-apple-darwin/release/bundle/`. The preview targets macOS 13+ on Apple Silicon and still needs a local C++20 compiler for LC judging. See [release preparation and CI](docs/RELEASING.md) and [preview notes](docs/releases/v0.1.0-preview.2.md). GitHub Actions creates draft releases only.
 
 ## AI settings
 
@@ -89,3 +89,5 @@ tools/leetcode/              Problem generators and authoring guide
 ## License
 
 Original project material is proprietary, with personal non-commercial evaluation of authorized preview binaries permitted by [LICENSE](LICENSE). No open-source license is granted. Third-party dependencies retain their own licenses; release assets include dependency notices.
+
+Signed preview updates: see [UPDATES.md](docs/UPDATES.md) for automatic checks, signing-key backup, the first manual install and the human-controlled release/feed publication flow.

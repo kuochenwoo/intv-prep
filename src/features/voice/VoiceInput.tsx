@@ -1,3 +1,4 @@
+import { registerUpdateGuard } from "../updates/guards";
 import { useEffect, useRef, useState } from "react";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { Button } from "@astryxdesign/core/Button";
@@ -61,6 +62,10 @@ export function VoiceInput({
     "stopping",
     "transcribing",
   ].includes(phase);
+
+  useEffect(() => registerUpdateGuard(() => {
+    if (pending || clip || transcript.trim()) throw new Error("updateVoicePending");
+  }), [pending, clip, transcript]);
 
   function releaseMicrophone() {
     stream.current?.getTracks().forEach((track) => track.stop());

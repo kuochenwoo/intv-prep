@@ -3,6 +3,9 @@ import type { Lang } from "./i18n";
 // The Rust backend reports errors in Chinese. In English mode the UI translates
 // them here, so keep this table in sync when adding or rewording a backend error.
 const EXACT: [string, string][] = [
+  ["当前运行环境不支持应用内更新，请安装正式应用包", "In-app updates require an installed Release app outside a mounted disk image"],
+  ["请等待判题、面试请求或语音转写完成后再更新", "Wait for judging, interview requests or transcription to finish before updating"],
+  ["无法保存更新前的数据，请稍后重试", "Could not save data before updating; try again later"],
   ["当前会话不能接收语音输入", "This session cannot accept voice input"],
   ["已有语音转写请求正在运行", "A transcription request is already running"],
   [

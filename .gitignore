@@ -12,3 +12,6 @@ src-tauri/gen/schemas/
 
 # Generated preview release assets (never include credentials or local data)
 release-artifacts/
+
+# Updater signing identity (public key is embedded in tauri.conf.json)
+.release-keys/

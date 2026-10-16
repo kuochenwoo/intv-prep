@@ -11,6 +11,7 @@ import { useI18n } from "../../i18n";
 import { localizeError } from "../../errors";
 import { UsagePanel } from "./SessionTools";
 import { ApiKeyBadge, ApiKeyWarning } from "../../ApiKeyStatus";
+import { UpdateSettings } from "../updates/UpdateCenter";
 import { VoiceSettings } from "../voice/VoiceSettings";
 type Config = { provider: string; model: string; timeoutSeconds: number };
 type Summary = { id: string; title: string; provider?: string; model?: string };
@@ -178,6 +179,7 @@ export default function SettingsPage({
         </Collapsible>
       </div>
 
+      <UpdateSettings />
       <VoiceSettings active={active} />
       <section className="card settings-accounting">
         <h2>{t("compiler")}</h2>

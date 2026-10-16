@@ -435,6 +435,11 @@ button.tint-btn.tint-btn:disabled { opacity: 0.55; }
   background: color-mix(in srgb, var(--color-background-purple) 45%, transparent);
 }
 .usage-rates-card .usage-rates { margin-block: 10px 14px; }
+.update-notice { padding: 10px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.update-notice > :first-child { flex: 1 1 400px; }
+.update-progress { padding: 24px; }
+.update-progress progress { width: 100%; accent-color: var(--color-accent); }
+.update-release-notes { max-height: 260px; overflow: auto; margin-top: 16px; }
 .usage-saved { color: var(--color-text-green); font-weight: var(--font-weight-semibold); }
 
 /* Settings: the provider fields and both buttons fit one row on desktop widths. */
