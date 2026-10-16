@@ -4,6 +4,7 @@ import { Button } from "@astryxdesign/core/Button";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { Banner } from "@astryxdesign/core/Banner";
 import { useI18n } from "../../i18n";
+import { ApiKeyBadge, ApiKeyWarning } from "../../ApiKeyStatus";
 import { localizeError } from "../../errors";
 
 type Settings = { model: string; keyStatus: string };
@@ -50,12 +51,9 @@ export function VoiceSettings({ active }: { active: boolean }) {
       <p className="muted">{t("voiceSettingsScope")}</p>
       <p>
         {t("voiceModel")} ·{" "}
-        {settings?.keyStatus === "saved"
-          ? t("keySaved")
-          : settings?.keyStatus === "unavailable"
-            ? t("keyUnavailable")
-            : t("keyMissing")}
+        <ApiKeyBadge status={settings?.keyStatus} provider="OpenAI" />
       </p>
+      <ApiKeyWarning status={settings?.keyStatus} provider="OpenAI" />
       <div className="provider-fields">
         <TextInput
           type="password"
