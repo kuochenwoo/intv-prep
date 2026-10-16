@@ -298,6 +298,14 @@ fn cache_reuse_is_offline_and_private_checkpoints_never_enter_candidate_view() {
         .generate_question(&topic("cache-selection").unwrap())
         .unwrap();
     let cached = store::cache_question(&c, "cache-selection", &config, &q).unwrap();
+    let version: String = c
+        .query_row(
+            "SELECT prompt_version FROM generated_questions WHERE id=?1",
+            [&cached.id],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(version, swe_interview_prep::quality::POLICY_VERSION);
     for _ in 0..2 {
         let session = store::start(&c, &cached.id, &config).unwrap();
         let public = serde_json::to_string(&session).unwrap();

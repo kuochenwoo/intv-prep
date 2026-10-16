@@ -145,3 +145,118 @@ test("voice insertion rejects overflow without truncating either input", () => {
   assert.equal(transcript, "中文");
   assert.equal(appendTranscript("", "x".repeat(6000)).length, 6000);
 });
+
+// Render the real shared component; this exercises parsing and escaping, not a mock renderer.
+const { buildSync } = await import("esbuild");
+const { createRequire } = await import("node:module");
+const { fileURLToPath } = await import("node:url");
+const markdownBundle = buildSync({
+  stdin: {
+    contents: `import { Markdown } from './src/Markdown';
+      import { renderToStaticMarkup } from 'react-dom/server';
+      import { createElement } from 'react';
+      export const render = (text) => renderToStaticMarkup(createElement(Markdown, { text }));`,
+    resolveDir: fileURLToPath(new URL("../../", import.meta.url)),
+    loader: "tsx",
+  },
+  platform: "node",
+  format: "cjs",
+  bundle: true,
+  write: false,
+  loader: { ".css": "empty" },
+});
+const markdownModule = { exports: {} };
+new Function(
+  "module",
+  "exports",
+  "require",
+  markdownBundle.outputFiles[0].text,
+)(markdownModule, markdownModule.exports, createRequire(import.meta.url));
+const renderMarkdown = markdownModule.exports.render;
+
+test("interview Markdown preserves fenced code, language tags, indentation and line breaks", () => {
+  const html = renderMarkdown(
+    "比较 `count` 的更新：\n\n```javascript\nif (ready) {\n  count += 1;\n}\n```",
+  );
+  assert.match(html, /<code>count<\/code>/);
+  assert.match(html, /<pre><code class="language-javascript">/);
+  assert.match(html, /if \(ready\) \{\n  count \+= 1;\n\}\n/);
+  assert.doesNotMatch(html, /```/);
+});
+
+test("interview Markdown supports lists, tables and incomplete streaming fences", () => {
+  const html = renderMarkdown(
+    "- first\n- second\n\n| A | B |\n| --- | --- |\n| 1 | 2 |",
+  );
+  assert.match(html, /<ul>/);
+  assert.match(html, /<table>/);
+  assert.match(html, /<td>2<\/td>/);
+  assert.match(
+    renderMarkdown("```sql\nSELECT id\n  FROM items"),
+    /<pre><code class="language-sql">SELECT id\n  FROM items/,
+  );
+});
+
+test("interview Markdown blocks HTML, external images and navigable links", () => {
+  const html = renderMarkdown(
+    '<script>alert(1)</script>\n\n<img src="https://example.com/beacon" onerror="alert(1)">\n\n![tracking](https://example.com/pixel)\n\n[reference](https://example.com)\n\n[bad](javascript:alert%281%29)',
+  );
+  assert.doesNotMatch(html, /<(script|img|a)\b|onerror=|href=|src=/);
+  assert.match(html, /reference/);
+});
+
+test("a generated question cannot open its session after selection moves to another topic", async () => {
+  const generated = deferred();
+  let selected = "cache",
+    opened = null,
+    starts = 0;
+  const operation = loadCurrent(
+    async () => {
+      const question = await generated.promise;
+      if (selected !== "cache") return null;
+      starts++;
+      return { question, seedId: "cache" };
+    },
+    (session) => {
+      opened = session;
+    },
+    () => selected === "cache",
+  );
+  selected = "network";
+  generated.resolve("real-request-result-placeholder");
+  await operation;
+  assert.equal(selected, "network");
+  assert.equal(starts, 0);
+  assert.equal(opened, null);
+});
+
+test("a late session or failed draft save cannot replace the chosen view", async () => {
+  const session = deferred();
+  let version = 0,
+    view = "original";
+  const operation = loadCurrent(
+    () => session.promise,
+    (value) => {
+      view = value;
+    },
+    () => version === 0,
+  );
+  version++;
+  view = "another topic";
+  session.resolve("old interview");
+  await operation;
+  assert.equal(view, "another topic");
+  await assert.rejects(
+    loadCurrent(
+      async () => {
+        throw new Error("draft save failed");
+      },
+      () => {
+        view = "lost draft";
+      },
+      () => true,
+    ),
+    /draft save failed/,
+  );
+  assert.equal(view, "another topic");
+});

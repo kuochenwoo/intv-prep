@@ -17,6 +17,7 @@ import { LiveResponse } from "./LiveResponse";
 import "./interview.css";
 import { SessionTools } from "./SessionTools";
 import { VoiceInput } from "../voice/VoiceInput";
+import { Markdown } from "../../Markdown";
 import { EmptyState, FeedbackLists } from "../../EmptyState";
 type Config = { provider: string; model: string; timeoutSeconds: number };
 type Settings = { config: Config; keyStatus: string; credentialSource: string };
@@ -192,6 +193,7 @@ export default function InterviewApp({
     );
   const [historyOpen, setHistoryOpen] = useState(false);
   const navigationVersion = useRef(0);
+  const requestOwner = useRef<number | null>(null);
   useEffect(() => {
     if (isTauri()) void overview().catch((e) => setError(String(e)));
   }, [settingsVersion]);
@@ -199,6 +201,7 @@ export default function InterviewApp({
   useEffect(() => {
     if (!focus || !isTauri()) return;
     const version = ++navigationVersion.current;
+    setLive("");
     let disposed = false;
     const current = () => !disposed && navigationVersion.current === version;
     void (async () => {
@@ -219,6 +222,8 @@ export default function InterviewApp({
         setTopicPriority("");
         setTopicId(focus.id);
         setQuestionId("");
+        setSession(null);
+        setDraft("");
       }
     })().catch((e) => {
       if (current()) setError(String(e));
@@ -232,6 +237,14 @@ export default function InterviewApp({
     setHistoryOpen(false);
     setSession(s);
     setDraft(s.draft);
+    setTopicId(s.question.seedId);
+    setQuestionId(s.question.id);
+    if (!visibleTopics.some((topic) => topic.id === s.question.seedId)) {
+      setTopicSearch("");
+      setTopicCategory("");
+      setTopicForm("");
+      setTopicPriority("");
+    }
   }
   async function overview() {
     const result = await invoke<Overview>("interview_overview");
@@ -242,7 +255,10 @@ export default function InterviewApp({
   useEffect(() => {
     if (!isTauri()) return;
     // The backend streams the model's partial JSON while a request runs.
-    const stop = listen<string>("llm-stream", (e) => setLive(e.payload));
+    const stop = listen<string>("llm-stream", (e) => {
+      if (requestOwner.current === navigationVersion.current)
+        setLive(e.payload);
+    });
     return () => {
       void stop.then((unlisten) => unlisten());
     };
@@ -274,6 +290,7 @@ export default function InterviewApp({
         .catch((e) => setError(String(e)));
     return () => {
       disposed = true;
+      navigationVersion.current += 1;
       window.removeEventListener("online", update);
       window.removeEventListener("offline", update);
     };
@@ -303,8 +320,15 @@ export default function InterviewApp({
     await queue.current;
     if (saveError.current) throw new Error(saveError.current);
   }
-  async function perform(task: () => Promise<void>, network = false) {
-    if (voiceBusy) return;
+  async function perform(
+    task: (current: () => boolean) => Promise<void>,
+    network = false,
+  ) {
+    if (voiceBusy || requestOwner.current !== null) return;
+    // Every explicit action supersedes a still-loading default restoration.
+    const version = ++navigationVersion.current;
+    requestOwner.current = version;
+    const current = () => navigationVersion.current === version;
     setBusy(true);
     setError("");
     setLive("");
@@ -315,27 +339,43 @@ export default function InterviewApp({
       });
     try {
       await flush();
-      await task();
+      if (!current()) return;
+      await task(current);
       await overview();
       if (network) setConnection({ kind: "ok" });
     } catch (e) {
+      if (!current()) return;
       setError(String(e));
       if (network) setConnection({ kind: "failed" });
       if (session && !saveError.current) {
         try {
-          show(
-            await invoke<Session>("get_interview_session", {
-              sessionId: session.id,
-            }),
+          await loadCurrent(
+            () =>
+              invoke<Session>("get_interview_session", {
+                sessionId: session.id,
+              }),
+            show,
+            current,
           );
         } catch {
           /* retain current local text on refresh failure */
         }
       }
     } finally {
+      requestOwner.current = null;
       setBusy(false);
       setLive("");
     }
+  }
+  function chooseTopic(id: string) {
+    if (busy || requestOwner.current !== null || id === topicId) return;
+    void perform(async (current) => {
+      if (!current()) return;
+      setTopicId(id);
+      setQuestionId("");
+      setSession(null);
+      setDraft("");
+    });
   }
   const found = data?.topics.find((x) => x.id === topicId),
     topic = found && localTopic(found, lang),
@@ -361,10 +401,12 @@ export default function InterviewApp({
       r && (
         <div className="shown-reference">
           <Collapsible trigger={<strong>{t("refShown")}</strong>} defaultIsOpen>
-            <p>{r.answer}</p>
+            <Markdown text={r.answer} />
             <ul>
               {r.keyPoints.map((point, n) => (
-                <li key={n}>{point}</li>
+                <li key={n}>
+                  <Markdown text={point} />
+                </li>
               ))}
             </ul>
             {session.status === "active" && k === session.turns.length && (
@@ -382,13 +424,19 @@ export default function InterviewApp({
                   tooltip={draft.trim() ? t("clearDraftFirst") : undefined}
                   onClick={() =>
                     perform(
-                      async () =>
-                        show(
-                          await invoke<Session>("submit_interview_reference", {
-                            sessionId: session.id,
-                            turnIndex: k,
-                            lang,
-                          }),
+                      async (current) =>
+                        await loadCurrent(
+                          async () =>
+                            await invoke<Session>(
+                              "submit_interview_reference",
+                              {
+                                sessionId: session.id,
+                                turnIndex: k,
+                                lang,
+                              },
+                            ),
+                          show,
+                          current,
                         ),
                       true,
                     )
@@ -474,7 +522,7 @@ export default function InterviewApp({
         isActionLoading={busy}
         onAction={async () => {
           // perform() reports failures in the error banner, so the dialog closes either way.
-          await perform(async () => {
+          await perform(async (current) => {
             if (confirm === "history") {
               await invoke("clear_interview_history");
               setSession(null);
@@ -590,11 +638,10 @@ export default function InterviewApp({
             width="100%"
             isDisabled={busy || !visibleTopics.length}
             onClick={() => {
-              setTopicId(
+              chooseTopic(
                 visibleTopics[Math.floor(Math.random() * visibleTopics.length)]
                   .id,
               );
-              setQuestionId("");
             }}
           />
           <div
@@ -612,10 +659,7 @@ export default function InterviewApp({
                 key={x.id}
                 disabled={busy}
                 aria-pressed={x.id === topicId}
-                onClick={() => {
-                  setTopicId(x.id);
-                  setQuestionId("");
-                }}
+                onClick={() => chooseTopic(x.id)}
               >
                 <small>
                   {categoryLabel(x.category)} ·{" "}
@@ -644,11 +688,14 @@ export default function InterviewApp({
               aria-current={s.id === session?.id ? "true" : undefined}
               disabled={busy}
               onClick={() =>
-                perform(async () =>
-                  show(
-                    await invoke<Session>("get_interview_session", {
-                      sessionId: s.id,
-                    }),
+                perform(async (current) =>
+                  loadCurrent(
+                    async () =>
+                      await invoke<Session>("get_interview_session", {
+                        sessionId: s.id,
+                      }),
+                    show,
+                    current,
                   ),
                 )
               }
@@ -691,16 +738,20 @@ export default function InterviewApp({
                     isDisabled={busy || !data}
                     isLoading={requestBusy}
                     onClick={() =>
-                      perform(async () => {
+                      perform(async (current) => {
                         const q = await invoke<Question>(
                           "generate_interview_question",
                           { topicId, lang },
                         );
+                        if (!current()) return;
                         setQuestionId(q.id);
-                        show(
-                          await invoke<Session>("start_interview", {
-                            questionId: q.id,
-                          }),
+                        await loadCurrent(
+                          async () =>
+                            await invoke<Session>("start_interview", {
+                              questionId: q.id,
+                            }),
+                          show,
+                          current,
                         );
                       }, true)
                     }
@@ -723,11 +774,15 @@ export default function InterviewApp({
                     />
                     {preview && (
                       <div className="question-preview">
-                        <h3>{preview.question}</h3>
-                        <p>{preview.background}</p>
+                        <div className="question-title">
+                          <Markdown text={preview.question} />
+                        </div>
+                        <Markdown text={preview.background} />
                         <ul>
                           {preview.constraints.map((c, i) => (
-                            <li key={i}>{c}</li>
+                            <li key={i}>
+                              <Markdown text={c} />
+                            </li>
                           ))}
                         </ul>
                         <small className="muted">
@@ -743,12 +798,16 @@ export default function InterviewApp({
                             label={t("reuseStart")}
                             isDisabled={busy}
                             onClick={() =>
-                              perform(async () =>
-                                show(
-                                  await invoke<Session>("start_interview", {
-                                    questionId: preview.id,
-                                  }),
-                                ),
+                              perform(
+                                async (current) =>
+                                  await loadCurrent(
+                                    async () =>
+                                      await invoke<Session>("start_interview", {
+                                        questionId: preview.id,
+                                      }),
+                                    show,
+                                    current,
+                                  ),
                               )
                             }
                           />
@@ -794,11 +853,15 @@ export default function InterviewApp({
                   turns={answered}
                 />
                 <div className="question-context">
-                  <h3>{session.question.question}</h3>
-                  <p>{session.question.background}</p>
+                  <div className="question-title">
+                    <Markdown text={session.question.question} />
+                  </div>
+                  <Markdown text={session.question.background} />
                   <ul>
                     {session.question.constraints.map((c, i) => (
-                      <li key={i}>{c}</li>
+                      <li key={i}>
+                        <Markdown text={c} />
+                      </li>
                     ))}
                   </ul>
                   {shownReference(0)}
@@ -813,7 +876,7 @@ export default function InterviewApp({
                             : t("roleYou")
                           : t("roleInterviewer")}
                       </strong>
-                      <p>{turn.text}</p>
+                      <Markdown text={turn.text} />
                       {turn.aiAssisted && (
                         <details className="reference-content">
                           <summary>{t("refKeyPoints")}</summary>
@@ -821,7 +884,9 @@ export default function InterviewApp({
                             {session.references
                               .find((r) => r.turnIndex === i)
                               ?.keyPoints.map((point, n) => (
-                                <li key={n}>{point}</li>
+                                <li key={n}>
+                                  <Markdown text={point} />
+                                </li>
                               ))}
                           </ul>
                         </details>
@@ -852,12 +917,15 @@ export default function InterviewApp({
                       isLoading={requestBusy}
                       onClick={() =>
                         perform(
-                          async () =>
-                            show(
-                              await invoke<Session>("retry_interview", {
-                                sessionId: session.id,
-                                lang,
-                              }),
+                          async (current) =>
+                            await loadCurrent(
+                              async () =>
+                                await invoke<Session>("retry_interview", {
+                                  sessionId: session.id,
+                                  lang,
+                                }),
+                              show,
+                              current,
                             ),
                           true,
                         )
@@ -911,16 +979,19 @@ export default function InterviewApp({
                         isLoading={requestBusy}
                         onClick={() =>
                           perform(
-                            async () =>
-                              show(
-                                await invoke<Session>(
-                                  "submit_interview_answer",
-                                  {
-                                    sessionId: session.id,
-                                    answer: draft,
-                                    lang,
-                                  },
-                                ),
+                            async (current) =>
+                              await loadCurrent(
+                                async () =>
+                                  await invoke<Session>(
+                                    "submit_interview_answer",
+                                    {
+                                      sessionId: session.id,
+                                      answer: draft,
+                                      lang,
+                                    },
+                                  ),
+                                show,
+                                current,
                               ),
                             true,
                           )
@@ -935,16 +1006,19 @@ export default function InterviewApp({
                         isDisabled={busy || referenceReady}
                         onClick={() =>
                           perform(
-                            async () =>
-                              show(
-                                await invoke<Session>(
-                                  "show_interview_reference",
-                                  {
-                                    sessionId: session.id,
-                                    turnIndex: session.turns.length,
-                                    lang,
-                                  },
-                                ),
+                            async (current) =>
+                              await loadCurrent(
+                                async () =>
+                                  await invoke<Session>(
+                                    "show_interview_reference",
+                                    {
+                                      sessionId: session.id,
+                                      turnIndex: session.turns.length,
+                                      lang,
+                                    },
+                                  ),
+                                show,
+                                current,
                               ),
                             true,
                           )
@@ -957,12 +1031,15 @@ export default function InterviewApp({
                         isDisabled={busy || !!draft.trim() || answered === 0}
                         onClick={() =>
                           perform(
-                            async () =>
-                              show(
-                                await invoke<Session>("finish_interview", {
-                                  sessionId: session.id,
-                                  lang,
-                                }),
+                            async (current) =>
+                              await loadCurrent(
+                                async () =>
+                                  await invoke<Session>("finish_interview", {
+                                    sessionId: session.id,
+                                    lang,
+                                  }),
+                                show,
+                                current,
                               ),
                             true,
                           )
@@ -984,7 +1061,7 @@ export default function InterviewApp({
                     <p role="status" className="muted">
                       {t("reviewAdded")}
                     </p>
-                    <p>{session.feedback.summary}</p>
+                    <Markdown text={session.feedback.summary} />
                     <div className="feedback-grid">
                       {session.feedback.dimensions.map((d) => (
                         <div className="feedback-dimension" key={d.name}>
@@ -995,14 +1072,14 @@ export default function InterviewApp({
                               label={lookup(t, "rating_", d.rating)}
                             />
                           </div>
-                          <p>
+                          <div>
                             <strong>{t("evidence")}</strong>
-                            {d.evidence}
-                          </p>
-                          <p>
+                            <Markdown text={d.evidence} />
+                          </div>
+                          <div>
                             <strong>{t("advice")}</strong>
-                            {d.improvement}
-                          </p>
+                            <Markdown text={d.improvement} />
+                          </div>
                         </div>
                       ))}
                     </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@astryxdesign/core/Button";
 import { lookup, useI18n, type T } from "../../i18n";
+import { Markdown } from "../../Markdown";
 import { readablePartialJson } from "./stream";
 
 /**
@@ -29,7 +30,7 @@ export function LiveResponse({ text }: { text: string }) {
         sections.map((s, i) => (
           <section key={i}>
             <span>{label(t, s.field)}</span>
-            <p>{s.text}</p>
+            <Markdown text={s.text} />
           </section>
         ))}
     </div>

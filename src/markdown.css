@@ -1,0 +1,73 @@
+.markdown-content {
+  max-inline-size: var(--reading-measure);
+  overflow-wrap: anywhere;
+  line-height: var(--line-height-reading);
+}
+.markdown-content p {
+  margin-block: 0.85em;
+}
+.markdown-content li {
+  margin-block: 0.45em;
+  line-height: var(--line-height-reading);
+}
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4 {
+  margin-block: 1.4em 0.6em;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.5;
+}
+.markdown-content :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-element);
+  background: var(--color-background-muted);
+  font-family: var(--font-family-code);
+  font-size: 0.88em;
+}
+.markdown-content pre {
+  overflow: auto;
+  padding: 12px;
+  background: var(--color-background-muted);
+  border-radius: var(--radius-element);
+  line-height: 1.65;
+}
+.markdown-content table {
+  border-collapse: collapse;
+  display: block;
+  overflow: auto;
+  max-width: 100%;
+}
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid var(--color-border);
+  padding: 6px 10px;
+}
+.markdown-content > :first-child {
+  margin-top: 8px;
+}
+
+.markdown-content {
+  min-width: 0;
+}
+.markdown-content p {
+  white-space: pre-wrap;
+}
+.markdown-content pre {
+  max-width: 100%;
+  white-space: pre;
+  overflow-wrap: normal;
+  font-family: var(--font-family-code);
+  font-size: 0.9em;
+  font-weight: var(--font-weight-normal, 400);
+}
+.markdown-content pre code {
+  font: inherit;
+  white-space: inherit;
+}
+.markdown-content > :last-child {
+  margin-bottom: 0;
+}
+.question-title {
+  font-weight: var(--font-weight-semibold);
+}

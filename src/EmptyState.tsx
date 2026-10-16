@@ -1,3 +1,4 @@
+import { Markdown } from "./Markdown";
 import { useI18n } from "./i18n";
 
 /** A small centered card for "nothing here yet" messages. */
@@ -44,7 +45,9 @@ export function FeedbackLists({
           {items.length ? (
             <ul>
               {items.map((s, i) => (
-                <li key={i}>{s}</li>
+                <li key={i}>
+                  <Markdown text={s} />
+                </li>
               ))}
             </ul>
           ) : (

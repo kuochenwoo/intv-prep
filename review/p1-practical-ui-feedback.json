@@ -1,0 +1,107 @@
+{
+  "module": "p1",
+  "profile": "local.swe.interview-prep.p1-qa",
+  "topicId": "redis-cache-failures",
+  "sessionId": "1c0303f95fad1f60d198baabe6a6e1a4",
+  "status": "finished",
+  "question": {
+    "question": "线上有一个基于 Redis 的缓存层，业务读取路径是：先查缓存，未命中再查数据库并回写缓存。最近一段时间监控显示数据库 QPS 明显上升，缓存整体命中率下降。目前已知的观测只有这两点，还没有下钻到具体键。请说说你接下来会收集哪些证据来定位回源增多的原因，以及你希望从这些证据里看出什么。",
+    "background": "这是一个运行在 Redis 作为缓存、后端关系数据库作为数据源的读多写少服务。缓存未命中时会回源数据库。现在只观察到数据库查询量上升、缓存命中率下降，尚不清楚是哪些键、哪些时间段、由什么请求造成。",
+    "constraints": [
+      "先聚焦定位回源增多的原因，不要求在本轮给出完整修复或架构改造方案。",
+      "可以假设你能拿到 Redis 的监控与命令统计、应用的访问日志和数据库查询日志。",
+      "请说明每项证据能区分或排除什么，而不是只列监控指标名称。"
+    ],
+    "followUpDirections": [
+      "如果发现回源集中在极少数键上，你会怎么进一步判断这些键是本来就查不到，还是短时间内集中失效？",
+      "如果回源请求对应的键在 Redis 里大量同时消失，你会怎么验证是同一时刻过期，还是被某种操作批量删除？",
+      "在拿到键分布证据后，你会用哪些指标来评估当前缓存层对后端数据库的保护是否足够？",
+      "假设你已经定位到原因，你会如何在不改动整体架构的前提下先做缓解？"
+    ],
+    "evaluationChecklist": [
+      "提出按维度下钻证据，例如按 key、按时间段、按请求类型拆分命中率与回源量，而不是只看整体命中率。",
+      "说明如何区分单个或少量键反复未命中与大量键同时不可用这两类模式，并指出各自可能的含义。",
+      "提到需要核对被访问键是否真实存在、是否在近期被删除或过期，以及请求分布是否集中。",
+      "每项证据都给出可判断的预期差异，而不是仅罗列指标名称。"
+    ],
+    "answerTerms": [
+      "键级回源分布",
+      "键是否真实存在",
+      "批量同时不可用",
+      "访问请求是否集中"
+    ]
+  },
+  "feedback": {
+    "summary": "Independent answers: 1; AI-assisted answers: 1. Assisted text is excluded from independent ability evidence.\nDemonstrated: Communication.\nPartially demonstrated: Ordering and correctness.\nInsufficient independent evidence: Principles, Choice rationale, Trade-offs.",
+    "dimensions": [
+      {
+        "name": "principles",
+        "rating": "missing",
+        "evidence": "The candidate did not explain a causal mechanism for why database QPS rises or cache hit rate falls; they only proposed evidence-collection steps. The interview did not ask for or probe the underlying read-through, cache-write, or expiry mechanism.",
+        "improvement": "Practice explaining the likely causal chain before listing evidence: e.g., distinguish between keys expiring or being evicted, writes that delete or update cache, and read misses that trigger backfill. A useful drill is: for a Redis cache-aside read path, describe how a key transition can produce both higher database QPS and lower hit rate, and what observation would confirm each transition."
+      },
+      {
+        "name": "selection_rationale",
+        "rating": "missing",
+        "evidence": "The candidate listed several evidence sources but did not explain why these particular sources were chosen over alternatives, nor what each source could distinguish or exclude. The prompt did ask what they hoped to see from the evidence, but the answer did not make that reasoning explicit.",
+        "improvement": "Practice justifying each investigative step: for every proposed data source, write one sentence naming the hypothesis it supports and the alternative it rules out. For example: 'Key-level miss distribution distinguishes a hot-key expiry spike from broad eviction pressure; sampling database results distinguishes a miss storm from empty-result caching.'"
+      },
+      {
+        "name": "tradeoffs",
+        "rating": "missing",
+        "evidence": "The candidate mentioned avoiding a blocking full-database scan and using controlled sampling, which is a relevant operational constraint, but did not weigh the cost, coverage, or latency implications of their chosen sampling or monitoring approach against alternatives. The interview did not separately probe trade-offs.",
+        "improvement": "Practice articulating local trade-offs in an investigation: e.g., compare the statistical power of sampled logs versus full request tracing, or the risk of sampling too few requests and missing a low-frequency key pattern. A concrete exercise is to write two sentences on the trade-off between per-command Redis stats and per-key telemetry for locating sparse miss surges."
+      },
+      {
+        "name": "failure_and_correctness",
+        "rating": "partial",
+        "evidence": "The candidate correctly withheld a conclusion, saying 'only hit rate decline and database request increase are not enough to determine the cause,' and preserved multiple hypotheses until evidence is collected. They also proposed sampling database queries to see whether they return results, which can distinguish a miss storm from empty-result caching. However, they did not state what evidence would disconfirm a leading hypothesis or how they would verify a suspected key set against the database and application logs.",
+        "improvement": "Practice building a falsification checklist for each hypothesis: state the observation that would rule it out, and the observation that would confirm it with high specificity. For example, if a key-expiry spike is suspected, check whether miss counts cluster at TTL boundaries and whether the database returns non-empty results for those keys."
+      },
+      {
+        "name": "communication",
+        "rating": "good",
+        "evidence": "The answer is concise and ordered: it first questions the sufficiency of the two known signals, then proposes a sequence of evidence collection, then states the operational constraint of not blocking production. The reasoning is understandable without requiring a diagram or jargon.",
+        "improvement": "Continue using this structure. To make the reasoning easier to follow in an interview, add a brief explicit statement of the current hypotheses before the evidence list, e.g., 'I would test expiry, eviction, and write-invalidation in that order,' so the listener knows the frame before the evidence details."
+      }
+    ],
+    "strengths": [
+      "Framed the symptom as insufficient for a causal claim before proposing data collection.",
+      "Proposed concrete, relevant evidence: miss-key distribution, database result sampling, and request/expiry correlation.",
+      "Showed operational awareness by preferring controlled sampling and existing monitoring over a blocking production scan."
+    ],
+    "gaps": [
+      "Did not explicitly state what each evidence source would distinguish or exclude, despite the prompt asking for that.",
+      "Did not articulate how a leading hypothesis would be confirmed or falsified by the proposed evidence."
+    ],
+    "nextPracticeTopics": [
+      "For a cache-aside Redis read path, explain causal mechanisms that produce simultaneous rise in database QPS and fall in hit rate.",
+      "Practice evidence-to-hypothesis mapping: for each proposed metric or log source, state the hypothesis it supports and the alternative it rules out.",
+      "Draft a falsification checklist for cache-miss investigations, including how to distinguish key expiry, eviction, write-invalidation, and empty-result caching."
+    ]
+  },
+  "turns": [
+    {
+      "role": "candidate",
+      "text": "仅凭命中率下降和数据库请求增加还不能认定原因。我会先对比异常时段未命中键的分布，并抽样确认数据库查询是否有结果；随后把请求时间与相关键的过期记录对应起来。应使用受控采样和已有监控，不在生产执行阻塞全库扫描；取得证据前保留多种假设。",
+      "aiAssisted": false
+    },
+    {
+      "role": "interviewer",
+      "text": "在对比未命中键分布时，如果你看到回源几乎全部集中在极少数几个键、而其余键命中正常，你会进一步查哪一项证据来判断这几个键是本来就查不到（数据库也没结果），还是短时间内集中失效（数据库有结果但刚过期）？",
+      "aiAssisted": false
+    },
+    {
+      "role": "candidate",
+      "text": "我会对这几个高频未命中键做“键级回源采样”，把每一次回源记录成三件事：键、回源时刻、数据库是否返回了业务结果。如果数据库也没结果，说明这些键本身是查不到的（空值或非法键），属于缓存放大了不存在查询；如果数据库有结果且是刚写入不久的旧数据，说明键是集中失效后被反复回源。为了区分这两种，我会同时调取该键在 Redis 的 TTL/过期记录和最近删除/淘汰日志，并对照回源时间线：有结果且时间点紧跟过期或删除，就是短时间内失效；一直无结果则是本来查不到。再看请求分布是否集中在这几个键上，避免把整体命中率下降误判成单键问题。",
+      "aiAssisted": true
+    },
+    {
+      "role": "interviewer",
+      "text": "你刚才提到要对照 TTL/过期记录和删除/淘汰日志，如果发现这几个键第一次回源之前自身并没有任何过期或淘汰记录，你会优先怀疑哪个环节异常、再去查什么？",
+      "aiAssisted": false
+    }
+  ],
+  "httpAttempts": 2,
+  "scope": "Only previously authorized scripted content; native Retry pending request; no personal history or draft included"
+}

@@ -1,0 +1,1268 @@
+{
+  "httpAttempts": 43,
+  "httpCap": 60,
+  "model": "deepseek-flash",
+  "policy": "separate-task-v9-neutral-code-openings",
+  "provider": "deepseek",
+  "samples": [
+    {
+      "error": "无法连接 API（网络、代理或 TLS 错误），请检查后重试",
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "中间节点只存键值和指针",
+          "叶子层存放数据且有顺序连接",
+          "高分支因子带来矮树、页访问次数少",
+          "等值查询沿根到叶单路径，范围查询沿叶子顺序扫描"
+        ],
+        "background": "候选人应聘偏后端/数据库方向的岗位，团队日常使用 MySQL 8.4，引擎为 InnoDB，讨论的是 InnoDB 默认的聚簇索引组织方式。",
+        "constraints": [
+          "请以 MySQL 8.4 / InnoDB 为讨论对象，不要泛化到 PostgreSQL 或其它存储引擎的默认索引结构。",
+          "解释层次放在「树的分支方式与页访问次数的关系」，不需要背诵存储页内部字节布局。",
+          "等值查询与范围扫描两者都要涉及，但不要求覆盖所有变体和写入维护细节。"
+        ],
+        "evaluationChecklist": [
+          "能说明中间节点只存键值与子节点指针、实际行数据或指向行的指针集中在叶子层，因此每个非叶子页能容纳很多分支，树被压得很矮。",
+          "能说明等值查询从根到叶只需少量页访问，并把这归因于树的分支因子高、层数少，而非某个具体页大小数值。",
+          "能说明范围查询依赖叶子层按顺序组织并相连，命中起始位置后沿叶子顺序读取即可，无需反复回到上层。",
+          "能指出分支因子/层数与单次查询页访问次数之间的因果关系，而不是只说“B+ 树比较快”。"
+        ],
+        "followUpDirections": [
+          "如果表数据量增长，为什么查询所需的页访问次数只是缓慢增加、而不是线性增长？",
+          "范围查询时，叶子节点之间还需要什么条件才能高效连续扫描？",
+          "相对于在每个节点都存数据的普通平衡二叉树，B+ 树的做法在磁盘 IO 上各有什么得失？",
+          "如果你写入了大量随机主键，插入操作会带来哪些额外的页访问？"
+        ],
+        "question": "在 MySQL 8.4 / InnoDB 中，我们常见的聚簇索引底层是一棵 B+ 树。请说明：B+ 树的结构特点是如何降低一次查询所需读的磁盘页数量的？可以结合「等值查询定位到某一行」和「范围扫描一批行」这两个典型过程来谈。"
+      },
+      "retries": [
+        {
+          "action": "One explicitly authorized probe retry; product behavior is unchanged",
+          "firstFailure": "无法连接 API（网络、代理或 TLS 错误），请检查后重试",
+          "stage": "feedback"
+        }
+      ],
+      "session": {
+        "createdAt": "2026-10-16T01:43:17.476Z",
+        "draft": "",
+        "feedback": null,
+        "id": "cf99f518d2584813aeec39c92dd2b7c6",
+        "lastError": "无法连接 API（网络、代理或 TLS 错误），请检查后重试",
+        "model": "deepseek-flash",
+        "provider": "deepseek",
+        "question": {
+          "background": "候选人应聘偏后端/数据库方向的岗位，团队日常使用 MySQL 8.4，引擎为 InnoDB，讨论的是 InnoDB 默认的聚簇索引组织方式。",
+          "constraints": [
+            "请以 MySQL 8.4 / InnoDB 为讨论对象，不要泛化到 PostgreSQL 或其它存储引擎的默认索引结构。",
+            "解释层次放在「树的分支方式与页访问次数的关系」，不需要背诵存储页内部字节布局。",
+            "等值查询与范围扫描两者都要涉及，但不要求覆盖所有变体和写入维护细节。"
+          ],
+          "createdAt": "2026-10-16T01:43:17.470Z",
+          "id": "a93063fb2fc41196373c6264813f84aa",
+          "model": "deepseek-flash",
+          "provider": "deepseek",
+          "question": "在 MySQL 8.4 / InnoDB 中，我们常见的聚簇索引底层是一棵 B+ 树。请说明：B+ 树的结构特点是如何降低一次查询所需读的磁盘页数量的？可以结合「等值查询定位到某一行」和「范围扫描一批行」这两个典型过程来谈。",
+          "seedId": "mysql-index-structure"
+        },
+        "references": [],
+        "shouldEnd": true,
+        "status": "feedback_pending",
+        "turns": [
+          {
+            "aiAssisted": false,
+            "role": "candidate",
+            "text": "B+ 树一个节点可容纳较多索引项，较高扇出使树更矮，一次查找需要访问较少的页。等值查找沿键范围向下定位叶子；范围查询定位起点后可以沿叶子顺序遍历，避免每个结果都重新从根查找。实际耗时还与缓存命中和数据分布有关。",
+            "timestamp": "2026-10-16T01:43:17.477Z"
+          },
+          {
+            "aiAssisted": false,
+            "role": "interviewer",
+            "text": "如果叶子按主键顺序相连，但你要扫描的列不是主键、也没有该列的索引，这个“沿叶子顺序遍历”的优势还成立吗？为什么？",
+            "timestamp": "2026-10-16T01:43:18.966Z"
+          }
+        ]
+      },
+      "sessionId": "cf99f518d2584813aeec39c92dd2b7c6",
+      "status": "failed",
+      "topic": {
+        "category": "Database",
+        "focus": [
+          "页访问与树高",
+          "范围查询与索引维护成本"
+        ],
+        "id": "mysql-index-structure",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "foundation",
+        "scenarioConstraints": [
+          "用一次等值查询或范围查询说明，不考察存储页结构背诵",
+          "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+        ],
+        "title": "B+ 树索引为什么适合数据库"
+      },
+      "topicId": "mysql-index-structure"
+    },
+    {
+      "lang": "en",
+      "offlineReuse": {
+        "seedId": "javascript-event-loop",
+        "sessionId": "d5f698f31f5854513852801a8c6a5222"
+      },
+      "question": {
+        "answerTerms": [
+          "run-to-completion",
+          "microtask checkpoint",
+          "macrotask phase",
+          "timer queue"
+        ],
+        "background": "This question explores the browser's event-loop scheduling model for synchronous code, promise callbacks, and zero-delay timers.",
+        "constraints": [
+          "Focus only on the relative ordering of A, B, C, and D; do not discuss actual elapsed milliseconds or Node.js behavior.",
+          "Your answer should be concise, explaining the key scheduling steps rather than covering every detail of the HTML specification."
+        ],
+        "evaluationChecklist": [
+          "Correctly identifies that A and D are logged synchronously first, in that order, before any asynchronous callbacks.",
+          "Explains that promise callbacks are processed as microtasks after the current task, so C runs before the timer callback B.",
+          "Explains that the timer callback B is a macrotask and therefore runs after all microtasks have been drained.",
+          "Provides a coherent causal explanation involving the event loop phases, without relying solely on keyword recall."
+        ],
+        "followUpDirections": [
+          "Clarification: What does the term 'microtask checkpoint' mean in this context?",
+          "Practical application: How would the order change if the setTimeout callback were replaced by a Promise then callback?",
+          "Diagnostic evidence: How would you verify this ordering using browser developer tools?",
+          "Local trade-off: Why might a developer intentionally use a microtask instead of a timer for deferring work?"
+        ],
+        "question": "In a single browser script, the following statements execute in order:\n\n```javascript\nconsole.log(\"A\");\nsetTimeout(() => console.log(\"B\"), 0);\nPromise.resolve().then(() => console.log(\"C\"));\nconsole.log(\"D\");\n```\n\nAssuming no other tasks, timers, or exceptions are involved, what is the order of the four console outputs, and why?"
+      },
+      "reference": {
+        "answer": "The output order is A, D, C, B. The script itself runs as one task with run-to-completion semantics: `console.log(\"A\")` fires, `setTimeout` just registers the callback in the timer queue, the `.then` just registers a microtask, and `console.log(\"D\")` fires — so A and D print synchronously. When the current task ends, the event loop reaches a microtask checkpoint and drains all pending microtasks before moving to the next macrotask phase, so C runs next. Only after the microtask queue is empty does the loop advance to the timer/macrotask phase, where B's zero-delay callback is eligible. So B comes last, not because of any real delay but purely because timers are macrotasks processed after microtasks.",
+        "keyPoints": [
+          "Synchronous A and D run first; setTimeout only registers a callback.",
+          "Promise then is queued as a microtask, not executed immediately.",
+          "Microtask checkpoint drains before the next macrotask phase.",
+          "Timer callback B is a macrotask, so it runs after C."
+        ]
+      },
+      "referencePreviewDidNotSubmit": true,
+      "retries": [],
+      "session": {
+        "createdAt": "2026-10-16T01:43:22.982Z",
+        "draft": "",
+        "feedback": {
+          "dimensions": [
+            {
+              "evidence": "Not independently assessed: no independent candidate answer provides evidence for this dimension. AI-assisted text is excluded from ability evidence.",
+              "improvement": "Independently explain the current question's mechanism or reasoning without the reference answer, then practise this dimension.",
+              "name": "principles",
+              "rating": "missing"
+            },
+            {
+              "evidence": "Not independently assessed: no independent candidate answer provides evidence for this dimension. AI-assisted text is excluded from ability evidence.",
+              "improvement": "Independently explain the current question's mechanism or reasoning without the reference answer, then practise this dimension.",
+              "name": "selection_rationale",
+              "rating": "missing"
+            },
+            {
+              "evidence": "Not independently assessed: no independent candidate answer provides evidence for this dimension. AI-assisted text is excluded from ability evidence.",
+              "improvement": "Independently explain the current question's mechanism or reasoning without the reference answer, then practise this dimension.",
+              "name": "tradeoffs",
+              "rating": "missing"
+            },
+            {
+              "evidence": "Not independently assessed: no independent candidate answer provides evidence for this dimension. AI-assisted text is excluded from ability evidence.",
+              "improvement": "Independently explain the current question's mechanism or reasoning without the reference answer, then practise this dimension.",
+              "name": "failure_and_correctness",
+              "rating": "missing"
+            },
+            {
+              "evidence": "Not independently assessed: no independent candidate answer provides evidence for this dimension. AI-assisted text is excluded from ability evidence.",
+              "improvement": "Independently explain the current question's mechanism or reasoning without the reference answer, then practise this dimension.",
+              "name": "communication",
+              "rating": "missing"
+            }
+          ],
+          "gaps": [],
+          "nextPracticeTopics": [
+            "Restate, without assistance, the output order for console.log of A, setTimeout B, Promise.then C, console.log D and explain the macro/microtask scheduling steps in your own words.",
+            "Independently compare microtasks and zero-delay timers in a browser and describe one scenario where their relative ordering changes observable behavior.",
+            "Practice explaining a small event-loop ordering example clearly: give the final order first, then the scheduling phases that produce it."
+          ],
+          "strengths": [],
+          "summary": "Independent answers: 0; AI-assisted answers: 1. Assisted text is excluded from independent ability evidence.\nInsufficient independent evidence: Principles, Choice rationale, Trade-offs, Ordering and correctness, Communication."
+        },
+        "id": "ad97f3eddb1e6ce92ca13c71b8baab0f",
+        "lastError": null,
+        "model": "deepseek-flash",
+        "provider": "deepseek",
+        "question": {
+          "background": "This question explores the browser's event-loop scheduling model for synchronous code, promise callbacks, and zero-delay timers.",
+          "constraints": [
+            "Focus only on the relative ordering of A, B, C, and D; do not discuss actual elapsed milliseconds or Node.js behavior.",
+            "Your answer should be concise, explaining the key scheduling steps rather than covering every detail of the HTML specification."
+          ],
+          "createdAt": "2026-10-16T01:43:22.982Z",
+          "id": "e71df1ed8cc0c3e8fb2d526b58e81947",
+          "model": "deepseek-flash",
+          "provider": "deepseek",
+          "question": "In a single browser script, the following statements execute in order:\n\n```javascript\nconsole.log(\"A\");\nsetTimeout(() => console.log(\"B\"), 0);\nPromise.resolve().then(() => console.log(\"C\"));\nconsole.log(\"D\");\n```\n\nAssuming no other tasks, timers, or exceptions are involved, what is the order of the four console outputs, and why?",
+          "seedId": "javascript-event-loop"
+        },
+        "references": [
+          {
+            "answer": "The output order is A, D, C, B. The script itself runs as one task with run-to-completion semantics: `console.log(\"A\")` fires, `setTimeout` just registers the callback in the timer queue, the `.then` just registers a microtask, and `console.log(\"D\")` fires — so A and D print synchronously. When the current task ends, the event loop reaches a microtask checkpoint and drains all pending microtasks before moving to the next macrotask phase, so C runs next. Only after the microtask queue is empty does the loop advance to the timer/macrotask phase, where B's zero-delay callback is eligible. So B comes last, not because of any real delay but purely because timers are macrotasks processed after microtasks.",
+            "keyPoints": [
+              "Synchronous A and D run first; setTimeout only registers a callback.",
+              "Promise then is queued as a microtask, not executed immediately.",
+              "Microtask checkpoint drains before the next macrotask phase.",
+              "Timer callback B is a macrotask, so it runs after C."
+            ],
+            "turnIndex": 0
+          }
+        ],
+        "shouldEnd": false,
+        "status": "finished",
+        "turns": [
+          {
+            "aiAssisted": true,
+            "role": "candidate",
+            "text": "The output order is A, D, C, B. The script itself runs as one task with run-to-completion semantics: `console.log(\"A\")` fires, `setTimeout` just registers the callback in the timer queue, the `.then` just registers a microtask, and `console.log(\"D\")` fires — so A and D print synchronously. When the current task ends, the event loop reaches a microtask checkpoint and drains all pending microtasks before moving to the next macrotask phase, so C runs next. Only after the microtask queue is empty does the loop advance to the timer/macrotask phase, where B's zero-delay callback is eligible. So B comes last, not because of any real delay but purely because timers are macrotasks processed after microtasks.",
+            "timestamp": "2026-10-16T01:43:25.171Z"
+          },
+          {
+            "aiAssisted": false,
+            "role": "interviewer",
+            "text": "Suppose we change one condition: the timer callback body is replaced with `Promise.resolve().then(() => console.log(\"B\"))` while the original C `.then` stays. Now what is the full output order, and what single property of these two callbacks determines it?",
+            "timestamp": "2026-10-16T01:43:26.837Z"
+          }
+        ]
+      },
+      "sessionId": "ad97f3eddb1e6ce92ca13c71b8baab0f",
+      "status": "completed",
+      "topic": {
+        "category": "Runtime",
+        "focus": [
+          "Execution of the current task",
+          "Promise microtask checkpoints",
+          "Timers do not specify exact execution times"
+        ],
+        "id": "javascript-event-loop",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "One browser script executes console.log(\"A\"), setTimeout(() => console.log(\"B\"), 0), Promise.resolve().then(() => console.log(\"C\")), then console.log(\"D\")",
+          "There are no other tasks or exceptions; compare only these four logs, not actual millisecond delays or Node.js behavior"
+        ],
+        "sources": [
+          "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model"
+        ],
+        "title": "JavaScript Microtasks and Timers"
+      },
+      "topicId": "javascript-event-loop"
+    },
+    {
+      "error": "AI 内容未通过质量检查，请重试；本地回答已保留",
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "键级回源分布",
+          "键是否真实存在",
+          "批量同时不可用",
+          "访问请求是否集中"
+        ],
+        "background": "这是一个运行在 Redis 作为缓存、后端关系数据库作为数据源的读多写少服务。缓存未命中时会回源数据库。现在只观察到数据库查询量上升、缓存命中率下降，尚不清楚是哪些键、哪些时间段、由什么请求造成。",
+        "constraints": [
+          "先聚焦定位回源增多的原因，不要求在本轮给出完整修复或架构改造方案。",
+          "可以假设你能拿到 Redis 的监控与命令统计、应用的访问日志和数据库查询日志。",
+          "请说明每项证据能区分或排除什么，而不是只列监控指标名称。"
+        ],
+        "evaluationChecklist": [
+          "提出按维度下钻证据，例如按 key、按时间段、按请求类型拆分命中率与回源量，而不是只看整体命中率。",
+          "说明如何区分单个或少量键反复未命中与大量键同时不可用这两类模式，并指出各自可能的含义。",
+          "提到需要核对被访问键是否真实存在、是否在近期被删除或过期，以及请求分布是否集中。",
+          "每项证据都给出可判断的预期差异，而不是仅罗列指标名称。"
+        ],
+        "followUpDirections": [
+          "如果发现回源集中在极少数键上，你会怎么进一步判断这些键是本来就查不到，还是短时间内集中失效？",
+          "如果回源请求对应的键在 Redis 里大量同时消失，你会怎么验证是同一时刻过期，还是被某种操作批量删除？",
+          "在拿到键分布证据后，你会用哪些指标来评估当前缓存层对后端数据库的保护是否足够？",
+          "假设你已经定位到原因，你会如何在不改动整体架构的前提下先做缓解？"
+        ],
+        "question": "线上有一个基于 Redis 的缓存层，业务读取路径是：先查缓存，未命中再查数据库并回写缓存。最近一段时间监控显示数据库 QPS 明显上升，缓存整体命中率下降。目前已知的观测只有这两点，还没有下钻到具体键。请说说你接下来会收集哪些证据来定位回源增多的原因，以及你希望从这些证据里看出什么。"
+      },
+      "reference": {
+        "answer": "我会对这几个高频未命中键做“键级回源采样”，把每一次回源记录成三件事：键、回源时刻、数据库是否返回了业务结果。如果数据库也没结果，说明这些键本身是查不到的（空值或非法键），属于缓存放大了不存在查询；如果数据库有结果且是刚写入不久的旧数据，说明键是集中失效后被反复回源。为了区分这两种，我会同时调取该键在 Redis 的 TTL/过期记录和最近删除/淘汰日志，并对照回源时间线：有结果且时间点紧跟过期或删除，就是短时间内失效；一直无结果则是本来查不到。再看请求分布是否集中在这几个键上，避免把整体命中率下降误判成单键问题。",
+        "keyPoints": [
+          "对高频未命中键做键级回源采样，记录键、时刻、数据库是否有结果",
+          "数据库无结果=键本来不存在；有结果且刚过期=集中失效后回源",
+          "对照 Redis 过期记录、删除/淘汰日志与回源时间线",
+          "确认请求是否集中在这几个键，避免误判整体命中率",
+          "必要时用受控采样，不在生产做阻塞全库扫描"
+        ]
+      },
+      "referencePreviewDidNotSubmit": true,
+      "retries": [
+        {
+          "action": "One explicitly authorized probe retry; product behavior is unchanged",
+          "firstFailure": "无法连接 API（网络、代理或 TLS 错误），请检查后重试",
+          "stage": "reference"
+        }
+      ],
+      "session": {
+        "createdAt": "2026-10-16T01:43:38.795Z",
+        "draft": "",
+        "feedback": null,
+        "id": "1c0303f95fad1f60d198baabe6a6e1a4",
+        "lastError": "AI 内容未通过质量检查，请重试；本地回答已保留",
+        "model": "deepseek-flash",
+        "provider": "deepseek",
+        "question": {
+          "background": "这是一个运行在 Redis 作为缓存、后端关系数据库作为数据源的读多写少服务。缓存未命中时会回源数据库。现在只观察到数据库查询量上升、缓存命中率下降，尚不清楚是哪些键、哪些时间段、由什么请求造成。",
+          "constraints": [
+            "先聚焦定位回源增多的原因，不要求在本轮给出完整修复或架构改造方案。",
+            "可以假设你能拿到 Redis 的监控与命令统计、应用的访问日志和数据库查询日志。",
+            "请说明每项证据能区分或排除什么，而不是只列监控指标名称。"
+          ],
+          "createdAt": "2026-10-16T01:43:38.794Z",
+          "id": "f05101e692adcf9d795507791b815e62",
+          "model": "deepseek-flash",
+          "provider": "deepseek",
+          "question": "线上有一个基于 Redis 的缓存层，业务读取路径是：先查缓存，未命中再查数据库并回写缓存。最近一段时间监控显示数据库 QPS 明显上升，缓存整体命中率下降。目前已知的观测只有这两点，还没有下钻到具体键。请说说你接下来会收集哪些证据来定位回源增多的原因，以及你希望从这些证据里看出什么。",
+          "seedId": "redis-cache-failures"
+        },
+        "references": [
+          {
+            "answer": "我会对这几个高频未命中键做“键级回源采样”，把每一次回源记录成三件事：键、回源时刻、数据库是否返回了业务结果。如果数据库也没结果，说明这些键本身是查不到的（空值或非法键），属于缓存放大了不存在查询；如果数据库有结果且是刚写入不久的旧数据，说明键是集中失效后被反复回源。为了区分这两种，我会同时调取该键在 Redis 的 TTL/过期记录和最近删除/淘汰日志，并对照回源时间线：有结果且时间点紧跟过期或删除，就是短时间内失效；一直无结果则是本来查不到。再看请求分布是否集中在这几个键上，避免把整体命中率下降误判成单键问题。",
+            "keyPoints": [
+              "对高频未命中键做键级回源采样，记录键、时刻、数据库是否有结果",
+              "数据库无结果=键本来不存在；有结果且刚过期=集中失效后回源",
+              "对照 Redis 过期记录、删除/淘汰日志与回源时间线",
+              "确认请求是否集中在这几个键，避免误判整体命中率",
+              "必要时用受控采样，不在生产做阻塞全库扫描"
+            ],
+            "turnIndex": 2
+          }
+        ],
+        "shouldEnd": false,
+        "status": "feedback_pending",
+        "turns": [
+          {
+            "aiAssisted": false,
+            "role": "candidate",
+            "text": "仅凭命中率下降和数据库请求增加还不能认定原因。我会先对比异常时段未命中键的分布，并抽样确认数据库查询是否有结果；随后把请求时间与相关键的过期记录对应起来。应使用受控采样和已有监控，不在生产执行阻塞全库扫描；取得证据前保留多种假设。",
+            "timestamp": "2026-10-16T01:43:38.796Z"
+          },
+          {
+            "aiAssisted": false,
+            "role": "interviewer",
+            "text": "在对比未命中键分布时，如果你看到回源几乎全部集中在极少数几个键、而其余键命中正常，你会进一步查哪一项证据来判断这几个键是本来就查不到（数据库也没结果），还是短时间内集中失效（数据库有结果但刚过期）？",
+            "timestamp": "2026-10-16T01:43:40.327Z"
+          },
+          {
+            "aiAssisted": true,
+            "role": "candidate",
+            "text": "我会对这几个高频未命中键做“键级回源采样”，把每一次回源记录成三件事：键、回源时刻、数据库是否返回了业务结果。如果数据库也没结果，说明这些键本身是查不到的（空值或非法键），属于缓存放大了不存在查询；如果数据库有结果且是刚写入不久的旧数据，说明键是集中失效后被反复回源。为了区分这两种，我会同时调取该键在 Redis 的 TTL/过期记录和最近删除/淘汰日志，并对照回源时间线：有结果且时间点紧跟过期或删除，就是短时间内失效；一直无结果则是本来查不到。再看请求分布是否集中在这几个键上，避免把整体命中率下降误判成单键问题。",
+            "timestamp": "2026-10-16T01:43:43.307Z"
+          },
+          {
+            "aiAssisted": false,
+            "role": "interviewer",
+            "text": "你刚才提到要对照 TTL/过期记录和删除/淘汰日志，如果发现这几个键第一次回源之前自身并没有任何过期或淘汰记录，你会优先怀疑哪个环节异常、再去查什么？",
+            "timestamp": "2026-10-16T01:43:44.757Z"
+          }
+        ]
+      },
+      "sessionId": "1c0303f95fad1f60d198baabe6a6e1a4",
+      "status": "failed",
+      "topic": {
+        "category": "Redis",
+        "focus": [
+          "从键分布、过期分布和数据库命中结果区分回源原因",
+          "缓存穿透、击穿、雪崩作为内部诊断方向，不要求复述分类名称"
+        ],
+        "id": "redis-cache-failures",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "troubleshooting",
+        "scenarioConstraints": [
+          "开场只提供一次回源异常的有限观测，不同时列出多个故障的完整触发条件，也不提前给出原因或分类选项",
+          "先问下一项诊断证据及其判断依据；未知的键有效性、热点分布和过期情况留待候选人主动询问，不添加无关版本、值类型或持久化背景"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://redis.io/docs/latest/develop/"
+        ],
+        "title": "缓存未命中与数据库压力"
+      },
+      "topicId": "redis-cache-failures"
+    },
+    {
+      "lang": "en",
+      "offlineReuse": {
+        "seedId": "sql-explain-slow-query",
+        "sessionId": "27a1a4197ff96e1054b24a69cb0a1688"
+      },
+      "question": {
+        "answerTerms": [
+          "the optimizer chose a path based on estimated row counts",
+          "comparing estimated rows against actual rows",
+          "reading and sorting many rows before applying the limit",
+          "selectivity of the predicate values"
+        ],
+        "background": "The table has millions of rows; `customer_id = 42` matches a few thousand rows, while `status = 'pending'` matches a large fraction of the table. The query runs in production on MySQL 8.4 with InnoDB. `EXPLAIN` shows a chosen access path using the `customer_id` index, and the query is slow even when run standalone on the same data.",
+        "constraints": [
+          "Assume MySQL 8.4 with InnoDB; do not mix in PostgreSQL or other engine defaults.",
+          "Limit the answer to how you would read the execution plan and what additional evidence you would collect; do not propose a full schema redesign or a complete indexing strategy.",
+          "Keep the answer to roughly 2–3 minutes of spoken depth: focus on the diagnostic reasoning rather than every possible optimization."
+        ],
+        "evaluationChecklist": [
+          "Explains how to read the plan's chosen access method, estimated rows, and possible extra operations (sorting, temporary structures) rather than only the index name.",
+          "Distinguishes a planning/estimation problem (bad row estimates driving a poor path) from an execution problem (reading many rows or sorting many rows for the limit).",
+          "Suggests collecting complementary evidence such as actual row counts, timing/rough row-read measurements, or optimizer trace to compare estimates against reality.",
+          "Acknowledges that the plan alone does not prove the cause and that conclusions depend on the actual data distribution."
+        ],
+        "followUpDirections": [
+          "Ask how they would confirm whether the optimizer's row estimate for the chosen path matches reality (for example using actual row counts or optimizer trace).",
+          "Ask what changes if the plan switches to the `status` index instead, and what that implies about selectivity.",
+          "Ask how they would verify whether the `ORDER BY ... LIMIT` is forcing extra sorting or reading many rows before the limit is applied.",
+          "Ask when they would consider a composite index versus letting the optimizer choose between the two single-column indexes."
+        ],
+        "question": "A reporting query on a MySQL 8.4 InnoDB table has recently become slow under production load. The table `orders` has columns `id` (primary key), `customer_id`, `status`, `created_at`, and `amount`. There is a single-column index on `customer_id` and a single-column index on `status`. The query is:\n\n```sql\nSELECT id, created_at, amount\nFROM orders\nWHERE customer_id = 42 AND status = 'pending'\nORDER BY created_at DESC\nLIMIT 20;\n```\n\nYou capture `EXPLAIN` output for this query, but the output alone does not by itself prove why it is slow. How would you use the execution plan together with other evidence to determine why this query is slow, and what evidence would distinguish a scanning problem from a bad row-estimate problem?"
+      },
+      "reference": {
+        "answer": "I'd run `EXPLAIN ANALYZE` on the actual query, since MySQL 8.4 (InnoDB) provides per-iterator actual rows and timing in TREE format. That gives real rows read from each access path, plus loops, sorting and materialization cost, against the optimizer's estimated rows. I'd also read `EXPLAIN FORMAT=JSON` or the optimizer trace for the estimated rows, chosen access path, and whether the plan uses the `customer_id` index with a filesort, and confirm with `SHOW INDEX`/`ANALYZE TABLE` only if statistics look stale. A large estimate-vs-actual gap on the chosen path points to an estimation problem: bad selectivity or stale stats, so the plan choice is suspect even if the operator itself is efficient. If actual rows are close to the estimate but the query still reads and sorts many rows before LIMIT applies, it's an execution/scanning cost problem, not a misestimate. The plan alone doesn't prove the cause, so I'd correlate with actual rows.",
+        "keyPoints": [
+          "Use EXPLAIN ANALYZE for actual rows, loops, and time",
+          "Compare actual vs estimated rows per access path",
+          "Check JSON plan/trace for filesort and chosen index",
+          "Large gap implies estimation/selectivity problem",
+          "Close rows plus heavy reads implies scanning/sorting cost"
+        ]
+      },
+      "referencePreviewDidNotSubmit": true,
+      "retries": [
+        {
+          "action": "One explicitly authorized probe retry; product behavior is unchanged",
+          "firstFailure": "无法连接 API（网络、代理或 TLS 错误），请检查后重试",
+          "stage": "reference"
+        }
+      ],
+      "session": {
+        "createdAt": "2026-10-16T01:44:19.157Z",
+        "draft": "",
+        "feedback": null,
+        "id": "dd89b52687525b92e37f480b0fdad5a6",
+        "lastError": null,
+        "model": "deepseek-flash",
+        "provider": "deepseek",
+        "question": {
+          "background": "The table has millions of rows; `customer_id = 42` matches a few thousand rows, while `status = 'pending'` matches a large fraction of the table. The query runs in production on MySQL 8.4 with InnoDB. `EXPLAIN` shows a chosen access path using the `customer_id` index, and the query is slow even when run standalone on the same data.",
+          "constraints": [
+            "Assume MySQL 8.4 with InnoDB; do not mix in PostgreSQL or other engine defaults.",
+            "Limit the answer to how you would read the execution plan and what additional evidence you would collect; do not propose a full schema redesign or a complete indexing strategy.",
+            "Keep the answer to roughly 2–3 minutes of spoken depth: focus on the diagnostic reasoning rather than every possible optimization."
+          ],
+          "createdAt": "2026-10-16T01:44:19.157Z",
+          "id": "6dce8dc032a99d15653c2ccfa832e487",
+          "model": "deepseek-flash",
+          "provider": "deepseek",
+          "question": "A reporting query on a MySQL 8.4 InnoDB table has recently become slow under production load. The table `orders` has columns `id` (primary key), `customer_id`, `status`, `created_at`, and `amount`. There is a single-column index on `customer_id` and a single-column index on `status`. The query is:\n\n```sql\nSELECT id, created_at, amount\nFROM orders\nWHERE customer_id = 42 AND status = 'pending'\nORDER BY created_at DESC\nLIMIT 20;\n```\n\nYou capture `EXPLAIN` output for this query, but the output alone does not by itself prove why it is slow. How would you use the execution plan together with other evidence to determine why this query is slow, and what evidence would distinguish a scanning problem from a bad row-estimate problem?",
+          "seedId": "sql-explain-slow-query"
+        },
+        "references": [
+          {
+            "answer": "I'd run `EXPLAIN ANALYZE` on the actual query, since MySQL 8.4 (InnoDB) provides per-iterator actual rows and timing in TREE format. That gives real rows read from each access path, plus loops, sorting and materialization cost, against the optimizer's estimated rows. I'd also read `EXPLAIN FORMAT=JSON` or the optimizer trace for the estimated rows, chosen access path, and whether the plan uses the `customer_id` index with a filesort, and confirm with `SHOW INDEX`/`ANALYZE TABLE` only if statistics look stale. A large estimate-vs-actual gap on the chosen path points to an estimation problem: bad selectivity or stale stats, so the plan choice is suspect even if the operator itself is efficient. If actual rows are close to the estimate but the query still reads and sorts many rows before LIMIT applies, it's an execution/scanning cost problem, not a misestimate. The plan alone doesn't prove the cause, so I'd correlate with actual rows.",
+            "keyPoints": [
+              "Use EXPLAIN ANALYZE for actual rows, loops, and time",
+              "Compare actual vs estimated rows per access path",
+              "Check JSON plan/trace for filesort and chosen index",
+              "Large gap implies estimation/selectivity problem",
+              "Close rows plus heavy reads implies scanning/sorting cost"
+            ],
+            "turnIndex": 2
+          }
+        ],
+        "shouldEnd": false,
+        "status": "active",
+        "turns": [
+          {
+            "aiAssisted": false,
+            "role": "candidate",
+            "text": "I would inspect the query plan, actual row counts and the time spent scanning or waiting, using the supplied query and schema. I would compare estimates against actual cardinality and check recent data or statistics changes. A slow query alone is not proof that an index is missing, and I would avoid an unbounded production diagnostic query.",
+            "timestamp": "2026-10-16T01:44:19.158Z"
+          },
+          {
+            "aiAssisted": false,
+            "role": "interviewer",
+            "text": "Given that comparison of estimated vs. actual rows, how would you actually obtain the actual row counts for this query in MySQL 8.4, and what would a large gap between the two tell you about whether this is a scanning problem or an estimation problem?",
+            "timestamp": "2026-10-16T01:44:20.493Z"
+          }
+        ]
+      },
+      "sessionId": "dd89b52687525b92e37f480b0fdad5a6",
+      "status": "completed",
+      "topic": {
+        "category": "Database",
+        "focus": [
+          "Execution plans and actual scanning",
+          "selectivity and statistics"
+        ],
+        "id": "sql-explain-slow-query",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "troubleshooting",
+        "scenarioConstraints": [
+          "Supply a query and observations; slowness alone does not prove a missing index",
+          "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+        ],
+        "title": "Investigating a Slow SQL Query"
+      },
+      "topicId": "sql-explain-slow-query"
+    }
+  ],
+  "scope": "Prepared content only; no personal history, drafts or credentials. Transport completion is not semantic acceptance.",
+  "usage": {
+    "prices": [],
+    "records": [
+      {
+        "cacheReadTokens": 384,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:44:20.550Z",
+        "estimatedUsd": null,
+        "id": 43,
+        "inputTokens": 1450,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "reference",
+        "outputTokens": 303,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "dd89b52687525b92e37f480b0fdad5a6",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:44:20.495Z",
+        "estimatedUsd": null,
+        "id": 42,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "reference",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "dd89b52687525b92e37f480b0fdad5a6",
+        "status": "transport_error"
+      },
+      {
+        "cacheReadTokens": 896,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:44:19.159Z",
+        "estimatedUsd": null,
+        "id": 41,
+        "inputTokens": 1789,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "follow_up",
+        "outputTokens": 106,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "dd89b52687525b92e37f480b0fdad5a6",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 256,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:44:18.290Z",
+        "estimatedUsd": null,
+        "id": 40,
+        "inputTokens": 1317,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1280,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:44:12.411Z",
+        "estimatedUsd": null,
+        "id": 39,
+        "inputTokens": 1634,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 632,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1152,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:44:09.284Z",
+        "estimatedUsd": null,
+        "id": 38,
+        "inputTokens": 1971,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "feedback",
+        "outputTokens": 288,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": "1c0303f95fad1f60d198baabe6a6e1a4",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 896,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:44:04.722Z",
+        "estimatedUsd": null,
+        "id": 37,
+        "inputTokens": 2606,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "feedback",
+        "outputTokens": 887,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "1c0303f95fad1f60d198baabe6a6e1a4",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:44:02.672Z",
+        "estimatedUsd": null,
+        "id": 36,
+        "inputTokens": 1971,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "feedback",
+        "outputTokens": 143,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": "1c0303f95fad1f60d198baabe6a6e1a4",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1280,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:54.384Z",
+        "estimatedUsd": null,
+        "id": 35,
+        "inputTokens": 1514,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "feedback",
+        "outputTokens": 1112,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "1c0303f95fad1f60d198baabe6a6e1a4",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 128,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:44.786Z",
+        "estimatedUsd": null,
+        "id": 34,
+        "inputTokens": 1514,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "feedback",
+        "outputTokens": 1096,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "1c0303f95fad1f60d198baabe6a6e1a4",
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 1536,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:43.309Z",
+        "estimatedUsd": null,
+        "id": 33,
+        "inputTokens": 1888,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "follow_up",
+        "outputTokens": 111,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "1c0303f95fad1f60d198baabe6a6e1a4",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 128,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:40.407Z",
+        "estimatedUsd": null,
+        "id": 32,
+        "inputTokens": 1244,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "reference",
+        "outputTokens": 258,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "1c0303f95fad1f60d198baabe6a6e1a4",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:40.329Z",
+        "estimatedUsd": null,
+        "id": 31,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "reference",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "1c0303f95fad1f60d198baabe6a6e1a4",
+        "status": "transport_error"
+      },
+      {
+        "cacheReadTokens": 896,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:38.797Z",
+        "estimatedUsd": null,
+        "id": 30,
+        "inputTokens": 1602,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "follow_up",
+        "outputTokens": 142,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "1c0303f95fad1f60d198baabe6a6e1a4",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 256,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:37.911Z",
+        "estimatedUsd": null,
+        "id": 29,
+        "inputTokens": 1166,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1408,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:32.669Z",
+        "estimatedUsd": null,
+        "id": 28,
+        "inputTokens": 1783,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 454,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:31.928Z",
+        "estimatedUsd": null,
+        "id": 27,
+        "inputTokens": 1451,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "feedback",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": "ad97f3eddb1e6ce92ca13c71b8baab0f",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 128,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:26.846Z",
+        "estimatedUsd": null,
+        "id": 26,
+        "inputTokens": 1363,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "feedback",
+        "outputTokens": 660,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "ad97f3eddb1e6ce92ca13c71b8baab0f",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 896,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:25.172Z",
+        "estimatedUsd": null,
+        "id": 25,
+        "inputTokens": 1651,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "follow_up",
+        "outputTokens": 115,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "ad97f3eddb1e6ce92ca13c71b8baab0f",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 128,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:22.984Z",
+        "estimatedUsd": null,
+        "id": 24,
+        "inputTokens": 1069,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "reference",
+        "outputTokens": 238,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "ad97f3eddb1e6ce92ca13c71b8baab0f",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:22.101Z",
+        "estimatedUsd": null,
+        "id": 23,
+        "inputTokens": 1094,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 11,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1024,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:19.106Z",
+        "estimatedUsd": null,
+        "id": 22,
+        "inputTokens": 1655,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 430,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:19.035Z",
+        "estimatedUsd": null,
+        "id": 21,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "feedback",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "cf99f518d2584813aeec39c92dd2b7c6",
+        "status": "transport_error"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:18.971Z",
+        "estimatedUsd": null,
+        "id": 20,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "feedback",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "cf99f518d2584813aeec39c92dd2b7c6",
+        "status": "transport_error"
+      },
+      {
+        "cacheReadTokens": 896,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:17.488Z",
+        "estimatedUsd": null,
+        "id": 19,
+        "inputTokens": 1619,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "follow_up",
+        "outputTokens": 85,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "cf99f518d2584813aeec39c92dd2b7c6",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:16.786Z",
+        "estimatedUsd": null,
+        "id": 18,
+        "inputTokens": 1146,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1152,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:43:12.088Z",
+        "estimatedUsd": null,
+        "id": 17,
+        "inputTokens": 1745,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 472,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:50.313Z",
+        "estimatedUsd": null,
+        "id": 16,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "transport_error"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:50.225Z",
+        "estimatedUsd": null,
+        "id": 15,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "reference",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "c76d46469de8e15c693c3b2fd38f11af",
+        "status": "transport_error"
+      },
+      {
+        "cacheReadTokens": 896,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:48.737Z",
+        "estimatedUsd": null,
+        "id": 14,
+        "inputTokens": 1592,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "follow_up",
+        "outputTokens": 104,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "c76d46469de8e15c693c3b2fd38f11af",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 256,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:47.997Z",
+        "estimatedUsd": null,
+        "id": 13,
+        "inputTokens": 1092,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1536,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:43.521Z",
+        "estimatedUsd": null,
+        "id": 12,
+        "inputTokens": 1681,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 444,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1280,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:38.599Z",
+        "estimatedUsd": null,
+        "id": 11,
+        "inputTokens": 1681,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 469,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:38.523Z",
+        "estimatedUsd": null,
+        "id": 10,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "reference",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "8b8fad729563201160aaf0092163df90",
+        "status": "transport_error"
+      },
+      {
+        "cacheReadTokens": 256,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:37.852Z",
+        "estimatedUsd": null,
+        "id": 9,
+        "inputTokens": 1205,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1152,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:33.286Z",
+        "estimatedUsd": null,
+        "id": 8,
+        "inputTokens": 1555,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 569,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 128,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:31.549Z",
+        "estimatedUsd": null,
+        "id": 7,
+        "inputTokens": 1670,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "follow_up",
+        "outputTokens": 123,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "f75ccda48ffff25ed12ce14ecd605f43",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:30.598Z",
+        "estimatedUsd": null,
+        "id": 6,
+        "inputTokens": 1143,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:25.432Z",
+        "estimatedUsd": null,
+        "id": 5,
+        "inputTokens": 1648,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 579,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 128,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:23.772Z",
+        "estimatedUsd": null,
+        "id": 4,
+        "inputTokens": 1609,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "follow_up",
+        "outputTokens": 101,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "a56555701a42ea9339399c3ef2eb6992",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:22.932Z",
+        "estimatedUsd": null,
+        "id": 3,
+        "inputTokens": 1057,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 11,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:18.840Z",
+        "estimatedUsd": null,
+        "id": 2,
+        "inputTokens": 1521,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 462,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:18.478Z",
+        "estimatedUsd": null,
+        "id": 1,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "transport_error"
+      }
+    ]
+  }
+}

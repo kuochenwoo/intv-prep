@@ -13,7 +13,7 @@ See [the project TODO](TODO.md) for AI-quality calibration and the deferred feat
 
 Problem statements, interview topics, AI questions and answers, and error messages follow the selected language.
 
-The latest [practical fundamentals expansion](docs/P1_PRACTICAL_FUNDAMENTALS.md) adds P1 question-style/priority filters and five complete P2 exercises. This iteration is implementation-only; its automated, build, UI and live-provider validation is pending at the user’s request.
+The latest [practical fundamentals expansion](docs/P1_PRACTICAL_FUNDAMENTALS.md) adds P1 question-style/priority filters and five complete P2 exercises. The subsequent [P1 acceptance](docs/P1_ACCEPTANCE_2026-10-16.md) passed 103 automated checks, frontend/native builds and representative UI/live-provider workflows, with documented network and semantic limits. Live acceptance of the five new P2 scenarios remains separate.
 
 ## Requirements
 

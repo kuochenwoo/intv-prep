@@ -1,5 +1,7 @@
 # Practical fundamentals and system-design coverage — 2026-10-16
 
+> Subsequent status: the user authorized P1 testing. See [P1 acceptance](P1_ACCEPTANCE_2026-10-16.md) for 103 passing checks, native UI acceptance, 49 real DeepSeek attempts and remaining limits. The development-only statements below describe the initial implementation step.
+
 ## Development scope and status
 
 This iteration implements the user's request to make P1 resemble practical backend technical interviews, using the non-Java-specific scope of [JavaGuide](https://javaguide.cn/home.html) and its public [scenario-question preview](https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html). The user subsequently authorized complete versions of large design problems in P2, with concrete technical questions split into P1.

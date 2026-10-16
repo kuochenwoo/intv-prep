@@ -4,7 +4,7 @@ use crate::interview::Validated;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-pub const POLICY_VERSION: &str = "separate-task-v8-diagnostic-openings";
+pub const POLICY_VERSION: &str = "separate-task-v10-foundation-evidence";
 pub const FAILURE: &str = "AI 内容未通过质量检查，请重试；本地回答已保留";
 /// Summaries derive facts from validated ratings and local provenance, not free text.
 pub fn summary(
@@ -85,16 +85,16 @@ pub fn prompt(lang: crate::interview::Lang, proposal: &Value) -> String {
     // Only P1 questions carry answerTerms; keep its opening styles out of P2.
     let opening_style = if question && proposal.get("answerTerms").is_some() {
         match lang {
-            crate::interview::Lang::En => "Respect input.topic.questionForm: foundation asks natural concepts/comparisons, scenario asks a local business mechanism, troubleshooting asks evidence-based diagnosis; missing metadata defaults to scenario. Do not require code, a concurrency puzzle or architecture in every opening. In fault-classification or troubleshooting tasks, neutral subject names are distinct from diagnosis labels: reject an opening that names the target diagnosis or presents complete canonical triggers of multiple diagnoses as a matching exercise. Require one incident, sufficient observations for the actual question and explicitly unknown causes where evidence is incomplete; evidence-gathering questions need not establish a unique root cause. Reject irrelevant environment boilerplate. Ordinary explicit concept/mechanism questions remain valid.",
-            _ => "遵循 input.topic.questionForm：foundation 是自然的概念/原理/对比题，scenario 是业务局部机制，troubleshooting 是有证据的排障；缺少元数据时按 scenario。不要求每题都给代码、并发谜题或系统架构。故障分类或排障题中，中性知识主题名不等于待识别的故障标签；若开场给出诊断名称，或并列多类故障的完整典型触发条件让候选人对号入座，应拒绝。围绕一次异常提供足以支撑实际所问的观测，证据不足的原因保持未知；问诊断证据不要求预先有唯一根因。拒绝无关环境限定。正常明确概念的原理题仍然有效。",
+            crate::interview::Lang::En => "Respect input.topic.questionForm: foundation asks natural concepts/comparisons, scenario asks a local business mechanism, troubleshooting asks evidence-based diagnosis; missing metadata defaults to scenario. Do not require code, a concurrency puzzle or architecture in every opening. In fault-classification or troubleshooting tasks, neutral subject names are distinct from diagnosis labels: reject an opening that names the target diagnosis or presents complete canonical triggers of multiple diagnoses as a matching exercise. Require one incident, sufficient observations for the actual question and explicitly unknown causes where evidence is incomplete; evidence-gathering questions need not establish a unique root cause. Reject irrelevant environment boilerplate. Ordinary explicit concept/mechanism questions remain valid. Reject partial-output hints conveyed by negation, a corrected colleague or why-not phrasing: explain why zero delay does not make B precede C discloses the requested order just as directly as a positive assertion. A code-output opening must ask neutrally for output and reasoning. Troubleshooting constraints must not enumerate diagnostic evidence or checking steps the candidate is supposed to propose.",
+            _ => "遵循 input.topic.questionForm：foundation 是自然的概念/原理/对比题，scenario 是业务局部机制，troubleshooting 是有证据的排障；缺少元数据时按 scenario。不要求每题都给代码、并发谜题或系统架构。故障分类或排障题中，中性知识主题名不等于待识别的故障标签；若开场给出诊断名称，或并列多类故障的完整典型触发条件让候选人对号入座，应拒绝。围绕一次异常提供足以支撑实际所问的观测，证据不足的原因保持未知；问诊断证据不要求预先有唯一根因。拒绝无关环境限定。正常明确概念的原理题仍然有效。否定句、纠正同事或 why-not 也会泄露部分输出：例如“说明为什么 0 延迟不能让 B 先于 C”已给出待求顺序，应拒绝；代码输出题应中性询问输出和理由。排障约束不能预列候选人应主动提出的诊断证据或检查步骤。",
         }
     } else {
         ""
     };
     let fundamentals = if !question && proposal.get("dimensions").is_some() {
         match lang {
-            crate::interview::Lang::En => "For P1, a concise explanation or closely related comparison can fully answer a foundation opening; do not require a volunteered execution trace, counterexample or unasked implementation detail. Judge troubleshooting against the evidence supplied: a reasonable unverified hypothesis is not a demonstrated technical error. Credit clear hypothesis-testing steps when asked. Keep unassessed dimensions missing.",
-            _ => "P1 基础题中，简洁正确的概念解释或相关对比可以完整答题，不强迫主动列执行时序、反例或未问实现细节。排障按已提供证据判断，合理但未验证的假设不等于技术错误；若题目问验证方法，应认可清晰的排查证据与步骤。未考察维度继续标 missing。",
+            crate::interview::Lang::En => "For P1, a concise explanation or closely related comparison can fully answer a foundation opening; do not require a volunteered execution trace, counterexample or unasked implementation detail. Judge troubleshooting against the evidence supplied: a reasonable unverified hypothesis is not a demonstrated technical error. Credit clear hypothesis-testing steps when asked. Keep unassessed dimensions missing. Reject partial ratings justified only by absent unasked counterexamples, boundaries or implementation extensions after a correct foundation answer. In the B+ tree example, explaining fan-out/height and sequential leaf traversal already demonstrates the requested mechanism and local rationale; do not demand another internal-node payload detail. A general caveat about cache hits/data distribution without a requested boundary does not justify a partial failure rating merely for lacking a concrete example.",
+            _ => "P1 基础题中，简洁正确的概念解释或相关对比可以完整答题，不强迫主动列执行时序、反例或未问实现细节。排障按已提供证据判断，合理但未验证的假设不等于技术错误；若题目问验证方法，应认可清晰的排查证据与步骤。未考察维度继续标 missing。基础题已正确解释时，若 partial 的唯一理由是没有主动补充未问反例、边界或实现细节，应拒绝。例如 B+ 树高扇出降低树高、叶子顺序遍历减少重复定位已证明所问原理与局部理由，不强制额外补充内部节点数据布局。泛泛说缓存命中和数据分布影响耗时，且未问具体边界，不能仅因没有举例就把故障正确性标 partial。",
         }
     } else {
         ""

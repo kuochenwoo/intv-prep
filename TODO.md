@@ -14,7 +14,7 @@ This list records the agreed next step and future feature ideas. Recording an it
 
 These completed workflows do not imply that every model-generated question or judgement is correct.
 
-## Practical P1/P2 content update — implementation only (2026-10-16)
+## Practical P1/P2 content update (2026-10-16)
 
 - [x] Develop 120 bilingual P1 topics (40 foundation, 68 scenario, 12 troubleshooting) with local core/further-practice priorities, source records and sidebar filters.
 - [x] Replace Java-only seed assumptions with explicit language-neutral technical contracts while preserving IDs.
@@ -22,10 +22,13 @@ These completed workflows do not imply that every model-generated question or ju
 - [x] Add five complete P2 scenarios (20 total): orders/payment expiration, leaderboards, identity/sessions, wallets/withdrawals and visitor analytics. Document matching P1 prerequisites.
 - [x] Correct overly leading diagnostic openings: neutral cache topic title, one-incident evidence-first questions, private diagnosis labels and matching reviewer rules.
 - [x] Update existing automated test definitions for the changed content and compatibility contracts.
-- [ ] Run affected automated tests and frontend/native builds. The user explicitly deferred tests in this development step.
-- [ ] Perform bilingual UI/UX acceptance and separately scoped live text quality review of the new styles/scenarios. Earlier acceptance does not validate this iteration.
+- [x] Fix unasked-boundary downgrades in foundation feedback and recheck the same real B+ tree answer: demonstrated dimensions good, unassessed dimensions missing, no gaps.
+- [x] Run affected automated tests and frontend/native builds after the user authorized P1 acceptance: 92 backend + 11 frontend passed, 1 intentionally ignored Keychain test.
+- [x] Perform bilingual P1 native UI/UX acceptance and representative DeepSeek text review: 49 actual HTTP attempts, with original failures, approved retries and semantic limits recorded. Fix stale topic/session ownership and support Markdown code throughout P1.
+- [ ] Separately authorize and perform live acceptance of the five new P2 scenarios; P2 content/shared regression passed but those live scenarios were outside this P1 test.
+- [ ] Optional further AI wording refinement: cache-diagnostics feedback can overstate missing verification detail even when sampling was proposed. Do not equate this residual with a failure of local storage/recovery.
 
-See [implementation scope and module mapping](docs/P1_PRACTICAL_FUNDAMENTALS.md). The 40/15-topic entries above and the calibration report below describe the previously accepted baseline.
+See [implementation scope and module mapping](docs/P1_PRACTICAL_FUNDAMENTALS.md) and [P1 acceptance](docs/P1_ACCEPTANCE_2026-10-16.md). The 40/15-topic entries above and the calibration report below describe the previously accepted baseline.
 
 ## AI calibration: completed for the agreed Claude baseline
 

@@ -1,0 +1,711 @@
+{
+  "httpAttempts": 16,
+  "httpCap": 60,
+  "model": "deepseek-flash",
+  "policy": "separate-task-v8-diagnostic-openings",
+  "provider": "deepseek",
+  "samples": [
+    {
+      "error": "无法连接 API（网络、代理或 TLS 错误），请检查后重试",
+      "lang": "zh",
+      "status": "failed",
+      "steps": [],
+      "topic": {
+        "category": "Database",
+        "focus": [
+          "页访问与树高",
+          "范围查询与索引维护成本"
+        ],
+        "id": "mysql-index-structure",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "foundation",
+        "scenarioConstraints": [
+          "用一次等值查询或范围查询说明，不考察存储页结构背诵",
+          "说明使用 MySQL 8.4/InnoDB 还是 PostgreSQL 18，不混用实现默认值"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+        ],
+        "title": "B+ 树索引为什么适合数据库"
+      },
+      "topicId": "mysql-index-structure"
+    },
+    {
+      "lang": "en",
+      "offlineReuse": {
+        "seedId": "network-tcp-reliability",
+        "sessionId": "49690faf48952a56813cdb962d181def"
+      },
+      "question": {
+        "answerTerms": [
+          "transport receipt within the connection",
+          "application-level consumption or commit is separate",
+          "connection boundary breaks end-to-end delivery at the application layer"
+        ],
+        "background": "TCP is a connection-oriented protocol (RFC 9293) that runs on both endpoints, and an intermediate proxy may terminate one TCP connection and open another to the backend. The service's application protocol defines when a request is considered complete, separate from transport framing.",
+        "constraints": [
+          "Assume the sender's TCP stack correctly implements RFC 9293; do not speculate about bugs in the sender stack.",
+          "Answer at the level of protocol semantics and layering, not a specific OS socket buffer implementation.",
+          "Keep the explanation conceptual; no need to compute window sizes or throughput."
+        ],
+        "evaluationChecklist": [
+          "Explains that a transport ACK confirms receipt within the transport connection, typically that bytes reached the peer's TCP buffer, not that the application consumed or committed them.",
+          "Distinguishes transport-level delivery from application-level completion and processing, recognizing the layers as separate responsibilities.",
+          "Notes that the connection is between endpoint peer sockets, and that an intermediate boundary (proxy, connection termination) breaks the end-to-end guarantee at the application level.",
+          "Avoids claiming TCP guarantees application-level idempotency, ordering across connections, or delivery of a request as a business unit."
+        ],
+        "followUpDirections": [
+          "Ask for a concrete way a server-side application could detect an incomplete or truncated request if only transport ACKs are guaranteed.",
+          "Ask how an intermediate proxy that reads the client's stream fully and then fails before forwarding the backend request would look to each side.",
+          "Ask what role the application protocol's own framing (for example a length prefix or an explicit completion flag) plays in deciding when a request is complete."
+        ],
+        "question": "A service writes each request body to durable storage and only then acknowledges the request. A client sends a request with a body split across two TCP segments; the client receives a TCP-level acknowledgement, but the application later reports that only part of the data was persisted. Explain what TCP's reliability guarantees actually cover in this exchange. What does an ACK from the transport layer tell the sender, and why is that different from the application having processed or committed the full payload?"
+      },
+      "session": {
+        "createdAt": "2026-10-16T01:36:23.764Z",
+        "draft": "",
+        "feedback": null,
+        "id": "a56555701a42ea9339399c3ef2eb6992",
+        "lastError": null,
+        "model": "deepseek-flash",
+        "provider": "deepseek",
+        "question": {
+          "background": "TCP is a connection-oriented protocol (RFC 9293) that runs on both endpoints, and an intermediate proxy may terminate one TCP connection and open another to the backend. The service's application protocol defines when a request is considered complete, separate from transport framing.",
+          "constraints": [
+            "Assume the sender's TCP stack correctly implements RFC 9293; do not speculate about bugs in the sender stack.",
+            "Answer at the level of protocol semantics and layering, not a specific OS socket buffer implementation.",
+            "Keep the explanation conceptual; no need to compute window sizes or throughput."
+          ],
+          "createdAt": "2026-10-16T01:36:23.755Z",
+          "id": "2c78eea644e112ee26de1c2d8df6ebae",
+          "model": "deepseek-flash",
+          "provider": "deepseek",
+          "question": "A service writes each request body to durable storage and only then acknowledges the request. A client sends a request with a body split across two TCP segments; the client receives a TCP-level acknowledgement, but the application later reports that only part of the data was persisted. Explain what TCP's reliability guarantees actually cover in this exchange. What does an ACK from the transport layer tell the sender, and why is that different from the application having processed or committed the full payload?",
+          "seedId": "network-tcp-reliability"
+        },
+        "references": [],
+        "shouldEnd": false,
+        "status": "active",
+        "turns": [
+          {
+            "aiAssisted": false,
+            "role": "candidate",
+            "text": "TCP presents an ordered byte stream using sequence numbers, acknowledgements and retransmission. That does not prove an application transaction committed: a transport acknowledgement and a business response belong to different layers. After a timeout, I would treat the business result as unknown until an application-level result or status lookup establishes it.",
+            "timestamp": "2026-10-16T01:36:23.765Z"
+          },
+          {
+            "aiAssisted": false,
+            "role": "interviewer",
+            "text": "If a proxy terminates the client's TCP connection, reads the full request stream, then fails before forwarding it to the backend, what does the client's transport ACK indicate on each side of the proxy?",
+            "timestamp": "2026-10-16T01:36:25.368Z"
+          }
+        ]
+      },
+      "sessionId": "a56555701a42ea9339399c3ef2eb6992",
+      "status": "completed",
+      "steps": [],
+      "topic": {
+        "category": "Networking",
+        "focus": [
+          "Sequence numbers, acknowledgements and retransmission",
+          "bytes delivered versus business commit"
+        ],
+        "id": "network-tcp-reliability",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "foundation",
+        "scenarioConstraints": [
+          "Explain one timeout or disconnect; an ACK does not establish an order commit",
+          "State protocol version and client/proxy boundaries; browser policy is not server authentication"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://www.rfc-editor.org/rfc/rfc9293.html"
+        ],
+        "title": "The Scope of TCP Reliability"
+      },
+      "topicId": "network-tcp-reliability"
+    },
+    {
+      "lang": "zh",
+      "offlineReuse": {
+        "seedId": "business-payment-callback",
+        "sessionId": "fae723ff96a3e402f26992c7dc959ee7"
+      },
+      "question": {
+        "answerTerms": [
+          "唯一性约束或唯一索引",
+          "持久化层防重",
+          "并发下先查后写不可靠",
+          "验签与防重是两个不同问题"
+        ],
+        "background": "你在一家电商平台的支付组，负责处理第三方支付平台的异步回调。接口已经能正确验证回调签名的真实性，但需要在验签之后、响应之前完成入账。当前技术栈中，关系型数据库是可用的持久化组件。",
+        "constraints": [
+          "只讨论一个具体技术环节或业务不变量，不设计完整支付平台。",
+          "假设验签已经正确实施，不需要讨论如何验签。",
+          "如果涉及数据库约束或查询，使用语言无关的通用表述，不指名具体数据库产品。"
+        ],
+        "evaluationChecklist": [
+          "候选人指出需要建立与支付订单号（或回调唯一标识）相关的唯一性约束，使同一笔支付无法被写入两条入账记录。",
+          "候选人解释了为什么仅在应用层先查后写不足以在并发回调场景下可靠防重，而唯一约束能把防重下沉到持久化层。",
+          "候选人将验签（证明请求来源和完整性）与防重（保证同一笔业务只生效一次）区分为两个不同层面的问题。",
+          "候选人给出的检查或补充环节与“入账记录写入”这一步骤直接相关，而不是泛泛而谈消息队列、分布式锁等未讨论的组件。"
+        ],
+        "followUpDirections": [
+          "如果数据库层不引入唯一约束，仅靠应用层“先查后写”在并发场景下会有什么问题？",
+          "除了数据库唯一约束，还有哪些与业务语义相关的做法可以保证同一笔支付只入账一次？",
+          "回调接口验签通过后，在入账前还需要做哪些与业务无关的防御性检查？",
+          "如果支付平台可能在极短时间内重试回调，你如何设计测试来验证你的防重逻辑？"
+        ],
+        "question": "假设你负责一个支付回调接口。第三方支付平台在完成扣款后会回调你的服务，请求中带有签名字段，你的服务在验签通过后需要向账户写入一条入账记录。某次上线后，运营反馈有用户的账户在同一笔支付下出现了两条入账记录。已知现象：回调接口的日志里，同一笔支付订单号出现了两次请求，验签都通过了，两次请求的入参完全相同；服务在写入前没有查询过是否已入账。请说明：接下来你会优先检查或补充哪个技术环节（不限于已给日志），以及这个环节为什么能避免同一笔支付被重复入账。"
+      },
+      "session": {
+        "createdAt": "2026-10-16T01:36:31.533Z",
+        "draft": "",
+        "feedback": null,
+        "id": "f75ccda48ffff25ed12ce14ecd605f43",
+        "lastError": null,
+        "model": "deepseek-flash",
+        "provider": "deepseek",
+        "question": {
+          "background": "你在一家电商平台的支付组，负责处理第三方支付平台的异步回调。接口已经能正确验证回调签名的真实性，但需要在验签之后、响应之前完成入账。当前技术栈中，关系型数据库是可用的持久化组件。",
+          "constraints": [
+            "只讨论一个具体技术环节或业务不变量，不设计完整支付平台。",
+            "假设验签已经正确实施，不需要讨论如何验签。",
+            "如果涉及数据库约束或查询，使用语言无关的通用表述，不指名具体数据库产品。"
+          ],
+          "createdAt": "2026-10-16T01:36:31.525Z",
+          "id": "f88204b8e17e8855f3c146479e4cdd91",
+          "model": "deepseek-flash",
+          "provider": "deepseek",
+          "question": "假设你负责一个支付回调接口。第三方支付平台在完成扣款后会回调你的服务，请求中带有签名字段，你的服务在验签通过后需要向账户写入一条入账记录。某次上线后，运营反馈有用户的账户在同一笔支付下出现了两条入账记录。已知现象：回调接口的日志里，同一笔支付订单号出现了两次请求，验签都通过了，两次请求的入参完全相同；服务在写入前没有查询过是否已入账。请说明：接下来你会优先检查或补充哪个技术环节（不限于已给日志），以及这个环节为什么能避免同一笔支付被重复入账。",
+          "seedId": "business-payment-callback"
+        },
+        "references": [],
+        "shouldEnd": false,
+        "status": "active",
+        "turns": [
+          {
+            "aiAssisted": false,
+            "role": "candidate",
+            "text": "先按支付机构约定验证回调真实性，再以稳定的支付流水或业务事件标识去重。入账明细的唯一约束与状态更新放进同一个本地事务，只有事务提交后才确认处理成功。相同事件重试返回既有结果，不能靠先查再写的无保护流程避免并发重复。",
+            "timestamp": "2026-10-16T01:36:31.544Z"
+          },
+          {
+            "aiAssisted": false,
+            "role": "interviewer",
+            "text": "现在只改变一点：如果数据库层不引入任何唯一约束，仅保留你所说的本地事务和状态更新逻辑，同一支付订单号的两次并发回调仍可能都通过“先查后写”的检查，最终仍写入了两条入账记录——这个缺口是否成立，为什么？",
+            "timestamp": "2026-10-16T01:36:33.266Z"
+          }
+        ]
+      },
+      "sessionId": "f75ccda48ffff25ed12ce14ecd605f43",
+      "status": "completed",
+      "steps": [],
+      "topic": {
+        "category": "Business Scenarios",
+        "focus": [
+          "事件真实性与业务幂等",
+          "本地事务和唯一约束"
+        ],
+        "id": "business-payment-callback",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "限定可信验签方式及一条入账记录，不设计完整支付平台",
+          "仅讨论一个明确技术步骤或业务不变量；完整架构、容量估算和跨组件方案留给 P2"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://javaguide.cn/zhuanlan/back-end-interview-high-frequency-system-design-and-scenario-questions.html"
+        ],
+        "title": "支付回调与重复入账"
+      },
+      "topicId": "business-payment-callback"
+    },
+    {
+      "error": "无法连接 API（网络、代理或 TLS 错误），请检查后重试",
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "current task runs to completion before queued work",
+          "microtask checkpoint after the current task",
+          "timer callback is a later task",
+          "0 is a minimum delay, not immediate priority"
+        ],
+        "background": "The script runs as the only top-level task on a blank page in a modern browser; there are no other pending tasks, no unhandled errors, and no other promises or timers involved.",
+        "constraints": [
+          "Limit the discussion to this single script and the four console logs; do not cover animation frames, network events, or `async/await` syntax.",
+          "Do not use wall-clock timing or millisecond accuracy as the explanation, and do not cite Node.js behavior—only the browser execution model.",
+          "Keep the answer focused on the ordering mechanism in this example rather than general event-loop design.",
+          "Two to three minutes of oral explanation is sufficient; avoid enumerating every phase of the event loop spec."
+        ],
+        "evaluationChecklist": [
+          "Correctly states the log order is `A`, `D`, `C`, `B`.",
+          "Explains that `A` and `D` run as part of the current top-level task because synchronous code runs before any queued work.",
+          "Explains that the promise `.then` is a microtask that runs after the current task completes, so `C` precedes `B`.",
+          "Explains that the `setTimeout(..., 0)` callback is a macrotask/task queued for a later event-loop turn, and that `0` is a minimum delay rather than an immediate or priority guarantee."
+        ],
+        "followUpDirections": [
+          "If you needed `B` to reliably print after `C` without changing the promise, what would you change and why?",
+          "How would the ordering change if the promise callback itself scheduled another `setTimeout(..., 0)` before it finished?",
+          "Where do microtask checkpoints occur in the browser event loop, and why does that make them run between tasks rather than alongside them?",
+          "What evidence in the browser DevTools could confirm your predicted order, and what would contradict it?"
+        ],
+        "question": "In a browser, a developer runs this script on a page that has no other pending work:\n\n```js\nconsole.log(\"A\");\nsetTimeout(() => console.log(\"B\"), 0);\nPromise.resolve().then(() => console.log(\"C\"));\nconsole.log(\"D\");\n```\n\nLater, a colleague claims that because the timeout is `0`, `B` should be printed before `C`. Using this script, explain what log order the browser actually produces and walk through the scheduling events that cause it. Address why the `0` delay does not make the timer callback run before the promise callback."
+      },
+      "session": {
+        "createdAt": "2026-10-16T01:36:38.518Z",
+        "draft": "",
+        "feedback": null,
+        "id": "8b8fad729563201160aaf0092163df90",
+        "lastError": null,
+        "model": "deepseek-flash",
+        "provider": "deepseek",
+        "question": {
+          "background": "The script runs as the only top-level task on a blank page in a modern browser; there are no other pending tasks, no unhandled errors, and no other promises or timers involved.",
+          "constraints": [
+            "Limit the discussion to this single script and the four console logs; do not cover animation frames, network events, or `async/await` syntax.",
+            "Do not use wall-clock timing or millisecond accuracy as the explanation, and do not cite Node.js behavior—only the browser execution model.",
+            "Keep the answer focused on the ordering mechanism in this example rather than general event-loop design.",
+            "Two to three minutes of oral explanation is sufficient; avoid enumerating every phase of the event loop spec."
+          ],
+          "createdAt": "2026-10-16T01:36:38.517Z",
+          "id": "252fa0b0f2a6a9e9b266a42474a62805",
+          "model": "deepseek-flash",
+          "provider": "deepseek",
+          "question": "In a browser, a developer runs this script on a page that has no other pending work:\n\n```js\nconsole.log(\"A\");\nsetTimeout(() => console.log(\"B\"), 0);\nPromise.resolve().then(() => console.log(\"C\"));\nconsole.log(\"D\");\n```\n\nLater, a colleague claims that because the timeout is `0`, `B` should be printed before `C`. Using this script, explain what log order the browser actually produces and walk through the scheduling events that cause it. Address why the `0` delay does not make the timer callback run before the promise callback.",
+          "seedId": "javascript-event-loop"
+        },
+        "references": [],
+        "shouldEnd": false,
+        "status": "active",
+        "turns": []
+      },
+      "sessionId": "8b8fad729563201160aaf0092163df90",
+      "status": "failed",
+      "steps": [],
+      "topic": {
+        "category": "Runtime",
+        "focus": [
+          "Execution of the current task",
+          "Promise microtask checkpoints",
+          "Timers do not specify exact execution times"
+        ],
+        "id": "javascript-event-loop",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "One browser script executes console.log(\"A\"), setTimeout(() => console.log(\"B\"), 0), Promise.resolve().then(() => console.log(\"C\")), then console.log(\"D\")",
+          "There are no other tasks or exceptions; compare only these four logs, not actual millisecond delays or Node.js behavior"
+        ],
+        "sources": [
+          "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model"
+        ],
+        "title": "JavaScript Microtasks and Timers"
+      },
+      "topicId": "javascript-event-loop"
+    },
+    {
+      "error": "无法连接 API（网络、代理或 TLS 错误），请检查后重试",
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "键命中情况",
+          "失效时间分布",
+          "热点键集中度",
+          "缓存中键是否存在"
+        ],
+        "background": "某业务用缓存服务（Redis 兼容）做读缓存，缓存未命中时应用回查数据库。服务运行正常，问题表现为数据库读压力上升，应用未报错。",
+        "constraints": [
+          "只讨论缓存命中相关的读路径，不考虑连接池、线程池等资源耗尽问题",
+          "可以按需向面试官询问键的有效性、命中率、热点 key、过期策略等，但在提出之前先说明你想用哪个证据回答哪个问题"
+        ],
+        "evaluationChecklist": [
+          "能从当前观测出发提出有价值的下一步证据，例如按 key 命中率、失效时间分布、热点 key 集中度、数据库慢查询与语句类型、缓存键是否存在等维度切分数据",
+          "能说明每项证据回答的具体问题，而不仅是罗列指标；例如区分命中率下降与回源集中在少量键，或区分键不存在与键被频繁失效",
+          "能根据证据合理推进或收敛假设，而不是直接跳到某个预设结论"
+        ],
+        "followUpDirections": [
+          "如果监控显示整体命中率正常而数据库压力仍在上升，你会如何进一步区分是少数热点键集中回源，还是大量键在相近时间点失效？",
+          "如果发现某些查询的键在缓存中始终不存在，你会怎么判断是业务查询参数本身问题、写入路径遗漏，还是过期策略设置不当？",
+          "假设确认了某一类键集中回源，你会优先调整过期策略、主动预热还是做回源侧的保护？各自代价是什么？",
+          "在不改变业务语义的前提下，你会怎么设计一个验证实验来确认缓存是否真的没有承接这部分读请求？"
+        ],
+        "question": "线上服务在某个时间窗口内出现数据库 QPS 明显上升，同时监控显示缓存服务的查询量并没有明显下降，应用侧也没有报出连接错误或超时。团队怀疑缓存层没有像预期那样承接读请求。\n\n你现在负责排查。基于目前这些观测，你下一步会取哪一项或哪几项证据来缩小范围？说明每项证据能帮你排除或确认什么。"
+      },
+      "session": {
+        "createdAt": "2026-10-16T01:36:48.734Z",
+        "draft": "",
+        "feedback": null,
+        "id": "c76d46469de8e15c693c3b2fd38f11af",
+        "lastError": null,
+        "model": "deepseek-flash",
+        "provider": "deepseek",
+        "question": {
+          "background": "某业务用缓存服务（Redis 兼容）做读缓存，缓存未命中时应用回查数据库。服务运行正常，问题表现为数据库读压力上升，应用未报错。",
+          "constraints": [
+            "只讨论缓存命中相关的读路径，不考虑连接池、线程池等资源耗尽问题",
+            "可以按需向面试官询问键的有效性、命中率、热点 key、过期策略等，但在提出之前先说明你想用哪个证据回答哪个问题"
+          ],
+          "createdAt": "2026-10-16T01:36:48.727Z",
+          "id": "8946c431c9f1998e943381eb9c26ce4d",
+          "model": "deepseek-flash",
+          "provider": "deepseek",
+          "question": "线上服务在某个时间窗口内出现数据库 QPS 明显上升，同时监控显示缓存服务的查询量并没有明显下降，应用侧也没有报出连接错误或超时。团队怀疑缓存层没有像预期那样承接读请求。\n\n你现在负责排查。基于目前这些观测，你下一步会取哪一项或哪几项证据来缩小范围？说明每项证据能帮你排除或确认什么。",
+          "seedId": "redis-cache-failures"
+        },
+        "references": [],
+        "shouldEnd": false,
+        "status": "active",
+        "turns": [
+          {
+            "aiAssisted": false,
+            "role": "candidate",
+            "text": "仅凭命中率下降和数据库请求增加还不能认定原因。我会先对比异常时段未命中键的分布，并抽样确认数据库查询是否有结果；随后把请求时间与相关键的过期记录对应起来。应使用受控采样和已有监控，不在生产执行阻塞全库扫描；取得证据前保留多种假设。",
+            "timestamp": "2026-10-16T01:36:48.735Z"
+          },
+          {
+            "aiAssisted": false,
+            "role": "interviewer",
+            "text": "如果异常窗口内未命中键分布很分散、每个键只回源一两次，而数据库 QPS 仍明显上升，你会取哪项证据来判断是大量键集中失效导致，还是命中率本身没有问题、回源一直存在？",
+            "timestamp": "2026-10-16T01:36:50.221Z"
+          }
+        ]
+      },
+      "sessionId": "c76d46469de8e15c693c3b2fd38f11af",
+      "status": "failed",
+      "steps": [],
+      "topic": {
+        "category": "Redis",
+        "focus": [
+          "从键分布、过期分布和数据库命中结果区分回源原因",
+          "缓存穿透、击穿、雪崩作为内部诊断方向，不要求复述分类名称"
+        ],
+        "id": "redis-cache-failures",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "troubleshooting",
+        "scenarioConstraints": [
+          "开场只提供一次回源异常的有限观测，不同时列出多个故障的完整触发条件，也不提前给出原因或分类选项",
+          "先问下一项诊断证据及其判断依据；未知的键有效性、热点分布和过期情况留待候选人主动询问，不添加无关版本、值类型或持久化背景"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://redis.io/docs/latest/develop/"
+        ],
+        "title": "缓存未命中与数据库压力"
+      },
+      "topicId": "redis-cache-failures"
+    },
+    {
+      "error": "无法连接 API（网络、代理或 TLS 错误），请检查后重试",
+      "lang": "en",
+      "status": "failed",
+      "steps": [],
+      "topic": {
+        "category": "Database",
+        "focus": [
+          "Execution plans and actual scanning",
+          "selectivity and statistics"
+        ],
+        "id": "sql-explain-slow-query",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "troubleshooting",
+        "scenarioConstraints": [
+          "Supply a query and observations; slowness alone does not prove a missing index",
+          "State whether the example uses MySQL 8.4/InnoDB or PostgreSQL 18; do not mix implementation defaults"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+        ],
+        "title": "Investigating a Slow SQL Query"
+      },
+      "topicId": "sql-explain-slow-query"
+    }
+  ],
+  "scope": "Prepared content only; no personal history, drafts or credentials. Transport completion is not semantic acceptance.",
+  "usage": {
+    "prices": [],
+    "records": [
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:50.313Z",
+        "estimatedUsd": null,
+        "id": 16,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "transport_error"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:50.225Z",
+        "estimatedUsd": null,
+        "id": 15,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "reference",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "c76d46469de8e15c693c3b2fd38f11af",
+        "status": "transport_error"
+      },
+      {
+        "cacheReadTokens": 896,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:48.737Z",
+        "estimatedUsd": null,
+        "id": 14,
+        "inputTokens": 1592,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "follow_up",
+        "outputTokens": 104,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "c76d46469de8e15c693c3b2fd38f11af",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 256,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:47.997Z",
+        "estimatedUsd": null,
+        "id": 13,
+        "inputTokens": 1092,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1536,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:43.521Z",
+        "estimatedUsd": null,
+        "id": 12,
+        "inputTokens": 1681,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 444,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1280,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:38.599Z",
+        "estimatedUsd": null,
+        "id": 11,
+        "inputTokens": 1681,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 469,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:38.523Z",
+        "estimatedUsd": null,
+        "id": 10,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "reference",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "8b8fad729563201160aaf0092163df90",
+        "status": "transport_error"
+      },
+      {
+        "cacheReadTokens": 256,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:37.852Z",
+        "estimatedUsd": null,
+        "id": 9,
+        "inputTokens": 1205,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1152,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:33.286Z",
+        "estimatedUsd": null,
+        "id": 8,
+        "inputTokens": 1555,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 569,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 128,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:31.549Z",
+        "estimatedUsd": null,
+        "id": 7,
+        "inputTokens": 1670,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "follow_up",
+        "outputTokens": 123,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "f75ccda48ffff25ed12ce14ecd605f43",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:30.598Z",
+        "estimatedUsd": null,
+        "id": 6,
+        "inputTokens": 1143,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:25.432Z",
+        "estimatedUsd": null,
+        "id": 5,
+        "inputTokens": 1648,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 579,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 128,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:23.772Z",
+        "estimatedUsd": null,
+        "id": 4,
+        "inputTokens": 1609,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "follow_up",
+        "outputTokens": 101,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "a56555701a42ea9339399c3ef2eb6992",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:22.932Z",
+        "estimatedUsd": null,
+        "id": 3,
+        "inputTokens": 1057,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 11,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:18.840Z",
+        "estimatedUsd": null,
+        "id": 2,
+        "inputTokens": 1521,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 462,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T01:36:18.478Z",
+        "estimatedUsd": null,
+        "id": 1,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "transport_error"
+      }
+    ]
+  }
+}

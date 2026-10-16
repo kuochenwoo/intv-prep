@@ -1,26 +1,7 @@
 import { useRef, useState } from "react";
 import { Button } from "@astryxdesign/core/Button";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+export { Markdown } from "../../Markdown";
 import { useI18n } from "../../i18n";
-
-export function Markdown({ text }: { text: string }) {
-  return (
-    <div className="sd-markdown">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        skipHtml
-        components={{
-          // Notes never fetch images or open user/model supplied external destinations.
-          img: () => null,
-          a: ({ children }) => <span>{children}</span>,
-        }}
-      >
-        {text}
-      </ReactMarkdown>
-    </div>
-  );
-}
 
 export function Diagram({ source, dark }: { source: string; dark: boolean }) {
   const { t } = useI18n();

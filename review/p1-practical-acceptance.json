@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-16",
+  "timezone": "Asia/Tokyo",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "policy": "separate-task-v10-foundation-evidence",
+  "scriptedHttpAttempts": 47,
+  "uiHttpAttempts": 2,
+  "totalHttpAttempts": 49,
+  "authorizedCap": 60,
+  "automated": {
+    "backendPassed": 92,
+    "frontendPassed": 11,
+    "ignored": 1,
+    "ignoredReason": "OS Keychain round-trip intentionally excluded; .env-only credential policy"
+  },
+  "finalSamples": [
+    {
+      "topicId": "mysql-index-structure",
+      "workflowStatus": "completed",
+      "sessionStatus": "finished",
+      "source": "targeted_recheck",
+      "finalFeedbackSource": "p1-foundation-feedback-final.json (re-evaluation; stored earlier score preserved)"
+    },
+    {
+      "topicId": "network-tcp-reliability",
+      "workflowStatus": "completed",
+      "sessionStatus": "active",
+      "source": "initial_batch"
+    },
+    {
+      "topicId": "business-payment-callback",
+      "workflowStatus": "completed",
+      "sessionStatus": "active",
+      "source": "initial_batch"
+    },
+    {
+      "topicId": "javascript-event-loop",
+      "workflowStatus": "completed",
+      "sessionStatus": "finished",
+      "source": "targeted_recheck"
+    },
+    {
+      "topicId": "redis-cache-failures",
+      "workflowStatus": "finished",
+      "sessionStatus": "finished",
+      "source": "native_ui"
+    },
+    {
+      "topicId": "sql-explain-slow-query",
+      "workflowStatus": "completed",
+      "sessionStatus": "active",
+      "source": "targeted_recheck"
+    }
+  ],
+  "findings": [
+    "Initial batch had network/TLS failures. Original failures and pending states are preserved.",
+    "Initial JavaScript opening revealed a partial order through why-not wording. Do not accept that initial opening as a semantic pass. The revised generated opening is neutral and preserves a fenced code block.",
+    "Initial diagnostic constraints listed evidence axes. The rechecked cache opening leaves the cause unknown without an evidence menu.",
+    "B+ tree feedback resumed after network failure without another submitted answer.",
+    "Cache mixed-answer feedback was rejected in the script, then completed via native UI retry with exactly two submitted candidate turns, one independent and one assisted.",
+    "AI-only JavaScript feedback has all five dimensions missing and empty strengths/gaps.",
+    "Semantic review remains fallible. Cache feedback wording can overstate the absence of verification detail even when the candidate proposed database-result sampling; partial evidence-to-hypothesis mapping is a defensible improvement target, not proof of no diagnostic knowledge.",
+    "Final manual review found absence-based partial ratings on the correctly answered B+ tree opening. Policy v10 rejects downgrades for unasked internal details or boundary examples. The same real answer was rechecked in two HTTP calls: principles/selection_rationale/communication good, tradeoffs/failure_and_correctness missing, gaps empty. Stored earlier scores were not rewritten.",
+    "Final native build restart restored the saved SQL interview with the matching topic. Review Practice navigation cleared the previous conversation and selected the cache topic."
+  ],
+  "limitations": [
+    "Representative real-provider coverage across six topics, not live generation of every one of the 120 seeds.",
+    "The v9 generation policy (unchanged by v10) was rechecked on four affected/previously failed topics; TCP and callback samples are from the earlier policy in this run.",
+    "Native UI retry used the previously built diagnostic-policy binary; its feedback rules match v9, whose changes concern generation/answer hints. Final source/build is verified separately.",
+    "No new OpenAI voice requests, Keychain migration, personal history modification or LC full-library rerun.",
+    "The final v10 feedback correction was rechecked on the B+ tree sample only; it is not a semantic guarantee for every future judgement."
+  ],
+  "semanticReview": {
+    "initialEventLoopOpening": "Rejected on manual review: negated partial-output hint",
+    "finalEventLoopOpening": "Accepted representative neutral code-output opening",
+    "initialFoundationRatings": "Rejected on manual review: partial ratings for unasked extensions",
+    "finalFoundationFeedbackArtifact": "p1-foundation-feedback-final.json",
+    "finalFoundationRatings": {
+      "principles": "good",
+      "selection_rationale": "good",
+      "tradeoffs": "missing",
+      "failure_and_correctness": "missing",
+      "communication": "good"
+    },
+    "cacheFeedback": "Completed with residual wording caveat; see findings and raw evidence"
+  }
+}
