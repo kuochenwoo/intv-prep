@@ -15,7 +15,7 @@ export function ApiKeyBadge({ status, provider }: Props) {
         ? t("keyUnavailable")
         : t("keyMissing");
   return (
-    <span role="status">
+    <span role="status" className="api-key-badge">
       <Badge
         variant={status === "saved" ? "success" : status === "unsaved" ? "neutral" : "warning"}
         label={`${provider} · ${label}`}
@@ -28,11 +28,13 @@ export function ApiKeyWarning({ status, provider }: Props) {
   const { t } = useI18n();
   if (!status || status === "saved" || status === "unsaved") return null;
   return (
-    <Banner
-      status="warning"
-      title={status === "unavailable"
-        ? t("apiKeyUnreadableWarning", { p: provider })
-        : t("apiKeyMissingWarning", { p: provider })}
-    />
+    <div className="api-key-warning">
+      <Banner
+        status="warning"
+        title={status === "unavailable"
+          ? t("apiKeyUnreadableWarning", { p: provider })
+          : t("apiKeyMissingWarning", { p: provider })}
+      />
+    </div>
   );
 }

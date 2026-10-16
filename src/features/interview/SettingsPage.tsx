@@ -90,7 +90,7 @@ export default function SettingsPage({
       <div className="provider-settings">
         <Collapsible
           trigger={
-            <span>
+            <span className="settings-key-title">
               <strong>{t("settingsTitle")}</strong>{" "}
               <ApiKeyBadge status={keyStatus} provider={config.provider} />
             </span>
