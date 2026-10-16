@@ -17,3 +17,5 @@ pub mod session_tools;
 pub mod usage;
 
 pub mod coding_timer;
+
+pub mod transcription;

@@ -125,3 +125,23 @@ test("cost summaries distinguish unknown-only, mixed, zero and no requests", () 
   });
   assert.deepEqual(summarizeCosts([]), { total: 0, known: 0, unknown: 0 });
 });
+
+const { appendTranscript } = await sourceModule(
+  "../../src/features/voice/draft.ts",
+);
+test("voice insertion appends without overwriting a typed draft", () => {
+  assert.equal(
+    appendTranscript("Typed answer.", " 我用 Redis 做 cache-aside。 "),
+    "Typed answer.\n\n我用 Redis 做 cache-aside。",
+  );
+  assert.equal(appendTranscript("", " spoken answer "), "spoken answer");
+  assert.equal(appendTranscript("keep this", "   "), null);
+});
+test("voice insertion rejects overflow without truncating either input", () => {
+  const draft = "x".repeat(5998),
+    transcript = "中文";
+  assert.equal(appendTranscript(draft, transcript), null);
+  assert.equal(draft.length, 5998);
+  assert.equal(transcript, "中文");
+  assert.equal(appendTranscript("", "x".repeat(6000)).length, 6000);
+});

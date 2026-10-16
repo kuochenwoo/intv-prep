@@ -1,0 +1,398 @@
+{
+  "audio": "Locally synthesized authored samples; no personal audio",
+  "deepseekHttpAttempts": 7,
+  "extraVoiceChecks": [
+    {
+      "case": "mixed_chinese_english_voice",
+      "error": null,
+      "passed": true,
+      "transcript": "我用Redis做Cache Aside,读取时先检查缓存,缓存没有命中时,再查询数据库。数据库事务使用MVCC,减少读写之间的相互阻塞。"
+    }
+  ],
+  "openaiHttpAttempts": 3,
+  "p1Session": {
+    "createdAt": "2026-10-16T00:31:30.697Z",
+    "draft": "",
+    "feedback": {
+      "dimensions": [
+        {
+          "evidence": "The candidate explained that synchronous code runs first, that promise callbacks are microtasks, and that the browser drains the microtask queue before running the next timer task, and also noted that a busy synchronous loop can delay both. However, the answer did not explicitly connect these mechanisms to the actual priority and ordering of the specific four callbacks, so the causal chain is only partially demonstrated.",
+          "improvement": "Practice explicitly stating the causal chain end to end: synchronous script runs, then microtask queue drains to completion, then timers become eligible at their phase, so both promise callbacks precede both timers. Walk through a concrete four-callback example and label which callback is a microtask versus a timer task at each step.",
+          "name": "principles",
+          "rating": "partial"
+        },
+        {
+          "evidence": "The candidate's answer describes the mechanics but does not address why promise callbacks are placed in the microtask queue rather than being run as ordinary tasks or timers, nor why the event loop drains microtasks before the next timer task. This dimension was not independently assessed in the answer.",
+          "improvement": "Practice articulating the reason for the microtask versus macrotask split: promise callbacks are grouped as microtasks so continuations run immediately after the current synchronous execution completes and before the browser can repaint or run the next timer, giving prompt continuation semantics while still yielding between tasks.",
+          "name": "selection_rationale",
+          "rating": "missing"
+        },
+        {
+          "evidence": "The answer mentions that a busy synchronous loop can delay both microtasks and timers, but it does not discuss any local costs or tradeoffs of the microtask-versus-timer scheduling choice, such as microtask starvation of rendering or timers, or the benefit of draining microtasks for prompt continuation. This dimension was not independently assessed.",
+          "improvement": "Practice naming one concrete local cost for each scheduling choice: draining all microtasks before the next timer can starve timers or rendering if microtasks keep enqueueing more microtasks, while deferring to the next timer phase yields control but adds latency to continuations.",
+          "name": "tradeoffs",
+          "rating": "missing"
+        },
+        {
+          "evidence": "The candidate's explanation that the synchronous phase runs first, then the microtask queue drains, and only then the next timer task runs, already correctly implies the ordering boundary between promise callbacks and the two timers. However, the candidate did not state the full four-callback invocation order or resolve the ordering between the two timers, so the correctness of the final sequence is only partially demonstrated.",
+          "improvement": "Practice writing the exact expected sequence for the four callbacks and justifying each adjacent pair: both microtasks precede both timers, and among same-phase timers the registration order decides. Then add a boundary case, such as microtasks scheduled from within a microtask, to see how the ordering rule still holds.",
+          "name": "failure_and_correctness",
+          "rating": "partial"
+        },
+        {
+          "evidence": "The candidate stated the key mechanisms in a clear, compact order: synchronous code first, promise callbacks as microtasks, microtask queue drained before the next timer, and a busy synchronous loop delaying both. The progression is easy to follow and the terms used are appropriate for the question.",
+          "improvement": "Practice turning a mechanism summary into an explicit answer by closing with the concrete requested order of the four callbacks and one sentence of justification, so the explanation ends with the answer rather than stopping at the general rule.",
+          "name": "communication",
+          "rating": "good"
+        }
+      ],
+      "gaps": [
+        "Did not state the actual invocation order of the four specified callbacks.",
+        "Did not address why promise callbacks are microtasks versus timer tasks, or why microtasks are drained before the next timer.",
+        "Did not discuss any local cost or tradeoff of the microtask-versus-timer scheduling choice."
+      ],
+      "nextPracticeTopics": [
+        "State the full order of four callbacks (both promise callbacks, then both timers) with the registration-order rule for same-phase timers.",
+        "Explain the event loop phases for browser microtasks versus timer tasks and why microtasks drain before the next timer.",
+        "Describe one local tradeoff of draining all microtasks before the next timer, such as starvation of rendering or timers.",
+        "Trace a boundary case where a microtask schedules another microtask, and confirm the ordering rule still applies."
+      ],
+      "strengths": [
+        "Correctly identified that synchronous code runs before any callbacks.",
+        "Correctly identified promise callbacks as microtasks drained before the next timer task.",
+        "Noted that a busy synchronous loop can delay both microtasks and timers."
+      ],
+      "summary": "Independent answers: 1; AI-assisted answers: 0. Assisted text is excluded from independent ability evidence.\nDemonstrated: Communication.\nPartially demonstrated: Principles, Ordering and correctness.\nInsufficient independent evidence: Choice rationale, Trade-offs."
+    },
+    "id": "5b0e12f8dcbe95b5adf9099dde9583df",
+    "lastError": null,
+    "model": "deepseek-flash",
+    "provider": "deepseek",
+    "question": {
+      "background": "A browser script runs synchronously and, before returning control to the event loop, schedules four callbacks: T1's timer (10 ms), T1's promise callback, T2's timer (10 ms), and T2's promise callback. Both tasks are already complete when the event loop begins processing. Assume the timers have the same delay and are ready when their phase is reached.",
+      "constraints": [
+        "Both tasks are complete before the event loop starts; no other tasks, timers, or exceptions are present.",
+        "Consider only the order in which the four callbacks are invoked, not actual millisecond delays or Node.js behavior."
+      ],
+      "createdAt": "2026-10-16T00:31:30.696Z",
+      "id": "2463ab567691d2e7e1ed545278549a61",
+      "model": "deepseek-flash",
+      "provider": "deepseek",
+      "question": "Two tasks are scheduled: T1 schedules a timer with a 10 ms delay and a promise `.then` callback; T2 does the same. The event loop starts after both have finished scheduling. In what order will the four callbacks (timer from T1, promise callback from T1, timer from T2, promise callback from T2) run? Explain why.",
+      "seedId": "javascript-event-loop"
+    },
+    "references": [],
+    "shouldEnd": false,
+    "status": "finished",
+    "turns": [
+      {
+        "aiAssisted": false,
+        "role": "candidate",
+        "text": "Typed draft retained.\n\nSynchronous code runs first, promise callbacks are microtasks, the browser drains the microtask queue before running the next timer task. A busy synchronous loop can delay both.",
+        "timestamp": "2026-10-16T00:31:35.102Z"
+      },
+      {
+        "aiAssisted": false,
+        "role": "interviewer",
+        "text": "Given that the microtask queue is drained before the timer phase, in what order do T1's promise callback, T1's timer callback, T2's promise callback, and T2's timer callback run?",
+        "timestamp": "2026-10-16T00:31:36.527Z"
+      }
+    ]
+  },
+  "p2Session": {
+    "createdAt": "2026-10-16T00:31:45.776Z",
+    "feedback": null,
+    "id": "4b20315088f474fe12de14f4eed2002c",
+    "lastError": "无法连接 API（网络、代理或 TLS 错误），请检查后重试",
+    "model": "deepseek-flash",
+    "provider": "deepseek",
+    "question": {
+      "content": {
+        "background": "Authored acceptance scenario; not AI-generated content.",
+        "constraints": [
+          "多端可能同时离线修改同一文件"
+        ],
+        "evaluationChecklist": [
+          "避免静默覆盖"
+        ],
+        "followUpDirections": [
+          "分析版本冲突"
+        ],
+        "question": "设计一个支持离线修改和冲突处理的文件同步服务。请解释文件版本如何保存和合并。"
+      },
+      "createdAt": "2026-10-16T00:31:45.775Z",
+      "id": "b76645984f3039924fbeb33b12320ce9",
+      "lang": "zh",
+      "model": "deepseek-flash",
+      "provider": "deepseek",
+      "seedId": "file-sync"
+    },
+    "references": [],
+    "stage": "high_level",
+    "status": "feedback_pending",
+    "suggestedStage": "high_level",
+    "turns": [
+      {
+        "aiAssisted": false,
+        "observation": null,
+        "role": "interviewer",
+        "stage": "requirements",
+        "text": "请先澄清核心功能、非功能目标和范围，区分题设与自己的假设。"
+      },
+      {
+        "aiAssisted": false,
+        "observation": null,
+        "role": "interviewer",
+        "stage": "high_level",
+        "text": "请描述 API、主要组件、数据模型及一条完整读写数据流；可在设计笔记中补充架构与 Mermaid 图。"
+      },
+      {
+        "aiAssisted": false,
+        "observation": null,
+        "role": "candidate",
+        "stage": "high_level",
+        "text": "保留原有草稿。\n\n我会保留文件的多个版本,客户端离线修改后重新同步时,先检查版本号,发生冲突时保留两份内容,让用户选择,不会静默覆盖。"
+      },
+      {
+        "aiAssisted": false,
+        "observation": "候选人给出了高层冲突处理思路：以版本号检测冲突，冲突时保留两份内容并交由用户选择，从而避免静默覆盖。但尚未说明 API、主要组件划分、文件版本的数据模型（版本号如何生成/递增、内容如何存储）以及一条完整的读写同步数据流。",
+        "role": "interviewer",
+        "stage": "high_level",
+        "text": "请具体描述这个服务的主要组件和文件版本的数据模型，并走一遍一条完整的数据流：客户端离线修改一个文件后重新上线同步，从请求到落库到冲突返回，各组件之间是如何交互的？"
+      }
+    ],
+    "workspace": {
+      "diagram": "",
+      "drafts": {},
+      "notes": ""
+    }
+  },
+  "priceNote": "Costs are unknown without configured transcription audio/text rates; not invoices",
+  "results": [
+    {
+      "case": "p1_deepseek_generation",
+      "error": null,
+      "passed": true
+    },
+    {
+      "case": "openai_english_voice",
+      "error": null,
+      "passed": true,
+      "transcript": "Synchronous code runs first, promise callbacks are microtasks, the browser drains the microtask queue before running the next timer task. A busy synchronous loop can delay both."
+    },
+    {
+      "case": "p1_draft_not_submitted_by_transcription",
+      "passed": true
+    },
+    {
+      "case": "p1_deepseek_follow_up",
+      "error": null,
+      "passed": true
+    },
+    {
+      "case": "p1_deepseek_feedback",
+      "error": null,
+      "passed": true
+    },
+    {
+      "case": "openai_chinese_voice",
+      "error": null,
+      "passed": true,
+      "transcript": "我会保留文件的多个版本,客户端离线修改后重新同步时,先检查版本号,发生冲突时保留两份内容,让用户选择,不会静默覆盖。"
+    },
+    {
+      "case": "p2_draft_not_submitted_by_transcription",
+      "passed": true
+    },
+    {
+      "case": "p2_deepseek_follow_up",
+      "error": null,
+      "passed": true
+    },
+    {
+      "case": "p2_deepseek_feedback",
+      "error": "无法连接 API（网络、代理或 TLS 错误），请检查后重试",
+      "passed": false
+    },
+    {
+      "case": "provider_key_isolation",
+      "passed": true
+    }
+  ],
+  "status": "failed_or_incomplete",
+  "usage": {
+    "prices": [],
+    "records": [
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": null,
+        "createdAt": "2026-10-16T00:36:25.199Z",
+        "estimatedUsd": null,
+        "id": 10,
+        "inputTokens": 163,
+        "model": "gpt-4o-mini-transcribe",
+        "module": "p1",
+        "operation": "transcription",
+        "outputTokens": 42,
+        "provider": "openai",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "245cb7b27e99f32b72e983971f5df710",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T00:31:50.933Z",
+        "estimatedUsd": null,
+        "id": 9,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p2",
+        "operation": "feedback",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "4b20315088f474fe12de14f4eed2002c",
+        "status": "transport_error"
+      },
+      {
+        "cacheReadTokens": 512,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T00:31:46.990Z",
+        "estimatedUsd": null,
+        "id": 8,
+        "inputTokens": 1126,
+        "model": "deepseek-flash",
+        "module": "p2",
+        "operation": "follow_up",
+        "outputTokens": 126,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "4b20315088f474fe12de14f4eed2002c",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": null,
+        "createdAt": "2026-10-16T00:31:45.783Z",
+        "estimatedUsd": null,
+        "id": 7,
+        "inputTokens": 149,
+        "model": "gpt-4o-mini-transcribe",
+        "module": "p2",
+        "operation": "transcription",
+        "outputTokens": 44,
+        "provider": "openai",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "4b20315088f474fe12de14f4eed2002c",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T00:31:44.878Z",
+        "estimatedUsd": null,
+        "id": 6,
+        "inputTokens": 2008,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "feedback",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": "5b0e12f8dcbe95b5adf9099dde9583df",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 512,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T00:31:36.555Z",
+        "estimatedUsd": null,
+        "id": 5,
+        "inputTokens": 1323,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "feedback",
+        "outputTokens": 1079,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "5b0e12f8dcbe95b5adf9099dde9583df",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 384,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T00:31:35.103Z",
+        "estimatedUsd": null,
+        "id": 4,
+        "inputTokens": 1364,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "follow_up",
+        "outputTokens": 104,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "5b0e12f8dcbe95b5adf9099dde9583df",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": null,
+        "createdAt": "2026-10-16T00:31:30.700Z",
+        "estimatedUsd": null,
+        "id": 3,
+        "inputTokens": 118,
+        "model": "gpt-4o-mini-transcribe",
+        "module": "p1",
+        "operation": "transcription",
+        "outputTokens": 36,
+        "provider": "openai",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": "5b0e12f8dcbe95b5adf9099dde9583df",
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 256,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T00:31:30.000Z",
+        "estimatedUsd": null,
+        "id": 2,
+        "inputTokens": 840,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 11,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1021,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T00:31:26.006Z",
+        "estimatedUsd": null,
+        "id": 1,
+        "inputTokens": 1155,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 478,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      }
+    ]
+  }
+}

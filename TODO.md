@@ -45,11 +45,16 @@ Existing evidence and defects:
 
 ## Deferred features, in suggested order
 
-### 1. Voice answers with editable transcription
+### 1. Voice answers with editable transcription — core implementation validated
 
-- [ ] Support speech input during P1 and P2 interviews.
-- [ ] Show an editable transcript and let the user correct recognition mistakes before submission.
-- [ ] Submit only after explicit user action, through the existing answer/follow-up workflow.
+- [x] Implement speech input during P1 and P2 interviews using OpenAI `gpt-4o-mini-transcribe`.
+- [x] Show an editable transcript and let the user correct recognition mistakes before submission.
+- [x] Submit only after explicit user action, through the existing answer/follow-up workflow.
+- [x] Validate the core voice path: builds, 91 automated checks, native microphone/UI checks and three real OpenAI transcriptions.
+
+Live text checks used DeepSeek only: P1 generation/follow-up/feedback and P2 follow-up passed. P2 feedback hit a connection/TLS failure and remains pending in the isolated test ledger; that batch is not a full DeepSeek acceptance pass. Broader accent/device, explicit permission-denial and full five-minute/size-limit UI testing remain outside this core acceptance.
+
+The OpenAI key is for voice input only. Interview generation and feedback remain on Claude/DeepSeek. See [voice input](docs/VOICE_INPUT.md) for operation, accounting limits and pending acceptance.
 
 ### 2. Review and weak-point tracking — completed
 

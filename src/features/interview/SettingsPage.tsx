@@ -10,6 +10,7 @@ import { Banner } from "@astryxdesign/core/Banner";
 import { useI18n } from "../../i18n";
 import { localizeError } from "../../errors";
 import { UsagePanel } from "./SessionTools";
+import { VoiceSettings } from "../voice/VoiceSettings";
 type Config = { provider: string; model: string; timeoutSeconds: number };
 type Summary = { id: string; title: string; provider?: string; model?: string };
 type Overview = {
@@ -173,6 +174,7 @@ export default function SettingsPage({
         </Collapsible>
       </div>
 
+      <VoiceSettings active={active} />
       <section className="card settings-accounting">
         <h2>{t("compiler")}</h2>
         <div className="provider-fields">

@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-16",
+  "voiceCoreStatus": "passed_for_tested_scope",
+  "textWorkflowStatus": "partial_p2_feedback_transport_failure",
+  "automated": {
+    "rustPassed": 85,
+    "rustIgnoredKeychain": 1,
+    "frontendPassed": 6,
+    "totalPassed": 91,
+    "voiceSpecificRustTests": 4,
+    "voiceSpecificFrontendTests": 2
+  },
+  "builds": {
+    "typescriptVite": "passed; existing chunk-size advisory",
+    "nativeDebugApp": "passed"
+  },
+  "live": {
+    "openaiVoiceRequests": 3,
+    "deepseekTextRequests": 7,
+    "claudeRequests": 0,
+    "samples": "Locally synthesized authored English, Chinese and mixed Chinese/English speech",
+    "mixedTermsPreserved": [
+      "Redis",
+      "Cache Aside",
+      "MVCC"
+    ],
+    "p1": "generation, follow-up and reviewed feedback passed",
+    "p2": "follow-up passed; feedback failed with connection/network/proxy/TLS error",
+    "p2Recovery": "feedback_pending with candidate turn and error retained",
+    "overallBatchStatus": "failed_or_incomplete",
+    "evidence": "review/voice-live-acceptance.json"
+  },
+  "computerUse": {
+    "profile": "local.swe.interview-prep.voice-qa",
+    "fixtures": "Authored cached sessions; DeepSeek config in QA profile only",
+    "passed": [
+      "Small accessible idle microphone icon in P1/P2",
+      "Microphone capture starts and toggles to Stop",
+      "Separate Transcribe button appears only after recording",
+      "Local audio controls show recorded duration",
+      "Leaving module stops microphone capture",
+      "Changing P2 stage clears temporary clip",
+      "P1 authored typed draft preserved",
+      "Bilingual controls observed"
+    ],
+    "microphoneAudioUploaded": false
+  },
+  "limitations": [
+    "Synthetic sample recognition is not a general accent/device benchmark",
+    "Explicit permission-denial paths, full five-minute wait and maximum-size native capture were not manually exercised",
+    "Native editable-preview insertion was covered by pure helper tests and real backend draft persistence, not by uploading microphone captures in the QA UI",
+    "DeepSeek P2 feedback live retry remains outstanding; no full DeepSeek acceptance claim",
+    "Transcription costs remain unknown without dedicated audio/text rate configuration"
+  ],
+  "normalProfileSettingsOrHistoryChanged": false,
+  "openaiKeyUse": "Transcription only; no question, follow-up, reference, feedback, review or repair generation",
+  "bundle": "src-tauri/target/voice-input/SWE Interview Prep.app",
+  "sourceSha256": {
+    "src/features/voice/VoiceInput.tsx": "afaa4ec563caa93ada6948f2c962385e50eca9aca4a9cafc56e94b61b98534fe",
+    "src/features/voice/VoiceSettings.tsx": "3936978107e319b097ff83f807ea3d0a132379ddd468bc85ad01d267ea419bd6",
+    "src/features/voice/voice.css": "693143400602eb051f6c4ed53dd818c3e09be60959cd7f99c58192c9fcf6531a",
+    "src/features/voice/draft.ts": "1c8b6bb18ff1a3245679db6a25b64ec9ba156cca6516371db4fc6b6480c873b5",
+    "src/features/interview/InterviewApp.tsx": "3a1b391984d4afde8fe178d67368b4c2396c541e00cc39cb08d0ae6a292998a1",
+    "src/features/system-design/SystemDesignApp.tsx": "30eeb265c0fc40137ad208e1baad216b811eadd4359229716d3378b12580a860",
+    "src/features/interview/SettingsPage.tsx": "0faf3542061a694692024b63fb2a571ca2efc471cb11e8a7bcfa923c53aad2ac",
+    "src/main.tsx": "1d7ef5360356e887794fe1259ac6728d54d94c0997bea7181f6ed75efee09ed3",
+    "src/i18n.tsx": "f63db6255f309ac8201fd572399182a5de32d02ec35f58e96701a91136bb10e2",
+    "src/errors.ts": "adf2422f6e83c014ae8d5912ea5a3a35b2bf6a50d2bf22dbc94ef55cba541128",
+    "src-tauri/src/transcription.rs": "01de1f898938d598ee95e9c3fe6cfda68162a831f33fb768e1ffe0333314596d",
+    "src-tauri/src/usage.rs": "0ddcb239f70d9faa62e634d36334f24c4e7771009a5375900277dadc68ad7c29",
+    "src-tauri/src/main.rs": "b255fc460a0a6e03ba7d76b01e1421e5c23cd084633df6bb1a3f5458c55d22c9",
+    "src-tauri/src/lib.rs": "c532ca4d1e6c573d90695f8f5764cbc69d424c83dd5f71f4c719fed659f75c8f",
+    "src-tauri/tauri.conf.json": "450fe7224550165b6701138aff05068604e91c9d0917f0e44274381864bb2bf7",
+    "src-tauri/Info.plist": "3311d6e69b9f65917b2eff857430fffdaacbaa4a5565a05cfca10fce73718788",
+    "src-tauri/Entitlements.plist": "d70ae7a3f925e53536fe56d205e4bab9bc1df03495738bf8dfdb6cb6dbb53c7d",
+    "tools/tests/review-ui.test.mjs": "437303acaa8d97955a0944e2013830134cb3971d89b9435de305a765a2031a61",
+    "src-tauri/examples/live_voice_acceptance.rs": "8a7e9ade161e702630f4754bdef7806f26caef33e32a669aeca9b3881ca8ee26"
+  }
+}

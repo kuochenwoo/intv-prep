@@ -16,6 +16,7 @@ import { localizeError } from "../../errors";
 import { LiveResponse } from "./LiveResponse";
 import "./interview.css";
 import { SessionTools } from "./SessionTools";
+import { VoiceInput } from "../voice/VoiceInput";
 import { EmptyState, FeedbackLists } from "../../EmptyState";
 type Config = { provider: string; model: string; timeoutSeconds: number };
 type Settings = { config: Config; keyStatus: string; credentialSource: string };
@@ -111,9 +112,11 @@ const stateBadge: Record<string, "info" | "warning" | "success"> = {
 };
 export default function InterviewApp({
   settingsVersion = 0,
+  visible = true,
   focus,
 }: {
   settingsVersion?: number;
+  visible?: boolean;
   focus?: { id: string; session: boolean; n: number };
 }) {
   const { t, lang } = useI18n();
@@ -129,13 +132,15 @@ export default function InterviewApp({
     model: "claude-haiku-5-5",
     timeoutSeconds: 60,
   });
-  const [busy, setBusy] = useState(false),
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  const [requestBusy, setBusy] = useState(false),
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
     [connection, setConnection] = useState<Connection>({
       kind: "unverified",
     }),
     [live, setLive] = useState("");
+  const busy = requestBusy || voiceBusy;
   const [online, setOnline] = useState(navigator.onLine),
     [confirm, setConfirm] = useState<"history" | "session" | null>(null);
   const queue = useRef(Promise.resolve()),
@@ -275,6 +280,7 @@ export default function InterviewApp({
     if (saveError.current) throw new Error(saveError.current);
   }
   async function perform(task: () => Promise<void>, network = false) {
+    if (voiceBusy) return;
     setBusy(true);
     setError("");
     setLive("");
@@ -402,7 +408,13 @@ export default function InterviewApp({
                   ? "success"
                   : "neutral"
             }
-            label={busy ? t("busyNote") : connectionText}
+            label={
+              voiceBusy
+                ? t("voiceInProgress")
+                : requestBusy
+                  ? t("busyNote")
+                  : connectionText
+            }
           />
           <Badge
             variant="purple"
@@ -411,7 +423,7 @@ export default function InterviewApp({
         </div>
       </section>
       <p className="privacy-note">{t("privacyNote")}</p>
-      {busy && live && <LiveResponse text={live} />}
+      {requestBusy && live && <LiveResponse text={live} />}
       {error && (
         <div className="page-banner">
           <Banner
@@ -606,8 +618,8 @@ export default function InterviewApp({
                   <Button
                     label={t("generateStart")}
                     variant="primary"
-                    isDisabled={!data}
-                    isLoading={busy}
+                    isDisabled={busy || !data}
+                    isLoading={requestBusy}
                     onClick={() =>
                       perform(async () => {
                         const q = await invoke<Question>(
@@ -766,7 +778,8 @@ export default function InterviewApp({
                     <Button
                       label={t("retryPending")}
                       variant="primary"
-                      isLoading={busy}
+                      isDisabled={busy}
+                      isLoading={requestBusy}
                       onClick={() =>
                         perform(
                           async () =>
@@ -794,6 +807,16 @@ export default function InterviewApp({
                       placeholder={t("answerPlaceholder")}
                       width="100%"
                     />
+                    <VoiceInput
+                      key={session.id}
+                      module="p1"
+                      sessionId={session.id}
+                      visible={visible}
+                      disabled={requestBusy}
+                      draft={draft}
+                      onDraft={save}
+                      onBusyChange={setVoiceBusy}
+                    />
                     <div className="answer-status muted">
                       {saving
                         ? t("saving")
@@ -814,8 +837,8 @@ export default function InterviewApp({
                       <Button
                         label={t("submitAnswer")}
                         variant="primary"
-                        isDisabled={!draft.trim() || answered >= 20}
-                        isLoading={busy}
+                        isDisabled={busy || !draft.trim() || answered >= 20}
+                        isLoading={requestBusy}
                         onClick={() =>
                           perform(
                             async () =>

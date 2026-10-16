@@ -15,6 +15,7 @@ struct AppState {
     db: Arc<Mutex<rusqlite::Connection>>,
     judge: Arc<Mutex<()>>,
     interview: Arc<Mutex<()>>,
+    transcription: Arc<Mutex<()>>,
 }
 impl AppState {
     fn db(&self) -> MutexGuard<'_, rusqlite::Connection> {
@@ -631,6 +632,41 @@ async fn sd_reference(
 }
 
 #[tauri::command]
+fn transcription_settings() -> serde_json::Value {
+    swe_interview_prep::transcription::settings()
+}
+#[tauri::command]
+fn save_transcription_key(api_key: String) -> Result<(), String> {
+    credentials::save_key("openai", &api_key)
+}
+#[tauri::command]
+async fn transcribe_audio(
+    state: State<'_, AppState>,
+    module: String,
+    session_id: String,
+    audio: Vec<u8>,
+    mime: String,
+    lang: interview::Lang,
+) -> Result<swe_interview_prep::transcription::Transcript, String> {
+    let state = state.inner().clone();
+    background(move || {
+        let _guard = state
+            .transcription
+            .try_lock()
+            .map_err(|_| "已有语音转写请求正在运行")?;
+        swe_interview_prep::transcription::transcribe(
+            &state.path,
+            &module,
+            &session_id,
+            &audio,
+            &mime,
+            lang,
+        )
+    })
+    .await
+}
+
+#[tauri::command]
 fn coding_timing(
     state: State<AppState>,
     problem_id: String,
@@ -703,6 +739,7 @@ fn main() {
                 db: Arc::new(Mutex::new(connection)),
                 judge: Arc::new(Mutex::new(())),
                 interview: Arc::new(Mutex::new(())),
+                transcription: Arc::new(Mutex::new(())),
             });
             Ok(())
         })
@@ -711,6 +748,9 @@ fn main() {
             review_dismiss,
             session_timing,
             coding_timing,
+            transcription_settings,
+            save_transcription_key,
+            transcribe_audio,
             export_interview,
             api_usage,
             save_api_prices,

@@ -3,6 +3,45 @@ import type { Lang } from "./i18n";
 // The Rust backend reports errors in Chinese. In English mode the UI translates
 // them here, so keep this table in sync when adding or rewording a backend error.
 const EXACT: [string, string][] = [
+  ["当前会话不能接收语音输入", "This session cannot accept voice input"],
+  ["已有语音转写请求正在运行", "A transcription request is already running"],
+  [
+    "录音为空或超过 20 MiB，请缩短录音",
+    "Recording is empty or exceeds 20 MiB; use a shorter recording",
+  ],
+  [
+    "不支持此录音格式，请更换录音环境",
+    "Unsupported recording format; use a compatible recording environment",
+  ],
+  ["无法初始化语音转写请求", "Could not initialize transcription"],
+  [
+    "语音转写连接失败或超时，录音已保留，可手动重试",
+    "Transcription connection failed or timed out. Your recording is retained; retry explicitly",
+  ],
+  [
+    "OpenAI 转写认证失败，请在设置中检查 Key 和项目权限",
+    "OpenAI transcription authentication failed. Check the key and project permissions in Settings",
+  ],
+  [
+    "OpenAI 转写额度或速率受限，请检查账户后重试",
+    "OpenAI transcription quota or rate limit reached. Check your account before retrying",
+  ],
+  [
+    "OpenAI 转写服务返回错误，录音已保留，可手动重试",
+    "OpenAI transcription returned an error. Your recording is retained; retry explicitly",
+  ],
+  [
+    "语音转写响应读取失败，录音已保留，可手动重试",
+    "Could not read the transcription response. Your recording is retained; retry explicitly",
+  ],
+  [
+    "语音转写响应无效，录音已保留，可手动重试",
+    "Invalid transcription response. Your recording is retained; retry explicitly",
+  ],
+  [
+    "未识别到有效文本，请检查录音或重新录制",
+    "No valid transcript was recognized. Check the recording or record again",
+  ],
   ["无效的费用设置", "Invalid cost settings"],
   ["未知面试模块", "Unknown interview module"],
   ["计时面试已结束", "The timed interview has ended"],

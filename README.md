@@ -40,9 +40,13 @@ The app is written to `src-tauri/target/release/bundle/macos/`. It still needs a
 
 ## AI settings
 
-Open **Technical Deep Dive** and pick a provider, model and timeout. Then save your API key there, or copy `.env.example` to `.env` and fill it in. Keys are kept only in the project's `.env` (Git-ignored, mode 0600). They are never written to SQLite or sent to the frontend. The default model is `claude-haiku-5-5`.
+Open **Settings** and pick an interview provider, model and timeout. Then save your API key there, or copy `.env.example` to `.env` and fill it in. Keys are kept only in the project's `.env` (Git-ignored, mode 0600). They are never written to SQLite or sent to the frontend. The default model is `claude-haiku-5-5`.
 
 Generating questions, answering, AI reference answers and feedback call the provider's API and may cost money. Viewing history, reusing cached questions and saving drafts stay offline.
+
+## Voice input
+
+P1/P2 answer panels include a small microphone icon for optional recording, followed by playback, OpenAI transcription and an editable preview. Record, stop, choose Transcribe, correct the text and append it to your answer draft; submitting the answer remains a separate action. `OPENAI_API_KEY` in the ignored `.env` is used only for `gpt-4o-mini-transcribe`; it never changes the Claude/DeepSeek interview provider. A separate key field lives under Settings → Voice transcription settings. Audio stays in memory until you explicitly request transcription. See [voice input](docs/VOICE_INPUT.md) for limits and pending validation. Core voice validation passed with three real OpenAI transcriptions, native microphone checks and 91 automated checks. The accompanying DeepSeek text batch retains a P2 feedback connection failure; see the report for its limits.
 
 ## Data
 

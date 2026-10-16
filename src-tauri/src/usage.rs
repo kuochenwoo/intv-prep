@@ -286,3 +286,18 @@ mod purpose_tests {
         );
     }
 }
+
+/// Transcription reports mixed audio/text input tokens. Preserve totals, but do
+/// not apply chat-model rates or invent a cost from locally measured duration.
+pub fn finish_transcription(
+    path: &Path,
+    id: i64,
+    status: &str,
+    usage: &Value,
+) -> Result<(), String> {
+    let c = crate::db::connect(path)?;
+    let counter = |name: &str| usage[name].as_u64().and_then(|n| i64::try_from(n).ok());
+    c.execute("UPDATE api_usage SET status=?2,input_tokens=?3,output_tokens=?4,estimated_usd=NULL WHERE id=?1",
+        params![id,status,counter("input_tokens"),counter("output_tokens")]).map_err(|e|e.to_string())?;
+    Ok(())
+}

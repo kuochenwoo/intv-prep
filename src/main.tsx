@@ -767,6 +767,7 @@ function App() {
           {designVisited && (
             <div hidden={view !== "system_design"}>
               <SystemDesignApp
+                visible={view === "system_design"}
                 dark={scheme === "dark"}
                 settingsVersion={settingsVersion}
                 focus={focusFor("p2")}
@@ -776,6 +777,7 @@ function App() {
           {visited && (
             <div hidden={view !== "deep_dive"}>
               <InterviewApp
+                visible={view === "deep_dive"}
                 settingsVersion={settingsVersion}
                 focus={focusFor("p1")}
               />

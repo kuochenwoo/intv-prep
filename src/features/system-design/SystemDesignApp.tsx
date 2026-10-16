@@ -19,6 +19,7 @@ import { Diagram, Markdown } from "./DesignDocument";
 import "../interview/interview.css";
 import "./system-design.css";
 import { SessionTools } from "../interview/SessionTools";
+import { VoiceInput } from "../voice/VoiceInput";
 
 const stages = [
   "requirements",
@@ -122,10 +123,12 @@ const emptyWorkspace = (): Workspace => ({
 export default function SystemDesignApp({
   dark,
   settingsVersion = 0,
+  visible = true,
   focus,
 }: {
   dark: boolean;
   settingsVersion?: number;
+  visible?: boolean;
   focus?: { id: string; session: boolean; n: number };
 }) {
   const { t, lang } = useI18n();
@@ -149,11 +152,13 @@ export default function SystemDesignApp({
       .toLocaleLowerCase()
       .includes(scenarioSearch.trim().toLocaleLowerCase());
   });
-  const [busy, setBusy] = useState(false),
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  const [requestBusy, setBusy] = useState(false),
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
     [live, setLive] = useState(""),
     [saveFailed, setSaveFailed] = useState(false);
+  const busy = requestBusy || voiceBusy;
   const [online, setOnline] = useState(navigator.onLine),
     [connection, setConnection] = useState<Connection>({ kind: "unverified" }),
     [confirm, setConfirm] = useState<"history" | "session" | null>(null);
@@ -273,7 +278,7 @@ export default function SystemDesignApp({
       });
   }
   async function perform(task: () => Promise<void>, network = false) {
-    if (running.current) return;
+    if (running.current || voiceBusy) return;
     running.current = true;
     setBusy(true);
     setError("");
@@ -452,7 +457,13 @@ export default function SystemDesignApp({
                   ? "success"
                   : "neutral"
             }
-            label={busy ? t("busyNote") : connectionText}
+            label={
+              voiceBusy
+                ? t("voiceInProgress")
+                : requestBusy
+                  ? t("busyNote")
+                  : connectionText
+            }
           />
           <Badge
             variant="purple"
@@ -468,7 +479,7 @@ export default function SystemDesignApp({
           <Banner status="warning" title={t("needDesktop")} />
         </div>
       )}
-      {busy && live && <LiveResponse text={live} />}
+      {requestBusy && live && <LiveResponse text={live} />}
       {error && (
         <div className="page-banner">
           <Banner
@@ -888,14 +899,34 @@ export default function SystemDesignApp({
                       })
                     }
                   />
+                  <VoiceInput
+                    key={`${session.id}:${session.stage}`}
+                    module="p2"
+                    sessionId={session.id}
+                    visible={visible}
+                    disabled={requestBusy}
+                    draft={draft}
+                    onBusyChange={setVoiceBusy}
+                    onDraft={(answer) =>
+                      updateWorkspace({
+                        ...workRef.current,
+                        drafts: {
+                          ...workRef.current.drafts,
+                          [session.stage]: answer,
+                        },
+                      })
+                    }
+                  />
                   <p className="muted" aria-live="polite">
-                    {busy
-                      ? t("busyNote")
-                      : saving
-                        ? t("saving")
-                        : saveFailed
-                          ? t("draftFailed")
-                          : t("saved")}
+                    {voiceBusy
+                      ? t("voiceInProgress")
+                      : requestBusy
+                        ? t("busyNote")
+                        : saving
+                          ? t("saving")
+                          : saveFailed
+                            ? t("draftFailed")
+                            : t("saved")}
                   </p>
                   {saveFailed && (
                     <Button

@@ -5,6 +5,102 @@ export type Lang = "zh" | "en";
 // UI strings. Problem and topic text has its own `en` blocks in the content files,
 // and backend errors are translated in errors.ts.
 const strings = {
+  voiceInProgress: ["语音输入处理中", "Voice input in progress"],
+  voiceTriggerHint: [
+    "语音输入：点击录音，再点击停止；转写需单独确认",
+    "Voice input: click to record, click again to stop; transcription is a separate action",
+  ],
+  voiceTitle: ["语音输入", "Voice input"],
+  voiceRecord: ["开始录音", "Record"],
+  voiceRerecord: ["重新录制", "Re-record"],
+  voiceStop: ["停止录音", "Stop recording"],
+  voiceTranscribe: [
+    "用 OpenAI 转写（联网）",
+    "Transcribe with OpenAI (online)",
+  ],
+  voiceDiscard: ["清除临时录音与转写", "Discard recording and transcript"],
+  voiceRecording: ["录音中 · {time}", "Recording · {time}"],
+  voiceRequesting: ["等待麦克风权限…", "Waiting for microphone permission…"],
+  voiceStopping: ["正在保存临时录音…", "Finishing recording…"],
+  voiceTranscribing: ["OpenAI 转写中…", "Transcribing with OpenAI…"],
+  voicePrivacy: [
+    "先录音，再手动转写。仅点击转写时将录音发送给 OpenAI，可能产生费用；不发送面试历史，不会自动提交回答。",
+    "Record first, then transcribe explicitly. Only Transcribe sends audio to OpenAI and may incur charges. Interview history is excluded; answers are never submitted automatically.",
+  ],
+  voicePlayback: ["回听临时录音", "Play back recording"],
+  voiceTranscript: ["转写预览（可编辑）", "Editable transcript preview"],
+  voiceEditHint: [
+    "请核对中英术语与识别错误，再添加到回答草稿；转写不用于润色或补充答案。",
+    "Check mixed-language terms and recognition errors before adding this to your answer draft. Transcription is not used to improve or expand the answer.",
+  ],
+  voiceInsert: ["追加到回答草稿", "Append to answer draft"],
+  voiceInserted: [
+    "已追加到草稿，请检查后手动提交回答。",
+    "Added to your draft. Review it, then submit the answer explicitly.",
+  ],
+  voiceDraftLimit: [
+    "合并后超过回答的 6000 字符上限。请精简转写或草稿，现有文字不会被覆盖或截断。",
+    "The combined answer exceeds 6,000 characters. Shorten the transcript or draft; existing text will not be overwritten or truncated.",
+  ],
+  voiceTemporary: [
+    "每段最多 5 分钟 / 20 MiB。临时录音与未插入的转写仅保存在内存；切换会话或设计阶段、关闭应用会清除。离开当前模块会停止录音；重新录制会替换临时内容。",
+    "Up to 5 minutes / 20 MiB per recording. Audio and uninserted transcripts stay in memory and are cleared when changing interviews or design stages, or closing the app. Leaving this module stops recording; re-recording replaces temporary content.",
+  ],
+  voiceLimit: [
+    "已达到 5 分钟上限，录音已停止；可回听并手动转写。",
+    "The 5-minute limit was reached. Recording stopped; play it back and transcribe when ready.",
+  ],
+  voiceTooLarge: [
+    "录音超过 20 MiB，请重新录制更短的回答。",
+    "Recording exceeded 20 MiB. Record a shorter answer.",
+  ],
+  voiceEmpty: [
+    "没有录到音频，请检查麦克风后重新录制。",
+    "No audio was recorded. Check your microphone and try again.",
+  ],
+  voiceUnsupported: [
+    "此环境不支持录音，请使用支持麦克风录音的桌面应用。",
+    "Recording is unavailable here. Use the desktop app with microphone recording support.",
+  ],
+  voicePermission: [
+    "麦克风权限被拒绝。请在系统隐私设置中允许本应用访问麦克风，然后重试。",
+    "Microphone permission was denied. Allow microphone access for this app in system privacy settings, then try again.",
+  ],
+  voiceNoDevice: [
+    "未找到麦克风，请连接设备后重试。",
+    "No microphone was found. Connect one and try again.",
+  ],
+  voiceDeviceBusy: [
+    "无法读取麦克风，请检查其他应用或系统音频设置。",
+    "The microphone could not be accessed. Check other apps and system audio settings.",
+  ],
+  voiceRecordFailed: [
+    "录音失败，请检查麦克风后重试；已有回答草稿保留。",
+    "Recording failed. Check your microphone and try again; your answer draft is preserved.",
+  ],
+  voiceOffline: [
+    "录音已保留，联网后可手动转写。",
+    "Recording retained. Reconnect to transcribe it.",
+  ],
+  voiceUsageWarning: [
+    "转写已完成，但用量记录未能完整保存。请保留文本，不必再次请求转写。",
+    "Transcription completed, but usage accounting could not be fully saved. Keep the text; you do not need to transcribe again.",
+  ],
+  voiceSettingsTitle: ["语音转写设置", "Voice transcription settings"],
+  voiceSettingsScope: [
+    "OpenAI Key 仅用于语音输入，保存在项目 .env 中。出题、追问、参考回答和反馈仍使用上方配置的 Claude / DeepSeek。",
+    "The OpenAI key is used only for voice input and stored in the project .env. Questions, follow-ups, reference answers and feedback continue using the Claude / DeepSeek configuration above.",
+  ],
+  voiceModel: [
+    "OpenAI · gpt-4o-mini-transcribe",
+    "OpenAI · gpt-4o-mini-transcribe",
+  ],
+  voiceKeyLabel: ["OpenAI 语音转写 API Key", "OpenAI transcription API key"],
+  voiceAccounting: [
+    "每次转写请求会记录到 API 用量。音频/文本输入单价不同，目前仅保留服务端返回的 Token 总数，费用显示未知；不会用聊天模型费率估算。",
+    "Each transcription request appears in API usage. Audio and text input have different rates; only provider-reported token totals are recorded for now, and cost remains unknown. Chat-model rates are not applied.",
+  ],
+  usageOp_transcription: ["语音转写", "Voice transcription"],
   reviewTimedOnly: [
     "已有计时练习，尚无提交或面试回答记录。",
     "Timed practice recorded; no submissions or interview answers yet.",
