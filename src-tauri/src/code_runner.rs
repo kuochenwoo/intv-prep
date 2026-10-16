@@ -459,14 +459,22 @@ pub fn judge(
             result.status = status.clone();
         }
         let stop = ["timeout", "output_limit", "memory_limit"].contains(&status.as_str());
+        // A passed hidden test keeps only its summary: its full input and answer stay in
+        // the backend and are not stored with every submission. Failing cases keep a
+        // bounded excerpt so the result stays small.
+        let detail = t.is_sample || status != "accepted";
         result.cases.push(CaseResult {
             id: t.id.clone(),
             status,
             exit_code: r.exit_code,
-            input,
-            expected: t.expected.clone(),
-            actual: r.stdout,
-            stderr: r.stderr,
+            input: if detail { excerpt(input) } else { String::new() },
+            expected: if detail {
+                bounded(&t.expected)
+            } else {
+                serde_json::Value::Null
+            },
+            actual: if detail { excerpt(r.stdout) } else { String::new() },
+            stderr: excerpt(r.stderr),
             duration_ms: r.duration_ms,
             peak_memory_bytes: r.peak_memory_bytes,
         });
@@ -475,6 +483,46 @@ pub fn judge(
         }
     }
     Ok(result)
+}
+
+/// Longest case text kept in a result; larger inputs are cut with a marker.
+const EXCERPT_BYTES: usize = 4096;
+
+pub(crate) fn excerpt(text: String) -> String {
+    if text.len() <= EXCERPT_BYTES {
+        return text;
+    }
+    let mut end = EXCERPT_BYTES;
+    while !text.is_char_boundary(end) {
+        end -= 1;
+    }
+    format!("{}\n… ({} bytes total)", &text[..end], text.len())
+}
+
+/// Expected values are shown as JSON; a huge one becomes a cut string instead.
+pub(crate) fn bounded(value: &serde_json::Value) -> serde_json::Value {
+    let text = value.to_string();
+    if text.len() <= EXCERPT_BYTES {
+        value.clone()
+    } else {
+        serde_json::Value::String(excerpt(text))
+    }
+}
+
+#[cfg(test)]
+mod excerpt_tests {
+    use super::*;
+    #[test]
+    fn long_case_text_is_cut_on_a_char_boundary() {
+        assert_eq!(excerpt("abc".into()), "abc");
+        let long = "数".repeat(EXCERPT_BYTES);
+        let cut = excerpt(long.clone());
+        assert!(cut.len() < EXCERPT_BYTES + 40);
+        assert!(cut.ends_with(&format!("({} bytes total)", long.len())));
+        let big = serde_json::json!(vec![1; 5000]);
+        assert!(bounded(&big).is_string());
+        assert_eq!(bounded(&serde_json::json!([1, 2])), serde_json::json!([1, 2]));
+    }
 }
 
 #[cfg(all(test, target_os = "macos"))]

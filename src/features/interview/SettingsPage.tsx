@@ -42,7 +42,9 @@ export default function SettingsPage({
     [scope, setScope] = useState("all"),
     [revision, setRevision] = useState(0),
     [compiler, setCompiler] = useState("");
-  async function load() {
+  // `keepEdits` refreshes everything except the model and key fields, so saving the
+  // compiler does not discard a key or provider change that has not been saved yet.
+  async function load(keepEdits = false) {
     const [p1, p2, compiler] = await Promise.all([
       invoke<Overview>("interview_overview"),
       invoke<{ sessions: Summary[] }>("sd_overview"),
@@ -50,20 +52,22 @@ export default function SettingsPage({
     ]);
     setData(p1);
     setDesign(p2.sessions);
-    setConfig(p1.settings.config);
-    setApiKey("");
+    if (!keepEdits) {
+      setConfig(p1.settings.config);
+      setApiKey("");
+    }
     setCompiler(compiler);
   }
   useEffect(() => {
     if (active && isTauri()) void load().catch((e) => setError(String(e)));
   }, [active]);
-  async function perform(task: () => Promise<void>) {
+  async function perform(task: () => Promise<void>, keepEdits = false) {
     setBusy(true);
     setError("");
     setNotice("");
     try {
       await task();
-      await load();
+      await load(keepEdits);
       setRevision((n) => n + 1);
       onSaved();
       setNotice(t("settingsSaved"));
@@ -203,7 +207,7 @@ export default function SettingsPage({
                   path: compiler,
                 });
                 setCompiler(path);
-              })
+              }, true)
             }
           />
         </div>

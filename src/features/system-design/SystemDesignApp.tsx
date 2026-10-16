@@ -186,9 +186,13 @@ export default function SystemDesignApp({
   useEffect(() => {
     if (isTauri()) void overview().catch((e) => setError(String(e)));
   }, [settingsVersion]);
-  // Explicit review navigation wins over initial restoration and older requests.
+  // Explicit review navigation wins over initial restoration. It waits for a running
+  // request or voice input to finish, so that request cannot pull the screen back or
+  // stream into the newly opened session.
+  const appliedFocus = useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (!focus || !isTauri()) return;
+    if (!focus || !isTauri() || busy || appliedFocus.current === focus.n) return;
+    appliedFocus.current = focus.n;
     const version = ++navigationVersion.current;
     let disposed = false;
     const current = () => !disposed && navigationVersion.current === version;
@@ -214,7 +218,7 @@ export default function SystemDesignApp({
     return () => {
       disposed = true;
     };
-  }, [focus?.n]);
+  }, [focus?.n, busy]);
   function show(s: Session) {
     navigationVersion.current += 1;
     setHistoryOpen(false);
@@ -289,6 +293,8 @@ export default function SystemDesignApp({
   async function perform(task: () => Promise<void>, network = false) {
     if (running.current || voiceBusy) return;
     running.current = true;
+    // A user action supersedes a launch restore that has not finished yet.
+    navigationVersion.current += 1;
     setBusy(true);
     setError("");
     setLive("");

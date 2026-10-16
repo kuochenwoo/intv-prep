@@ -431,10 +431,7 @@ impl Io {
                     a.len() == b.len()
                         && a.iter().zip(b).all(|(x, y)| {
                             let (x, y) = (x.as_str().unwrap_or(""), y.as_str().unwrap_or(""));
-                            match (x.parse::<f64>(), y.parse::<f64>()) {
-                                (Ok(p), Ok(q)) => (p - q).abs() <= 1e-5 * 1f64.max(q.abs()),
-                                _ => x == y,
-                            }
+                            token_eq(x, y)
                         })
                 }
                 _ => false,
@@ -726,7 +723,7 @@ fn same(a: &Value, b: &Value) -> bool {
     match (a, b) {
         (Value::Number(x), Value::Number(y)) if x.is_f64() || y.is_f64() => {
             let (x, y) = (x.as_f64().unwrap(), y.as_f64().unwrap());
-            (x - y).abs() <= 1e-5 * 1f64.max(y.abs())
+            (x - y).abs() <= DECIMAL_TOLERANCE
         }
         (Value::Array(x), Value::Array(y)) => {
             x.len() == y.len() && x.iter().zip(y).all(|(a, b)| same(a, b))
@@ -892,3 +889,36 @@ inline void write(TreeNode* root) {
     write_row(tokens);
 }
 "#;
+
+/// Answers within 1e-5 count, as on LeetCode. The tolerance is absolute, so a median
+/// of large values that is off by 0.5 is still wrong.
+const DECIMAL_TOLERANCE: f64 = 1e-5;
+
+/// Integer tokens must match exactly (an overflow or off-by-one is wrong however
+/// large the value); decimals use the absolute tolerance; anything else compares as text.
+fn token_eq(x: &str, y: &str) -> bool {
+    if let (Ok(p), Ok(q)) = (x.parse::<i128>(), y.parse::<i128>()) {
+        return p == q;
+    }
+    match (x.parse::<f64>(), y.parse::<f64>()) {
+        (Ok(p), Ok(q)) => (p - q).abs() <= DECIMAL_TOLERANCE,
+        _ => x == y,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::token_eq;
+
+    #[test]
+    fn integer_tokens_match_exactly_and_decimals_use_absolute_tolerance() {
+        assert!(token_eq("-2147483648", "-2147483648"));
+        assert!(!token_eq("-2147483649", "-2147483648"));
+        assert!(!token_eq("1440956708", "1440956707"));
+        assert!(!token_eq("-100000.5", "-100000.0"));
+        assert!(token_eq("-100000", "-100000.0"));
+        assert!(token_eq("2.500001", "2.5"));
+        assert!(token_eq("null", "null"));
+        assert!(!token_eq("true", "false"));
+    }
+}

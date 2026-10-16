@@ -1,6 +1,6 @@
 # macOS preview release
 
-The first release was `0.1.0-preview.1`; the current candidate is `0.1.0-preview.4`, targeting macOS 13+ on Apple Silicon. It is
+The first release was `0.1.0-preview.1`; the current candidate is `0.1.0-preview.5`, targeting macOS 13+ on Apple Silicon. It is
 ad-hoc signed and not Apple-notarized. Original project material remains proprietary;
 see LICENSE. Intel, other operating systems and Developer ID
 signing/notarization are outside this preview.
@@ -57,8 +57,8 @@ different commit. It does not publish an application release. Signed updater art
 After review, create a version tag at the tested commit and push it:
 
 ```sh
-git tag v0.1.0-preview.4 <tested-commit>
-git push origin v0.1.0-preview.4
+git tag v0.1.0-preview.5 <tested-commit>
+git push origin v0.1.0-preview.5
 ```
 
 Preview assets are generated in ignored `release-artifacts/`. To build locally:

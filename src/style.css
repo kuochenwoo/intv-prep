@@ -509,9 +509,11 @@ button.tint-btn.stage-chip.current:hover:not(:disabled) { background: var(--tint
 
 /* API key status: the badge sits on the same line as its neighbours, and the warning stays one slim row. */
 .api-key-badge { display: inline-flex; align-items: center; vertical-align: middle; }
-.api-key-warning > div > div { padding: 6px 12px; gap: 8px; align-items: center; }
-.api-key-warning svg { width: 16px; height: 16px; }
-.api-key-warning > div > div > div:last-child { font-size: var(--font-size-sm); line-height: 1.4; }
+/* Compact pill: sized to its text, not a full-width banner. */
+.api-key-warning > div { width: fit-content; max-width: 100%; }
+.api-key-warning > div > div { padding: 3px 10px; gap: 6px; align-items: center; min-height: 0; border-radius: 999px; }
+.api-key-warning svg { width: 14px; height: 14px; }
+.api-key-warning > div > div > div:last-child { font-size: 12px; line-height: 1.35; }
 /* Settings: key badges are compact pills centred on their heading. */
 .settings-key-title { display: inline-flex; align-items: center; gap: 8px; }
 .settings-page .api-key-badge .astryx-badge { height: 18px; min-height: 0; padding-block: 0; padding-inline: 7px; font-size: 11px; line-height: 18px; }

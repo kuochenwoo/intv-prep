@@ -34,7 +34,48 @@ pub fn open(path: &Path) -> Result<Connection, String> {
     crate::session_tools::migrate(&c)?;
     crate::review::migrate(&c)?;
     crate::coding_timer::migrate(&c)?;
+    slim_results(&c)?;
     Ok(c)
+}
+/// Older versions stored every hidden test's full input and answer with each result.
+/// Shrink those once to the summary the judge stores now; small results are untouched.
+fn slim_results(c: &Connection) -> Result<(), String> {
+    let rows: Vec<(String, String, String)> = {
+        let mut s = c
+            .prepare("SELECT problem_id,mode,last_result FROM coding_progress WHERE length(last_result) > 32768")
+            .map_err(|e| e.to_string())?;
+        let rows = s
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
+            .map_err(|e| e.to_string())?;
+        rows.collect::<Result<_, _>>().map_err(|e| e.to_string())?
+    };
+    for (id, mode, text) in rows {
+        let Ok(mut v) = serde_json::from_str::<serde_json::Value>(&text) else {
+            continue;
+        };
+        for case in v["cases"].as_array_mut().into_iter().flatten() {
+            let passed = case["status"] == "accepted";
+            for field in ["input", "actual", "stderr"] {
+                let old = case[field].as_str().unwrap_or_default().to_string();
+                case[field] = if passed && field != "stderr" {
+                    "".into()
+                } else {
+                    crate::code_runner::excerpt(old).into()
+                };
+            }
+            case["expected"] = if passed {
+                serde_json::Value::Null
+            } else {
+                crate::code_runner::bounded(&case["expected"])
+            };
+        }
+        c.execute(
+            "UPDATE coding_progress SET last_result=?3 WHERE problem_id=?1 AND mode=?2",
+            params![id, mode, v.to_string()],
+        )
+        .map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 pub fn load(c: &Connection) -> Result<Vec<Progress>, String> {
     let mut s = c
@@ -123,5 +164,27 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM judge_runs", [], |r| r.get(0))
             .unwrap();
         assert_eq!(runs, 1);
+    }
+    #[test]
+    fn large_stored_results_are_slimmed_on_open() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("t.sqlite3");
+        let c = open(&path).unwrap();
+        let id = crate::content::problems()[0].id.clone();
+        save(&c, &id, "function", "a").unwrap();
+        let big = "1 ".repeat(40_000);
+        let result = serde_json::json!({"status":"wrong_answer","cases":[
+            {"id":"h1","status":"accepted","input":big,"expected":[1],"actual":"1","stderr":""},
+            {"id":"h2","status":"wrong_answer","input":big,"expected":[2],"actual":"3","stderr":""}]});
+        record(&c, &id, "function", &result.to_string(), false).unwrap();
+        drop(c);
+        let c = open(&path).unwrap();
+        let row = load(&c).unwrap().remove(0).last_result.unwrap();
+        assert!(row.len() < 10_000);
+        let v: serde_json::Value = serde_json::from_str(&row).unwrap();
+        assert_eq!(v["cases"][0]["input"], "");
+        assert!(v["cases"][0]["expected"].is_null());
+        assert!(v["cases"][1]["input"].as_str().unwrap().contains("bytes total"));
+        assert_eq!(v["cases"][1]["actual"], "3");
     }
 }
