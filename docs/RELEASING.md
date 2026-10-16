@@ -1,6 +1,6 @@
 # macOS preview release
 
-The first release was `0.1.0-preview.1`; the current candidate is `0.1.0-preview.3`, targeting macOS 13+ on Apple Silicon. It is
+The first release was `0.1.0-preview.1`; the current candidate is `0.1.0-preview.4`, targeting macOS 13+ on Apple Silicon. It is
 ad-hoc signed and not Apple-notarized. Original project material remains proprietary;
 see LICENSE. Intel, other operating systems and Developer ID
 signing/notarization are outside this preview.
@@ -57,8 +57,8 @@ different commit. It does not publish an application release. Signed updater art
 After review, create a version tag at the tested commit and push it:
 
 ```sh
-git tag v0.1.0-preview.3 <tested-commit>
-git push origin v0.1.0-preview.3
+git tag v0.1.0-preview.4 <tested-commit>
+git push origin v0.1.0-preview.4
 ```
 
 Preview assets are generated in ignored `release-artifacts/`. To build locally:
@@ -95,8 +95,10 @@ upstream texts and pinned supplemental license texts. Unmodified MPL-covered cra
 not assert that all dependencies are embedded or replace a license-compatibility
 review for broader/commercial distribution.
 
-Publishing remains a human decision in GitHub Releases. No workflow publishes
-silently, and no developer certificate or notarization claim is implied by ad-hoc
+For merged version increases, the reviewed release PR now authorizes automatic
+publication after successful main CI; see `AUTOMATIC_RELEASES.md`. Manual tag builds
+still create drafts and require publication in GitHub Releases. No developer
+certificate or notarization claim is implied by ad-hoc
 signature verification. A clean-machine Gatekeeper test and additional OS versions
 remain separate from testing a relocated bundle on the development Mac.
 
