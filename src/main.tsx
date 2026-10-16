@@ -144,13 +144,9 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
     () => allProblems.map((p) => localProblem(p, lang)),
     [allProblems, lang],
   );
-  useEffect(() => {
-    if (!focus) return;
-    setQuery("");
-    setDifficulty("all");
-    setTag("all");
-    setSelected(focus.id);
-  }, [focus?.n]);
+  // A Review link waits for a running judge or clear, so the code being judged stays on screen.
+  const [pendingFocus, setPendingFocus] = useState<Focus | undefined>();
+  useEffect(() => setPendingFocus(focus), [focus?.n]);
   // Tag names differ per language, so a tag filter does not carry over.
   useEffect(() => setTag("all"), [lang]);
   const [error, setError] = useState(""),
@@ -160,6 +156,22 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
   const saveQueue = useRef(Promise.resolve()),
     saveError = useRef(""),
     version = useRef(0);
+  useEffect(() => {
+    if (!pendingFocus || busy) return;
+    setQuery("");
+    setDifficulty("all");
+    setTag("all");
+    setSelected(pendingFocus.id);
+    setPendingFocus(undefined);
+  }, [pendingFocus, busy]);
+  // Refs let the editor's change handler see the current problem and lock state,
+  // even when Monaco calls a handler from an earlier render.
+  const busyRef = useRef(false),
+    editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  function lock(on: boolean) {
+    busyRef.current = on;
+    setBusy(on);
+  }
   useEffect(() => registerUpdateGuard(async () => {
     if (busy) throw new Error("updatePracticeBusy");
     await saveQueue.current;
@@ -204,11 +216,17 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
       ? problem?.cpp.functionTemplate
       : problem?.cpp.acmTemplate) ??
     "";
+  const current = useRef({ id: selected, mode, key, code, ready });
+  current.current = { id: selected, mode, key, code, ready };
   function edit(value: string | undefined) {
-    if (value === undefined || !problem) return;
-    const id = selected,
-      m = mode,
-      k = key;
+    // Only user typing saves: while locked or loading the editor is read-only, so any
+    // change then is Monaco syncing a new problem's code and must not be saved.
+    const now = current.current;
+    if (value === undefined || busyRef.current || !now.ready) return;
+    if (value === now.code) return;
+    const id = now.id,
+      m = now.mode,
+      k = now.key;
     const n = ++version.current;
     setProgress((prev) => ({
       ...prev,
@@ -236,7 +254,7 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
   }
   async function run(samples: boolean) {
     if (!problem) return;
-    setBusy(true);
+    lock(true);
     setError("");
     try {
       await saveQueue.current;
@@ -255,15 +273,29 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
     } catch (e) {
       setError(String(e));
     } finally {
-      setBusy(false);
+      lock(false);
     }
   }
   const [clearing, setClearing] = useState<"one" | "all" | null>(null);
   const savedProblems = new Set(
     Object.values(progress).map((r) => r.problemId),
   );
+  // Monaco keeps one model per problem and mode; drop cleared ones so reopening a
+  // problem shows its template, not the deleted code. The open model follows `value`.
+  function dropModels(scope: "one" | "all") {
+    const open = editorRef.current?.getModel();
+    const cleared = new Set(
+      (["function", "acm"] as Mode[]).map((m) =>
+        monaco.Uri.parse(keyOf(selected, m) + ".cpp").toString(),
+      ),
+    );
+    for (const model of monaco.editor.getModels()) {
+      if (model === open) continue;
+      if (scope === "all" || cleared.has(model.uri.toString())) model.dispose();
+    }
+  }
   async function clearSaved(scope: "one" | "all") {
-    setBusy(true);
+    lock(true);
     setError("");
     try {
       // Let queued draft saves land first so none recreates the cleared code.
@@ -273,6 +305,7 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
       await invoke("clear_solutions", {
         problemId: scope === "one" ? selected : null,
       });
+      dropModels(scope);
       const keep = (id: string) => scope === "one" && id !== selected;
       setProgress((prev) =>
         Object.fromEntries(
@@ -290,7 +323,7 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
     } catch (e) {
       setError(String(e));
     } finally {
-      setBusy(false);
+      lock(false);
     }
   }
   const result = results[key];
@@ -509,6 +542,9 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
               value={code}
               path={key + ".cpp"}
               onChange={edit}
+              onMount={(e) => {
+                editorRef.current = e;
+              }}
               options={{
                 minimap: { enabled: false },
                 fontSize: 14,
@@ -604,7 +640,8 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
                           })
                         : t("noMemory")}
                     </summary>
-                    <pre>
+                    {/* Passed hidden tests carry no input or output, only the summary. */}
+                    {(c.input || c.status !== "accepted") && <pre>
                       {t("caseStdin")}
                       {"\n"}
                       {c.input}
@@ -615,7 +652,7 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
                       {t("caseActual")}
                       {c.actual || t("emptyOutput")}
                       {c.stderr && `\nstderr: ${c.stderr}`}
-                    </pre>
+                    </pre>}
                   </details>
                 ))}
                 {result.cases.length > 0 &&

@@ -231,7 +231,36 @@ pub fn checked_feedback(raw: RawDesignFeedback, s: &DesignSession) -> DesignFeed
         .map(|g| g.gap)
         .collect();
     // Evidence may appear in any stage. Never override ratings from UI stage labels.
-    with_stage_coverage(f, s)
+    with_stage_coverage(without_assisted_evidence(f, s), s)
+}
+/// AI reference answers are never ability evidence. With no independent answer at all,
+/// every dimension is unassessed, whatever the model rated.
+fn without_assisted_evidence(mut f: DesignFeedback, s: &DesignSession) -> DesignFeedback {
+    let independent = s
+        .turns
+        .iter()
+        .any(|t| t.role == "candidate" && !t.ai_assisted);
+    if independent {
+        return f;
+    }
+    let (evidence, improvement) = match s.question.lang {
+        Lang::Zh => (
+            "未独立考察：没有可用于评价此维度的用户独立回答，AI 参考代答不作为能力证据。",
+            "不看参考答案，独立回答这一阶段的问题，再继续练习此维度。",
+        ),
+        Lang::En => (
+            "Not independently assessed: no independent answer provides evidence for this dimension. AI-assisted text is excluded from ability evidence.",
+            "Answer this stage's questions yourself without the reference answer, then practise this dimension.",
+        ),
+    };
+    for a in f.assessment.values_mut() {
+        a.rating = crate::interview::Rating::Missing;
+        a.evidence = evidence.into();
+        a.improvement = improvement.into();
+    }
+    f.strengths.clear();
+    f.gaps.clear();
+    f
 }
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -463,17 +492,20 @@ pub fn reference_context(s: &DesignSession) -> Value {
 pub fn feedback_context(s: &DesignSession) -> Value {
     let mut value = context(s);
     // A stage jump can leave an interviewer question unanswered. Keep every
-    // candidate answer, but pair only questions that actually received an answer
-    // in that stage. Unanswered prompts remain in local history, not grading evidence.
+    // independent answer, but pair only questions that actually received one in that
+    // stage. Unanswered prompts and AI-assisted answers stay in local history only:
+    // neither is grading evidence.
+    let own = |t: &DesignTurn| t.role == "candidate" && !t.ai_assisted;
     let answered: Vec<_> = s
         .turns
         .iter()
         .enumerate()
         .filter(|(i, turn)| {
-            turn.role == "candidate"
-                || s.turns
-                    .get(i + 1)
-                    .is_some_and(|next| next.role == "candidate" && next.stage == turn.stage)
+            own(turn)
+                || (turn.role == "interviewer"
+                    && s.turns
+                        .get(i + 1)
+                        .is_some_and(|next| own(next) && next.stage == turn.stage))
         })
         // Model observations are interpretations, not candidate evidence.
         .map(|(_, turn)| json!({"role":turn.role,"text":turn.text,"stage":turn.stage,"aiAssisted":turn.ai_assisted}))
@@ -485,10 +517,15 @@ pub fn feedback_context(s: &DesignSession) -> Value {
     value["assistance"] = json!({"assistedTurns":s.turns.iter().filter(|t|t.role=="candidate" && t.ai_assisted).count(),"independentAnswers":s.turns.iter().filter(|t|t.role=="candidate" && !t.ai_assisted).count()});
     value
 }
-/// Stages with at least one submitted answer, in the order first answered.
+/// Stages with at least one independent answer, in the order first answered.
+/// A stage answered only by the AI reference was not discussed by the user.
 pub fn discussed_stages(s: &DesignSession) -> Vec<Stage> {
     let mut stages = Vec::new();
-    for turn in s.turns.iter().filter(|t| t.role == "candidate") {
+    for turn in s
+        .turns
+        .iter()
+        .filter(|t| t.role == "candidate" && !t.ai_assisted)
+    {
         if turn.stage != Stage::Feedback && !stages.contains(&turn.stage) {
             stages.push(turn.stage);
         }
@@ -655,6 +692,50 @@ mod tests {
         assert!(f
             .summary
             .ends_with("本次讨论的阶段：容量估算、整体架构、跨组件权衡。"));
+        f.validate().unwrap();
+    }
+    #[test]
+    fn ai_assisted_answers_are_not_graded_as_the_users_own() {
+        let matrix: Value =
+            serde_json::from_str(include_str!("../../content/evals/interview-quality.json"))
+                .unwrap();
+        let case = &matrix["p2Cases"][0];
+        let mut turns = case["turns"].clone();
+        for t in turns.as_array_mut().unwrap() {
+            if t["role"] == "candidate" {
+                t["aiAssisted"] = json!(true);
+            }
+        }
+        let s: DesignSession = serde_json::from_value(json!({
+            "id":"fixture","createdAt":"","provider":"fixture","model":"fixture",
+            "question":{"id":"q","seedId":case["seedId"],"lang":case["lang"],
+                "provider":"fixture","model":"fixture","createdAt":"","content":case["question"]},
+            "stage":case["stage"],"status":"active","turns":turns,
+            "workspace":{"drafts":{},"notes":case["notes"],"diagram":case["diagram"]},
+            "suggestedStage":null,"lastError":null,"feedback":null
+        }))
+        .unwrap();
+        // The model never sees the assisted text as an answer.
+        let ctx = feedback_context(&s);
+        assert!(ctx["turns"].as_array().unwrap().is_empty());
+        assert!(discussed_stages(&s).is_empty());
+        let raw: RawDesignFeedback = serde_json::from_value(json!({
+            "summary":"Summary",
+            "assessment": DIMENSIONS.iter().map(|d| (d.to_string(),
+                json!({"rating":"good","evidence":"e","improvement":"i"})))
+                .collect::<serde_json::Map<_, _>>(),
+            "strengths":["s"],
+            "gaps":[{"question":"请说明发布与确认顺序。","gap":"g"}],
+            "nextPracticeTopics":["practice"]
+        }))
+        .unwrap();
+        let f = checked_feedback(raw, &s);
+        assert!(f
+            .assessment
+            .values()
+            .all(|a| a.rating == crate::interview::Rating::Missing));
+        assert!(f.strengths.is_empty() && f.gaps.is_empty());
+        assert!(!f.summary.contains("本次讨论的阶段"));
         f.validate().unwrap();
     }
     #[test]

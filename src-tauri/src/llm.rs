@@ -657,7 +657,14 @@ impl InterviewProvider {
                     Err(Failure::Content(_)) => "content_error",
                     Err(_) => "transport_error",
                 };
-                crate::usage::finish(&ctx.path, id, status, &self.provider, &v, complete)?;
+                // Never discard a paid response because local accounting failed: a busy
+                // database would otherwise turn a good answer into an error, and Retry
+                // would pay again. The row stays unfinished and shows as unknown cost.
+                if let Err(e) =
+                    crate::usage::finish(&ctx.path, id, status, &self.provider, &v, complete)
+                {
+                    eprintln!("usage ledger update failed: {e}");
+                }
             }
             match result {
                 Err(Failure::Content(_)) if attempts_left > 0 => continue,
