@@ -1,3 +1,4 @@
+import { ApiKeyBadge, ApiKeyWarning } from "../../ApiKeyStatus";
 import { useEffect, useRef, useState } from "react";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -470,6 +471,10 @@ export default function SystemDesignApp({
             variant="purple"
             label={`${config.provider} · ${config.model}`}
           />
+          <ApiKeyBadge
+            status={data?.settings.keyStatus}
+            provider={data?.settings.config.provider ?? config.provider}
+          />
         </div>
       </section>
       <p className="privacy-note">
@@ -478,6 +483,14 @@ export default function SystemDesignApp({
       {!isTauri() && (
         <div className="page-banner">
           <Banner status="warning" title={t("needDesktop")} />
+        </div>
+      )}
+      {data && data.settings.keyStatus !== "saved" && (
+        <div className="page-banner">
+          <ApiKeyWarning
+            status={data.settings.keyStatus}
+            provider={data.settings.config.provider}
+          />
         </div>
       )}
       {requestBusy && live && <LiveResponse text={live} />}

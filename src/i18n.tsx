@@ -631,7 +631,15 @@ const strings = {
     ".env 暂不可读或配置不完整",
     ".env unreadable or incomplete",
   ],
-  keyMissing: ["尚未保存密钥", "No key saved"],
+  keyMissing: ["未配置密钥或密钥为空", "Key missing or empty"],
+  apiKeyMissingWarning: [
+    "未配置 {p} API Key，或密钥为空。请在「设置」中填写并保存后再使用对应的在线功能。",
+    "The {p} API key is missing or empty. Enter and save it in Settings before using this provider's online features.",
+  ],
+  apiKeyUnreadableWarning: [
+    "无法读取 {p} API Key。请在「设置」中检查密钥配置并重新保存。",
+    "The {p} API key could not be read. Check its configuration in Settings and save it again.",
+  ],
   modelName: ["模型名称", "Model"],
   timeoutSeconds: ["请求超时（秒）", "Request timeout (s)"],
   apiKeyPlaceholder: [

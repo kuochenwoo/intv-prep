@@ -423,6 +423,11 @@ fn invalid_states_and_twenty_round_limit_are_enforced() {
 fn temporary_env_keys_are_private_atomic_and_provider_specific() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join(".env");
+    assert!(credentials::read_env_key(&path, "claude").is_err());
+    for value in ["CLAUDE_API_KEY=\n", "CLAUDE_API_KEY=\"   \"\n"] {
+        std::fs::write(&path, value).unwrap();
+        assert!(credentials::read_env_key(&path, "claude").is_err());
+    }
     credentials::write_env_key(&path, "deepseek", "fixture-deepseek-not-real-key").unwrap();
     credentials::write_env_key(&path, "claude", "fixture-claude-not-real-key").unwrap();
     assert_eq!(

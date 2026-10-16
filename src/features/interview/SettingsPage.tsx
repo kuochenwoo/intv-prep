@@ -10,6 +10,7 @@ import { Banner } from "@astryxdesign/core/Banner";
 import { useI18n } from "../../i18n";
 import { localizeError } from "../../errors";
 import { UsagePanel } from "./SessionTools";
+import { ApiKeyBadge, ApiKeyWarning } from "../../ApiKeyStatus";
 import { VoiceSettings } from "../voice/VoiceSettings";
 type Config = { provider: string; model: string; timeoutSeconds: number };
 type Summary = { id: string; title: string; provider?: string; model?: string };
@@ -71,14 +72,11 @@ export default function SettingsPage({
       setBusy(false);
     }
   }
-  const keyStatus =
-    config.provider !== data?.settings.config.provider
-      ? t("providerUnsaved")
-      : data?.settings.keyStatus === "saved"
-        ? t("keySaved")
-        : data?.settings.keyStatus === "unavailable"
-          ? t("keyUnavailable")
-          : t("keyMissing");
+  const keyStatus = data
+    ? config.provider !== data.settings.config.provider
+      ? "unsaved"
+      : data.settings.keyStatus
+    : undefined;
   const [scopeModule, scopeId] = scope.split(":");
   return (
     <main className="settings-page">
@@ -93,11 +91,12 @@ export default function SettingsPage({
           trigger={
             <span>
               <strong>{t("settingsTitle")}</strong>{" "}
-              <span className="muted">· {keyStatus}</span>
+              <ApiKeyBadge status={keyStatus} provider={config.provider} />
             </span>
           }
           defaultIsOpen={!data || data.settings.keyStatus !== "saved"}
         >
+          <ApiKeyWarning status={keyStatus} provider={config.provider} />
           <div className="provider-fields settings-provider-row">
             <Selector
               label={t("providerLabel")}
