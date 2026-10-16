@@ -898,5 +898,275 @@
         "High-cardinality dimensions, hot tenants, storage tiers and deletion propagation"
       ]
     }
+  },
+  {
+    "id": "product-search",
+    "title": "商品目录与搜索平台",
+    "description": "设计商家更新商品、用户组合筛选和关键词搜索的平台，区分商品事实与可重建的搜索视图。",
+    "functionalRequirements": [
+      "商品上下架、属性变更与批量导入",
+      "关键词、类目、价格筛选与分页",
+      "价格或可售状态变更后的查询行为"
+    ],
+    "scaleRanges": [
+      "本地训练假设：1000万–1亿 个商品，每条原始文档 2–10 KB",
+      "高峰每秒 1万–10万 次搜索，更新每秒 100–5000 次"
+    ],
+    "reliabilityConstraints": [
+      "搜索可用性目标 99.9%，允许明确说明的索引延迟",
+      "下单价格和库存以权威服务校验，不能把搜索结果作为交易承诺"
+    ],
+    "deepDiveDirections": [
+      "索引更新、乱序事件与全量重建",
+      "过滤、排序、分片与热点查询",
+      "搜索降级与交易事实的一致性边界"
+    ],
+    "en": {
+      "title": "Product Catalog and Search",
+      "description": "Design merchant catalog updates, faceted filtering and keyword search, distinguishing product authority from rebuildable search views.",
+      "functionalRequirements": [
+        "Product listing, attribute updates and bulk imports",
+        "Keyword, category and price filters with pagination",
+        "Query behavior after price or availability changes"
+      ],
+      "scaleRanges": [
+        "Local training assumption: 10–100 million products, 2–10 KB per source document",
+        "Peak 10k–100k searches/s and 100–5000 updates/s"
+      ],
+      "reliabilityConstraints": [
+        "Search availability target 99.9%; allow an explicitly defined indexing delay",
+        "Checkout validates authoritative price and inventory; search results are not a transaction promise"
+      ],
+      "deepDiveDirections": [
+        "Index updates, out-of-order events and full rebuilds",
+        "Filtering, ranking, partitioning and hot queries",
+        "Search degradation and consistency boundaries with transaction facts"
+      ]
+    }
+  },
+  {
+    "id": "configuration-platform",
+    "title": "配置与功能开关平台",
+    "description": "设计面向多个服务的配置发布、灰度开关和紧急回滚平台。",
+    "functionalRequirements": [
+      "版本化配置编辑、审批和发布",
+      "按租户或用户群灰度并记录决策版本",
+      "客户端更新、回滚和审计查询"
+    ],
+    "scaleRanges": [
+      "本地训练假设：1万–10万 客户端实例，1万–100万 个开关",
+      "每日 1000–1万 次发布，客户端配置包 100 KB–1 MB"
+    ],
+    "reliabilityConstraints": [
+      "控制面故障时已有客户端仍可按明确策略评估开关",
+      "紧急回滚传播目标 10 秒内；断网客户端必须显示版本与新鲜度"
+    ],
+    "deepDiveDirections": [
+      "控制面与本地决策路径的分离",
+      "稳定分桶、依赖关系与版本兼容",
+      "大规模重连、增量更新与安全审计"
+    ],
+    "en": {
+      "title": "Configuration and Feature Flags",
+      "description": "Design configuration rollout, feature flags and emergency rollback for multiple services.",
+      "functionalRequirements": [
+        "Versioned configuration editing, approval and publication",
+        "Target tenants or user cohorts and record decision versions",
+        "Client updates, rollback and audit queries"
+      ],
+      "scaleRanges": [
+        "Local training assumption: 10k–100k client instances and 10k–1m flags",
+        "1000–10k publications/day; client configuration bundles 100 KB–1 MB"
+      ],
+      "reliabilityConstraints": [
+        "Existing clients keep evaluating flags under an explicit policy during control-plane failure",
+        "Emergency rollback propagation target within 10 seconds; disconnected clients expose version and freshness"
+      ],
+      "deepDiveDirections": [
+        "Separating control-plane updates from local evaluation",
+        "Stable bucketing, dependencies and version compatibility",
+        "Reconnect storms, incremental updates and security audits"
+      ]
+    }
+  },
+  {
+    "id": "log-search-platform",
+    "title": "集中日志与检索平台",
+    "description": "设计多租户日志采集、按时间和字段检索、保留与归档平台。",
+    "functionalRequirements": [
+      "采集、批量写入和明确的接收确认",
+      "按服务、时间、字段检索与关联请求",
+      "租户配额、敏感字段处理及归档删除"
+    ],
+    "scaleRanges": [
+      "本地训练假设：每日 10亿–100亿 条日志，每条 500 B–2 KB",
+      "热数据 7–30 天，归档 90–365 天，突发为日均 10 倍"
+    ],
+    "reliabilityConstraints": [
+      "明确接收确认之后可丢失数据的界限和保留承诺",
+      "采集失败不得无限阻塞业务进程；交互查询目标 5 秒内返回首批结果"
+    ],
+    "deepDiveDirections": [
+      "代理缓冲、背压与租户隔离",
+      "时间分区、索引成本与冷热分层",
+      "重放、重复记录与可观测的数据缺口"
+    ],
+    "en": {
+      "title": "Centralized Logs and Search",
+      "description": "Design multi-tenant log ingestion, time and field search, retention and archival.",
+      "functionalRequirements": [
+        "Collection, batch ingestion and explicit acceptance acknowledgements",
+        "Search by service, time and fields and correlate requests",
+        "Tenant quotas, sensitive-field handling and archive deletion"
+      ],
+      "scaleRanges": [
+        "Local training assumption: 1–10 billion logs/day at 500 B–2 KB each",
+        "Hot data 7–30 days, archive 90–365 days; bursts at 10x daily average"
+      ],
+      "reliabilityConstraints": [
+        "Define data-loss boundaries after acknowledgement and retention commitments",
+        "Collection failures must not block business processes indefinitely; interactive queries target first results within 5 seconds"
+      ],
+      "deepDiveDirections": [
+        "Agent buffering, backpressure and tenant isolation",
+        "Time partitions, indexing cost and storage tiers",
+        "Replay, duplicate records and observable data gaps"
+      ]
+    }
+  },
+  {
+    "id": "durable-workflow",
+    "title": "持久化业务工作流平台",
+    "description": "设计跨多个业务服务、可暂停等待并可恢复执行的工作流平台，区别于单条任务队列。",
+    "functionalRequirements": [
+      "定义工作流步骤、依赖、版本和执行状态",
+      "支持长时间等待、定时唤醒和人工确认",
+      "步骤重试、补偿、取消与执行历史查询"
+    ],
+    "scaleRanges": [
+      "本地训练假设：每日 100万–1000万 个流程，每个 5–30 个步骤",
+      "流程可持续 1 分钟–30 天，历史保留 90 天"
+    ],
+    "reliabilityConstraints": [
+      "调度节点重启后可从已持久化状态恢复",
+      "外部动作结果未知时不能承诺任意副作用恰好一次"
+    ],
+    "deepDiveDirections": [
+      "执行历史与状态机、代码版本兼容",
+      "调度分区、持久化定时器和公平性",
+      "活动幂等、补偿失败与人工恢复"
+    ],
+    "en": {
+      "title": "Durable Business Workflows",
+      "description": "Design recoverable workflows spanning services with durable waits, distinct from a single-task queue.",
+      "functionalRequirements": [
+        "Define steps, dependencies, versions and execution state",
+        "Support long waits, timers and human approvals",
+        "Step retries, compensation, cancellation and execution history"
+      ],
+      "scaleRanges": [
+        "Local training assumption: 1–10 million workflows/day, 5–30 steps each",
+        "Workflows last 1 minute–30 days; history retained for 90 days"
+      ],
+      "reliabilityConstraints": [
+        "Recover from persisted state after scheduler restarts",
+        "Unknown external outcomes cannot imply exactly-once execution of arbitrary side effects"
+      ],
+      "deepDiveDirections": [
+        "Execution history, state machines and code-version compatibility",
+        "Scheduler partitioning, durable timers and fairness",
+        "Activity idempotency, failed compensation and operator recovery"
+      ]
+    }
+  },
+  {
+    "id": "distributed-kv",
+    "title": "分布式键值存储",
+    "description": "设计面向业务应用的持久化键值存储，明确读写一致性、分区与副本恢复的取舍。",
+    "functionalRequirements": [
+      "按键读取、写入、删除和条件更新",
+      "过期数据和批量操作的明确语义",
+      "扩缩容、故障恢复和数据校验"
+    ],
+    "scaleRanges": [
+      "本地训练假设：1亿–10亿 个键，每条键值合计 1–10 KB",
+      "每秒 10万–100万 次操作，读写比 4:1–20:1"
+    ],
+    "reliabilityConstraints": [
+      "单区域可用性目标 99.99%；候选人须明确分区时拒绝或接受哪些操作",
+      "条件更新不能靠无保护的先读后写实现；持久化确认边界必须明确"
+    ],
+    "deepDiveDirections": [
+      "分片路由、热点键与在线迁移",
+      "副本协议、读写一致性与故障切换",
+      "存储引擎、压缩合并、校验与修复"
+    ],
+    "en": {
+      "title": "Distributed Key-Value Store",
+      "description": "Design a durable application key-value store with explicit consistency, partitioning and replica recovery trade-offs.",
+      "functionalRequirements": [
+        "Key reads, writes, deletion and conditional updates",
+        "Explicit expiration and batch-operation semantics",
+        "Scaling, failure recovery and integrity checking"
+      ],
+      "scaleRanges": [
+        "Local training assumption: 100m–1bn keys at 1–10 KB per key-value pair",
+        "100k–1m operations/s with read/write ratios 4:1–20:1"
+      ],
+      "reliabilityConstraints": [
+        "Single-region availability target 99.99%; define accepted or rejected operations during a partition",
+        "Conditional updates cannot use an unprotected read-then-write; define the durability acknowledgement boundary"
+      ],
+      "deepDiveDirections": [
+        "Partition routing, hot keys and online migration",
+        "Replication protocol, read-write consistency and failover",
+        "Storage engine, compaction, integrity checking and repair"
+      ]
+    }
+  },
+  {
+    "id": "live-streaming",
+    "title": "直播与实时互动平台",
+    "description": "设计主播上行、观众观看及实时互动平台，明确低延迟与分发成本的取舍。",
+    "functionalRequirements": [
+      "主播推流、开播结束与播放鉴权",
+      "多清晰度观看、弱网切换和录制回放",
+      "实时评论、房间管理与内容处置"
+    ],
+    "scaleRanges": [
+      "本地训练假设：1万–10万 同时开播，100万–1000万 同时观看",
+      "视频码率 1–6 Mbps，热门房间可占总观看流量的 20%"
+    ],
+    "reliabilityConstraints": [
+      "明确选择普通直播或低延迟模式并给出端到端延迟目标",
+      "单节点故障不能使所有房间中断；评论顺序与播放进度的关系需明确"
+    ],
+    "deepDiveDirections": [
+      "接入、转码、分发与播放器缓冲",
+      "热房间扇出、区域故障与回源压力",
+      "媒体路径与互动消息的独立扩展"
+    ],
+    "en": {
+      "title": "Live Streaming and Interaction",
+      "description": "Design broadcaster ingestion, viewer playback and live interaction, balancing latency and distribution cost.",
+      "functionalRequirements": [
+        "Broadcaster ingestion, stream lifecycle and playback authorization",
+        "Multiple quality levels, weak-network adaptation and recorded replay",
+        "Live comments, room administration and content moderation"
+      ],
+      "scaleRanges": [
+        "Local training assumption: 10k–100k concurrent broadcasters, 1–10 million concurrent viewers",
+        "Video bitrate 1–6 Mbps; a hot room may account for 20% of viewers"
+      ],
+      "reliabilityConstraints": [
+        "Choose ordinary or low-latency streaming and define an end-to-end latency target",
+        "One node failure must not interrupt every room; define how comment order relates to playback progress"
+      ],
+      "deepDiveDirections": [
+        "Ingestion, transcoding, distribution and player buffering",
+        "Hot-room fanout, regional failures and origin pressure",
+        "Independent scaling of media and interaction paths"
+      ]
+    }
   }
 ]

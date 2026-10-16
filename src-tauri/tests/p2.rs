@@ -112,11 +112,11 @@ fn start(c: &rusqlite::Connection) -> DesignSession {
     store::start(c, &q.id, &config()).unwrap()
 }
 #[test]
-fn twenty_bilingual_scenarios_and_distinct_system_design_prompts() {
+fn expanded_bilingual_scenarios_and_distinct_system_design_prompts() {
     let seeds = scenarios();
-    assert_eq!(seeds.len(), 20);
+    assert_eq!(seeds.len(), 26);
     let unique: std::collections::HashSet<_> = seeds.iter().map(|s| s.id.as_str()).collect();
-    assert_eq!(unique.len(), 20);
+    assert_eq!(unique.len(), 26);
     for id in [
         "url-shortener",
         "flash-sale",

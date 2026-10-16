@@ -4,7 +4,7 @@ use crate::interview::Validated;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-pub const POLICY_VERSION: &str = "separate-task-v10-foundation-evidence";
+pub const POLICY_VERSION: &str = "separate-task-v12-opening-checkpoints";
 pub const FAILURE: &str = "AI 内容未通过质量检查，请重试；本地回答已保留";
 /// Summaries derive facts from validated ratings and local provenance, not free text.
 pub fn summary(
@@ -91,6 +91,14 @@ pub fn prompt(lang: crate::interview::Lang, proposal: &Value) -> String {
     } else {
         ""
     };
+    let premise_integrity = if question {
+        match lang {
+            crate::interview::Lang::En => "For EVERY mandatory evaluationChecklist item, identify the visible ask that actually requires it; topic relevance alone is not enough. If the opening asks consumers how to wake and exit, producer shutdown is optional. If it asks why a replica read is stale and for one local adjustment, do not also require LSN-based routing. If it asks retry counts and whether a timed-out call still runs, cancellation propagation is an unasked fix. If HTTP caching can be solved by private/no-store, do not require a Vary/cache-key solution too. Move such extensions into followUpDirections rather than adding extra opening questions to justify them. When troubleshooting asks for the FIRST hypothesis or evidence, one defensible discriminating path with reasoning is sufficient: do not require a particular root cause, every diagnostic branch or remediation. Check factual consistency of the visible premises, code and hidden expected answer before accepting. With an active database UNIQUE constraint on the same non-null key, concurrent committed inserts cannot produce two equal keys: reject a scenario asserting that outcome unless it explicitly supplies a relevant exception such as different normalization semantics. A check-then-insert race may instead yield one success and one unique-conflict error. Do not invent broken constraints, disabled checks or unmentioned exceptions to rescue an impossible incident. In troubleshooting, initial symptoms may be supplied, but a visible list of catalog views, counters or checking tools that answers the evidence-gathering question is an answer hint; move that list to private directions. Do not reject a valid question merely because it asks the candidate to challenge an explicitly labeled claim.",
+            _ => "逐条核对每个必需 evaluationChecklist 是否由可见问题实际要求，不能仅因与主题相关就列为必答。只问消费者唤醒退出时，生产者退出是可选延伸；只问副本旧读原因和一种局部调整时，不能额外强制 LSN 路由；只问重试次数和超时后的执行状态时，取消传播属于未问修复；HTTP 缓存用 private/no-store 已合理回答时，不能又强制回答 Vary/缓存键方案。此类延伸移到 followUpDirections，不能为了保留检查点而在开场追加更多问题。排障只问第一个假设或下一项证据时，一条合理且有区分力的调查路径及理由即可，不能强制某个根因、穷举所有分支或提供修复。先核对可见题设、代码与隐藏预期答案的技术自洽性。数据库对同一非空键的 UNIQUE 约束生效时，并发已提交插入不能产生两条相同键；除非明确给出规范化差异等相关例外，否则此类题设应拒绝。先查后插的竞态可导致一个成功、另一个唯一冲突，不能臆造约束失效、禁用检查或未提及例外来挽救矛盾事件。排障可给初始症状，但若可见部分列出正是待考察的系统视图、计数器或检查工具清单，就已经提示取证答案，应移入隐藏方向。若题目明确让候选人判断某项说法是否成立，不能仅因该说法错误而拒绝。",
+        }
+    } else {
+        ""
+    };
     let fundamentals = if !question && proposal.get("dimensions").is_some() {
         match lang {
             crate::interview::Lang::En => "For P1, a concise explanation or closely related comparison can fully answer a foundation opening; do not require a volunteered execution trace, counterexample or unasked implementation detail. Judge troubleshooting against the evidence supplied: a reasonable unverified hypothesis is not a demonstrated technical error. Credit clear hypothesis-testing steps when asked. Keep unassessed dimensions missing. Reject partial ratings justified only by absent unasked counterexamples, boundaries or implementation extensions after a correct foundation answer. In the B+ tree example, explaining fan-out/height and sequential leaf traversal already demonstrates the requested mechanism and local rationale; do not demand another internal-node payload detail. A general caveat about cache hits/data distribution without a requested boundary does not justify a partial failure rating merely for lacking a concrete example.",
@@ -100,7 +108,7 @@ pub fn prompt(lang: crate::interview::Lang, proposal: &Value) -> String {
         ""
     };
     format!(
-        "{common}\n{opening_style}\n{rules}\n{fundamentals}\nSchema: {}",
+        "{common}\n{opening_style}\n{premise_integrity}\n{rules}\n{fundamentals}\nSchema: {}",
         schema()
     )
 }

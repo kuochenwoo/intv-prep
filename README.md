@@ -7,13 +7,15 @@ A local desktop app for software-engineering interview practice, built with Taur
 See [the project TODO](TODO.md) for AI-quality calibration and the deferred feature backlog.
 
 - **LeetCode Judge:** all 100 LeetCode Hot 100 problems, in C++20. Each problem can be solved in Function mode (write only `class Solution`) or ACM mode (write the full program). Tests run offline with a real local compiler, with time, memory and output limits. Each problem lists its time and space requirements.
-- **Technical Deep Dive:** an AI interviewer (Claude or DeepSeek) uses 120 bilingual topics for foundation questions, applied scenarios and troubleshooting, asks follow-ups on your answers, and gives five-dimension feedback at the end. Answers stream in as they are written. An optional AI reference answer shows one concise model answer for the current question.
-- **System Design:** 20 bilingual scenarios, user-controlled interview stages, capacity estimates and architecture discussions, Markdown notes, local Mermaid previews, and eight-dimension feedback. Questions, drafts and history persist locally. See [the P2 guide](docs/P2_SYSTEM_DESIGN.md).
+- **Technical Deep Dive:** an AI interviewer (Claude or DeepSeek) uses 180 bilingual topics for foundation questions, applied scenarios and troubleshooting, asks follow-ups on your answers, and gives five-dimension feedback at the end. Answers stream in as they are written. An optional AI reference answer shows one concise model answer for the current question.
+- **System Design:** 26 bilingual scenarios, user-controlled interview stages, capacity estimates and architecture discussions, Markdown notes, local Mermaid previews, and eight-dimension feedback. Questions, drafts and history persist locally. See [the P2 guide](docs/P2_SYSTEM_DESIGN.md).
 - **Interface:** Chinese or English, switched with the button in the header. Light and dark modes. Built with Meta's [Astryx](https://github.com/facebook/astryx) design system.
 
 Problem statements, interview topics, AI questions and answers, and error messages follow the selected language.
 
 The latest [practical fundamentals expansion](docs/P1_PRACTICAL_FUNDAMENTALS.md) adds P1 question-style/priority filters and five complete P2 exercises. The subsequent [P1 acceptance](docs/P1_ACCEPTANCE_2026-10-16.md) passed 103 automated checks, frontend/native builds and representative UI/live-provider workflows, with documented network and semantic limits. Live acceptance of the five new P2 scenarios remains separate.
+
+> Latest content expansion: 180 P1 topics and 26 P2 scenarios. See [coverage and acceptance](docs/LIBRARY_EXPANSION_2026-10-16.md) for the real text-provider results and their limits.
 
 ## Requirements
 

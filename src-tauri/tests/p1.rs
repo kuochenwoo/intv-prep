@@ -634,3 +634,96 @@ fn ai_provenance_migration_preserves_legacy_turns_and_is_idempotent() {
     .unwrap();
     assert!(!legacy.ai_assisted);
 }
+
+#[test]
+fn expanded_library_preserves_every_bilingual_cache_after_reopening() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("all-p1-topics.sqlite3");
+    let c = db::open(&path).unwrap();
+    let mut cached = Vec::new();
+    for seed in topics() {
+        for lang in [Lang::Zh, Lang::En] {
+            // This fixture exercises offline persistence, not provider generation quality.
+            let mut fixture = question();
+            fixture.question = seed.localized(lang).title;
+            fixture.background = seed.localized(lang).scenario_constraints.join("\n");
+            let view =
+                store::cache_question(&c, &seed.id, &LlmSettings::default(), &fixture).unwrap();
+            cached.push((
+                view.id,
+                seed.id.clone(),
+                fixture.question,
+                fixture.background,
+            ));
+        }
+    }
+    drop(c);
+    let c = db::open(&path).unwrap();
+    assert_eq!(store::questions(&c).unwrap().len(), cached.len());
+    for (id, topic_id, title, background) in cached {
+        let (view, restored) = store::question(&c, &id).unwrap();
+        assert_eq!(view.seed_id, topic_id);
+        assert_eq!(restored.question, title);
+        assert_eq!(restored.background, background);
+    }
+}
+
+#[test]
+fn fundamentals_coverage_retains_foundations_and_diagnostic_uncertainty() {
+    // Guard against growing the count solely through business-scenario variants.
+    for category in [
+        "Database",
+        "Networking",
+        "Operating Systems",
+        "Concurrency",
+        "Messaging",
+        "Distributed Systems",
+        "Redis",
+        "Security",
+        "Data Structures",
+        "Runtime",
+        "Engineering",
+        "Search and Storage",
+    ] {
+        assert!(
+            topics().iter().any(|seed| seed.category == category
+                && seed.question_form == QuestionForm::Foundation
+                && seed.priority == TopicPriority::Core),
+            "missing core foundations: {category}"
+        );
+    }
+    for id in [
+        "db-long-transaction",
+        "redis-memory-diagnosis",
+        "network-idle-reset",
+        "os-fd-exhaustion",
+        "engineering-container-cpu",
+    ] {
+        let seed = topic(id).unwrap();
+        assert_eq!(seed.question_form, QuestionForm::Troubleshooting);
+        assert!(
+            seed.localized(Lang::En)
+                .scenario_constraints
+                .iter()
+                .any(|s| ["not yet", "unknown", "unconfirmed", "No conclusion"]
+                    .iter()
+                    .any(|marker| s.contains(marker))),
+            "diagnostic seed must retain uncertainty: {id}"
+        );
+    }
+}
+
+#[test]
+fn generation_and_review_check_impossible_incidents_without_banning_challenges() {
+    let proposal = serde_json::to_value(question()).unwrap();
+    let en = swe_interview_prep::quality::prompt(Lang::En, &proposal);
+    assert!(en.contains("concurrent committed inserts cannot produce two equal keys"));
+    assert!(en.contains("explicitly labeled claim"));
+    assert!(en.contains("catalog views, counters or checking tools"));
+    let zh = swe_interview_prep::quality::prompt(Lang::Zh, &proposal);
+    assert!(zh.contains("并发已提交插入不能产生两条相同键"));
+    assert!(zh.contains("视图、计数器或检查工具清单"));
+    let feedback = serde_json::to_value(feedback()).unwrap();
+    assert!(!swe_interview_prep::quality::prompt(Lang::En, &feedback)
+        .contains("concurrent committed inserts"));
+}

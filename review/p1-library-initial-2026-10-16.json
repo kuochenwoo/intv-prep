@@ -1,0 +1,4116 @@
+{
+  "httpAttempts": 77,
+  "httpCap": 180,
+  "plannedSamples": 30,
+  "policy": "separate-task-v10-foundation-evidence",
+  "samples": [
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "deepseek-flash",
+          "provider": "deepseek",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "检查与写入之间存在时间窗口",
+                  "两个请求都读到不存在",
+                  "唯一约束在写入时检查并拒绝冲突",
+                  "把冲突当作正常业务分支处理"
+                ],
+                "background": "岗位偏后端，日常直接写用户注册这类数据库写入逻辑。环境是单个 PostgreSQL 18 数据库，email 列已有唯一约束，注册服务可能被多个请求同时调用。",
+                "constraints": [
+                  "只讨论单个数据库、单个表的写入路径，不涉及分库分表或缓存层",
+                  "先不引入分布式锁或消息队列，聚焦数据库这一层能给出的保证",
+                  "假设应用侧可能开多个并发请求处理同一邮箱的注册"
+                ],
+                "evaluationChecklist": [
+                  "能说明先 SELECT 再 INSERT 之间存在时间窗口，两个并发请求可能都读到“不存在”然后各自插入",
+                  "能指出唯一约束是最终防线：数据库在写入时检查，冲突的第二个写入会失败而不是静默产生第二条",
+                  "能给出关键改动：让应用不要依赖先查结果做决策，而是把唯一约束的冲突当作正常业务分支来处理（如捕获唯一冲突、返回已注册）",
+                  "能说明仅靠应用层先查无法消除竞态，因为检查与写入不是同一个原子操作"
+                ],
+                "followUpDirections": [
+                  "如果两个请求几乎同时到达，数据库在唯一约束下是如何判定其中一个失败的？解释约束检查发生在什么时刻",
+                  "把先查后插改成直接 INSERT 并捕获唯一冲突异常，业务上如何区分“邮箱已注册”和“其他写入错误”？",
+                  "除了唯一约束，还有没有别的数据库层手段能在写入时防止重复，它们各自对并发请求的反馈有什么差别？",
+                  "如果同一个邮箱本身允许软删除后重新注册，唯一约束该如何调整才不阻断正常流程？"
+                ],
+                "question": "在一个使用 PostgreSQL 18 的注册服务里，创建账号前会先执行 `SELECT ... FROM users WHERE email = $1` 判断邮箱是否已被占用，没有结果时才 `INSERT` 新用户。数据库表上对 email 列建了唯一约束。上线后发现，同一邮箱偶尔会出现两条用户记录。请说明：这两条记录是怎么产生的？要保证同一邮箱最终只存在一条记录，写入这条路径上最关键的改动是什么？"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 0,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "检查与写入之间存在时间窗口",
+          "两个请求都读到不存在",
+          "唯一约束在写入时检查并拒绝冲突",
+          "把冲突当作正常业务分支处理"
+        ],
+        "background": "岗位偏后端，日常直接写用户注册这类数据库写入逻辑。环境是单个 PostgreSQL 18 数据库，email 列已有唯一约束，注册服务可能被多个请求同时调用。",
+        "constraints": [
+          "只讨论单个数据库、单个表的写入路径，不涉及分库分表或缓存层",
+          "先不引入分布式锁或消息队列，聚焦数据库这一层能给出的保证",
+          "假设应用侧可能开多个并发请求处理同一邮箱的注册"
+        ],
+        "evaluationChecklist": [
+          "能说明先 SELECT 再 INSERT 之间存在时间窗口，两个并发请求可能都读到“不存在”然后各自插入",
+          "能指出唯一约束是最终防线：数据库在写入时检查，冲突的第二个写入会失败而不是静默产生第二条",
+          "能给出关键改动：让应用不要依赖先查结果做决策，而是把唯一约束的冲突当作正常业务分支来处理（如捕获唯一冲突、返回已注册）",
+          "能说明仅靠应用层先查无法消除竞态，因为检查与写入不是同一个原子操作"
+        ],
+        "followUpDirections": [
+          "如果两个请求几乎同时到达，数据库在唯一约束下是如何判定其中一个失败的？解释约束检查发生在什么时刻",
+          "把先查后插改成直接 INSERT 并捕获唯一冲突异常，业务上如何区分“邮箱已注册”和“其他写入错误”？",
+          "除了唯一约束，还有没有别的数据库层手段能在写入时防止重复，它们各自对并发请求的反馈有什么差别？",
+          "如果同一个邮箱本身允许软删除后重新注册，唯一约束该如何调整才不阻断正常流程？"
+        ],
+        "question": "在一个使用 PostgreSQL 18 的注册服务里，创建账号前会先执行 `SELECT ... FROM users WHERE email = $1` 判断邮箱是否已被占用，没有结果时才 `INSERT` 新用户。数据库表上对 email 列建了唯一约束。上线后发现，同一邮箱偶尔会出现两条用户记录。请说明：这两条记录是怎么产生的？要保证同一邮箱最终只存在一条记录，写入这条路径上最关键的改动是什么？"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Database",
+        "focus": [
+          "先查后插入的竞态",
+          "唯一冲突的业务处理"
+        ],
+        "id": "db-unique-race",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "同一邮箱可能被并发注册",
+          "讨论单个数据库中的写入"
+        ],
+        "sources": [
+          "https://www.postgresql.org/docs/18/ddl-constraints.html"
+        ],
+        "title": "唯一约束与并发注册"
+      },
+      "topicId": "db-unique-race"
+    },
+    {
+      "attempts": [
+        {
+          "error": "无法连接 API（网络、代理或 TLS 错误），请检查后重试",
+          "model": "deepseek-flash",
+          "provider": "deepseek",
+          "reviews": []
+        },
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "Computing a value over a partition of related rows keeps every detail row in the output",
+                  "Tied values can share a position, so the tie rule must be stated explicitly",
+                  "A grouped aggregate returns one row per group and loses individual employee detail"
+                ],
+                "background": "Each employee row in the PostgreSQL 18 database holds an employee id, a department id, and a salary. A reporting screen lists employees and must show context from their own department.",
+                "constraints": [
+                  "Assume two employees in department 10 both have salary 5000, one employee in department 10 has salary 6200, and one employee in department 20 has salary 7000, so equal salaries exist within a department.",
+                  "Assume the screen must show one line per employee, not one line per department.",
+                  "Explain at the level of SQL semantics for a single query; do not discuss indexing, performance tuning, or capacity."
+                ],
+                "evaluationChecklist": [
+                  "The candidate explains that the calculation is made for each employee against a set of related rows while every employee row remains in the result, in contrast to a grouped aggregate that returns one row per group.",
+                  "The candidate states an explicit rule for equal salaries, such as shared position with or without gaps, or an arbitrary order, and explains what that rule means to a manager reading the list.",
+                  "The candidate identifies the grouping key for the comparison and the ordering direction, and explains how each changes which employees are compared and which position is 1."
+                ],
+                "followUpDirections": [
+                  "Clarification: if the screen should show only the highest-paid employee in each department, how does the result shape change and what mechanism would you use?",
+                  "Practical application: if the business wants positions with no gaps after ties, how would you adjust the ranking and what does that choice mean for employees with equal salaries?",
+                  "Local trade-off: when might joining the employee table to a per-department aggregate be easier to reason about than a per-row calculation, and what risk does such a join introduce if the aggregate has duplicate keys?"
+                ],
+                "question": "The screen must list every employee with their salary and their position among colleagues in the same department, where position 1 means the highest salary. Describe how you would produce this in one query, how the number of result rows compares with a grouped aggregate over the same data, and what tie behaviour you would specify for equal salaries and why."
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 1,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "Computing a value over a partition of related rows keeps every detail row in the output",
+          "Tied values can share a position, so the tie rule must be stated explicitly",
+          "A grouped aggregate returns one row per group and loses individual employee detail"
+        ],
+        "background": "Each employee row in the PostgreSQL 18 database holds an employee id, a department id, and a salary. A reporting screen lists employees and must show context from their own department.",
+        "constraints": [
+          "Assume two employees in department 10 both have salary 5000, one employee in department 10 has salary 6200, and one employee in department 20 has salary 7000, so equal salaries exist within a department.",
+          "Assume the screen must show one line per employee, not one line per department.",
+          "Explain at the level of SQL semantics for a single query; do not discuss indexing, performance tuning, or capacity."
+        ],
+        "evaluationChecklist": [
+          "The candidate explains that the calculation is made for each employee against a set of related rows while every employee row remains in the result, in contrast to a grouped aggregate that returns one row per group.",
+          "The candidate states an explicit rule for equal salaries, such as shared position with or without gaps, or an arbitrary order, and explains what that rule means to a manager reading the list.",
+          "The candidate identifies the grouping key for the comparison and the ordering direction, and explains how each changes which employees are compared and which position is 1."
+        ],
+        "followUpDirections": [
+          "Clarification: if the screen should show only the highest-paid employee in each department, how does the result shape change and what mechanism would you use?",
+          "Practical application: if the business wants positions with no gaps after ties, how would you adjust the ranking and what does that choice mean for employees with equal salaries?",
+          "Local trade-off: when might joining the employee table to a per-department aggregate be easier to reason about than a per-row calculation, and what risk does such a join introduce if the aggregate has duplicate keys?"
+        ],
+        "question": "The screen must list every employee with their salary and their position among colleagues in the same department, where position 1 means the highest salary. Describe how you would produce this in one query, how the number of result rows compares with a grouped aggregate over the same data, and what tie behaviour you would specify for equal salaries and why."
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Database",
+        "focus": [
+          "Preserving detail rows versus collapsing groups",
+          "Business meaning of ranking ties"
+        ],
+        "id": "db-window-functions",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "Compare employee salaries within departments",
+          "Equal salaries exist and tie semantics must be stated"
+        ],
+        "sources": [
+          "https://www.postgresql.org/docs/18/"
+        ],
+        "title": "Window Functions and Grouped Aggregation"
+      },
+      "topicId": "db-window-functions"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "deepseek-flash",
+          "provider": "deepseek",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "所有活跃快照都不再需要才能清理",
+                  "最老事务/最老快照决定回收下界",
+                  "idle in transaction 仍可能持有旧快照",
+                  "回收被卡住而非未触发"
+                ],
+                "background": "候选人应聘后端/数据库方向中级到高级岗位，环境为 PostgreSQL 18 默认配置的单实例业务库，表以 UPDATE 为主。现场只给了观测到的现象和少量监控数据，尚无定论。",
+                "constraints": [
+                  "只围绕“如何验证是不是长期存活事务/旧快照在阻碍回收”这一条线回答，不需要给出完整表膨胀治理方案。",
+                  "默认引擎为 PostgreSQL 18，可以用 pg_stat_activity、pg_stat_activity 的 backend_xmin、pg_stat_all_tables、pg_stat_progress_vacuum、（如可用）pg_stat_activity 相关视图等常规手段，但请说明你要从结果中读什么。",
+                  "不需要给出最终修复动作，重点是取证和判断逻辑。"
+                ],
+                "evaluationChecklist": [
+                  "能指出要从 pg_stat_activity 中辨识真正持有旧快照/最老 xmin 的会话（如 backend_xmin、state、xact_start、query_start、state 的 idle in transaction 等），而不是只看“有没有活动会话”。",
+                  "能说明 autovacuum 回收被阻断与最老可见事务年龄/最老 xmin 之间的关系：回收只能清理所有活跃快照都不再需要的版本。",
+                  "能给出至少一条对比性证据（例如 n_dead_tup 高但回收不下降、vacuum 进度中的死元组保留量、最老 xmin 与 pg_stat_all_tables 中 dead tuple 数量）来判断是持续阻塞还是偶发滞后。",
+                  "能区分“清理任务在跑”和“清理任务实际回收了空间”这两件事，不把 autovacuum 有日志等同于回收成功。"
+                ],
+                "followUpDirections": [
+                  "如果查到存在长时间 idle in transaction 的会话，你会如何判断它是否真的还持有旧快照、以及它对回收的影响范围？",
+                  "如果不是长事务，而是短事务高频、间歇性出现，你会用哪类观测把“持续阻塞”和“间歇滞后”区分开？",
+                  "假设确认是某个报表或分析查询导致的问题，你会先考虑调查询本身还是调整回收节奏？依据是什么？",
+                  "如果 old_snapshot_threshold 被显式设置过，这会不会改变你对“旧快照影响回收”的判断？说明前提。"
+                ],
+                "question": "我们在维护一套 PostgreSQL 18（默认配置）业务库。运维观察到：一张持续被更新的核心表，磁盘占用和表实际行数增长不成比例，最近几周空间持续上涨，清理任务看上去也在正常跑。目前手上有两条线索：pg_stat_user_tables 里该表的 n_dead_tup 长期偏高，autovacuum 有被触发的记录，但每次回收效果不明显。现在还没有确认是什么在拖住空间回收。请问：为了判断“是否存在一个长期存活的事务/快照在拉住回收”，你会去看哪些可验证的证据？请说明每项证据能支持或排除什么判断。"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 2,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "所有活跃快照都不再需要才能清理",
+          "最老事务/最老快照决定回收下界",
+          "idle in transaction 仍可能持有旧快照",
+          "回收被卡住而非未触发"
+        ],
+        "background": "候选人应聘后端/数据库方向中级到高级岗位，环境为 PostgreSQL 18 默认配置的单实例业务库，表以 UPDATE 为主。现场只给了观测到的现象和少量监控数据，尚无定论。",
+        "constraints": [
+          "只围绕“如何验证是不是长期存活事务/旧快照在阻碍回收”这一条线回答，不需要给出完整表膨胀治理方案。",
+          "默认引擎为 PostgreSQL 18，可以用 pg_stat_activity、pg_stat_activity 的 backend_xmin、pg_stat_all_tables、pg_stat_progress_vacuum、（如可用）pg_stat_activity 相关视图等常规手段，但请说明你要从结果中读什么。",
+          "不需要给出最终修复动作，重点是取证和判断逻辑。"
+        ],
+        "evaluationChecklist": [
+          "能指出要从 pg_stat_activity 中辨识真正持有旧快照/最老 xmin 的会话（如 backend_xmin、state、xact_start、query_start、state 的 idle in transaction 等），而不是只看“有没有活动会话”。",
+          "能说明 autovacuum 回收被阻断与最老可见事务年龄/最老 xmin 之间的关系：回收只能清理所有活跃快照都不再需要的版本。",
+          "能给出至少一条对比性证据（例如 n_dead_tup 高但回收不下降、vacuum 进度中的死元组保留量、最老 xmin 与 pg_stat_all_tables 中 dead tuple 数量）来判断是持续阻塞还是偶发滞后。",
+          "能区分“清理任务在跑”和“清理任务实际回收了空间”这两件事，不把 autovacuum 有日志等同于回收成功。"
+        ],
+        "followUpDirections": [
+          "如果查到存在长时间 idle in transaction 的会话，你会如何判断它是否真的还持有旧快照、以及它对回收的影响范围？",
+          "如果不是长事务，而是短事务高频、间歇性出现，你会用哪类观测把“持续阻塞”和“间歇滞后”区分开？",
+          "假设确认是某个报表或分析查询导致的问题，你会先考虑调查询本身还是调整回收节奏？依据是什么？",
+          "如果 old_snapshot_threshold 被显式设置过，这会不会改变你对“旧快照影响回收”的判断？说明前提。"
+        ],
+        "question": "我们在维护一套 PostgreSQL 18（默认配置）业务库。运维观察到：一张持续被更新的核心表，磁盘占用和表实际行数增长不成比例，最近几周空间持续上涨，清理任务看上去也在正常跑。目前手上有两条线索：pg_stat_user_tables 里该表的 n_dead_tup 长期偏高，autovacuum 有被触发的记录，但每次回收效果不明显。现在还没有确认是什么在拖住空间回收。请问：为了判断“是否存在一个长期存活的事务/快照在拉住回收”，你会去看哪些可验证的证据？请说明每项证据能支持或排除什么判断。"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Database",
+        "focus": [
+          "版本保留与清理进度",
+          "事务年龄的可验证证据"
+        ],
+        "id": "db-long-transaction",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "troubleshooting",
+        "scenarioConstraints": [
+          "PostgreSQL 表持续更新后空间增长",
+          "尚未确认是哪类后台或会话行为造成"
+        ],
+        "sources": [
+          "https://www.postgresql.org/docs/18/"
+        ],
+        "title": "长事务与表膨胀"
+      },
+      "topicId": "db-long-transaction"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "the primary sends its reply after applying the write locally, without waiting for replica confirmation",
+                  "a replica promoted after failover may lack writes the old primary already acknowledged to clients",
+                  "a replica acknowledgement count observed at one moment does not by itself guarantee the write survives a later failover"
+                ],
+                "background": "A service stores session state in a single Redis primary with one replica that follows it over the standard Redis replication link.",
+                "constraints": [
+                  "Assume a recent Redis OSS version with default replication settings and no extra durability options configured on the write path.",
+                  "Keep the explanation at the conceptual level: describe the client-visible guarantee and the replication timing, without configuration tuning, capacity figures or a multi-node architecture.",
+                  "The client issues a single SET command to the primary and receives an OK reply; no other commands are involved in the scenario."
+                ],
+                "evaluationChecklist": [
+                  "Explains what the OK reply from the primary confirms and what it does not confirm about the replica.",
+                  "Describes how a write can be visible to the client yet absent from a replica that is promoted after the primary fails.",
+                  "Distinguishes client success from durability after failover, using a clear causal reason rather than a keyword list."
+                ],
+                "followUpDirections": [
+                  "Clarification: ask the candidate what WAIT numreplicas timeout returns and whether a successful WAIT result changes the failover guarantee.",
+                  "Practical application: ask how the team could decide whether a bounded loss window is acceptable for session data versus payment records.",
+                  "Diagnostic evidence: ask which replication-related observations (offset comparison between primary and replica, link status) would show the replica is behind before a planned failover.",
+                  "Local trade-off: ask what the candidate would accept in latency or complexity to reduce the loss window, and what new failure modes that introduces."
+                ],
+                "question": "When a client receives a successful reply to a SET on a Redis primary that has one replica, what does that reply tell the client about whether the write will survive a failover, and why?"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 3,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "the primary sends its reply after applying the write locally, without waiting for replica confirmation",
+          "a replica promoted after failover may lack writes the old primary already acknowledged to clients",
+          "a replica acknowledgement count observed at one moment does not by itself guarantee the write survives a later failover"
+        ],
+        "background": "A service stores session state in a single Redis primary with one replica that follows it over the standard Redis replication link.",
+        "constraints": [
+          "Assume a recent Redis OSS version with default replication settings and no extra durability options configured on the write path.",
+          "Keep the explanation at the conceptual level: describe the client-visible guarantee and the replication timing, without configuration tuning, capacity figures or a multi-node architecture.",
+          "The client issues a single SET command to the primary and receives an OK reply; no other commands are involved in the scenario."
+        ],
+        "evaluationChecklist": [
+          "Explains what the OK reply from the primary confirms and what it does not confirm about the replica.",
+          "Describes how a write can be visible to the client yet absent from a replica that is promoted after the primary fails.",
+          "Distinguishes client success from durability after failover, using a clear causal reason rather than a keyword list."
+        ],
+        "followUpDirections": [
+          "Clarification: ask the candidate what WAIT numreplicas timeout returns and whether a successful WAIT result changes the failover guarantee.",
+          "Practical application: ask how the team could decide whether a bounded loss window is acceptable for session data versus payment records.",
+          "Diagnostic evidence: ask which replication-related observations (offset comparison between primary and replica, link status) would show the replica is behind before a planned failover.",
+          "Local trade-off: ask what the candidate would accept in latency or complexity to reduce the loss window, and what new failure modes that introduces."
+        ],
+        "question": "When a client receives a successful reply to a SET on a Redis primary that has one replica, what does that reply tell the client about whether the write will survive a failover, and why?"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Redis",
+        "focus": [
+          "Acknowledgement boundaries of asynchronous replication",
+          "Scope of WAIT and failover guarantees"
+        ],
+        "id": "redis-replication-ack",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "foundation",
+        "scenarioConstraints": [
+          "Discuss Redis primary-replica replication",
+          "Distinguish client success responses from durability after failover"
+        ],
+        "sources": [
+          "https://redis.io/docs/latest/operate/oss_and_stack/management/replication/"
+        ],
+        "title": "Redis Replication Acknowledgements and Loss Windows"
+      },
+      "topicId": "redis-replication-ack"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "被监视键在 EXEC 前被修改时整个事务不执行",
+                  "EXEC 的结果需与业务层错误区分开",
+                  "应重新读取最新值后再计算并提交",
+                  "扣减等副作用需依据 EXEC 是否真正提交来决定"
+                ],
+                "background": "你在负责库存服务的后端开发，使用单节点 Redis，应用通过普通客户端连接，按 WATCH、MULTI、EXEC 的顺序实现乐观更新。",
+                "constraints": [
+                  "只讨论单个键 stock:1001 上的 WATCH、MULTI、EXEC 路径，不涉及 Lua 脚本或分布式锁。",
+                  "初始库存为 10，A 与 B 两个客户端在 A 读取之后、A 执行 EXEC 之前，B 对该键完成了一次修改并已提交。",
+                  "只考虑 A 在 EXEC 前没有其他写入，回答以 Redis 的通用事务语义为准，不展开具体客户端库的封装细节。"
+                ],
+                "evaluationChecklist": [
+                  "能准确说明 A 的 EXEC 在此场景下会得到什么结果，并解释原因是被监视的键在 WATCH 之后发生了变化。",
+                  "能区分这种 EXEC 结果与库存不足等业务错误，指出两者的处理方式不同。",
+                  "能说明 A 的代码应重新读取最新库存并基于新值计算，而不是直接沿用之前读到的值。",
+                  "能说明扣减、发送通知等副作用应依据 EXEC 是否真正执行来决定，而不是在 MULTI 排队时就执行。"
+                ],
+                "followUpDirections": [
+                  "如果 A 在 WATCH 之后、MULTI 之前已经发现库存不足并直接返回，这种情况下是否还需要 EXEC？请说明理由。",
+                  "如果 B 的修改发生在 A 执行 MULTI 之后、EXEC 之前，结论是否变化？请解释被监视键的判定时机。",
+                  "在重试次数有限的情况下，应如何设计循环结构，才能避免无限重试并把最终失败反馈给业务层？",
+                  "如果 A 在 EXEC 之前因为网络超时没有收到响应，客户端应如何判断这次扣减是否已经生效？"
+                ],
+                "question": "假设 A 与 B 同时操作 stock:1001：A 先执行 WATCH stock:1001，然后 GET 得到 10，在本地计算后准备 MULTI，DECRBY stock:1001 1，再 EXEC。在 A 完成 GET 之后、EXEC 之前，B 将库存修改为 9 并已提交。请说明 A 的 EXEC 会得到什么结果，它与库存不足这类业务错误有什么区别，以及 A 接下来的代码应如何处理这个结果。"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 4,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "被监视键在 EXEC 前被修改时整个事务不执行",
+          "EXEC 的结果需与业务层错误区分开",
+          "应重新读取最新值后再计算并提交",
+          "扣减等副作用需依据 EXEC 是否真正提交来决定"
+        ],
+        "background": "你在负责库存服务的后端开发，使用单节点 Redis，应用通过普通客户端连接，按 WATCH、MULTI、EXEC 的顺序实现乐观更新。",
+        "constraints": [
+          "只讨论单个键 stock:1001 上的 WATCH、MULTI、EXEC 路径，不涉及 Lua 脚本或分布式锁。",
+          "初始库存为 10，A 与 B 两个客户端在 A 读取之后、A 执行 EXEC 之前，B 对该键完成了一次修改并已提交。",
+          "只考虑 A 在 EXEC 前没有其他写入，回答以 Redis 的通用事务语义为准，不展开具体客户端库的封装细节。"
+        ],
+        "evaluationChecklist": [
+          "能准确说明 A 的 EXEC 在此场景下会得到什么结果，并解释原因是被监视的键在 WATCH 之后发生了变化。",
+          "能区分这种 EXEC 结果与库存不足等业务错误，指出两者的处理方式不同。",
+          "能说明 A 的代码应重新读取最新库存并基于新值计算，而不是直接沿用之前读到的值。",
+          "能说明扣减、发送通知等副作用应依据 EXEC 是否真正执行来决定，而不是在 MULTI 排队时就执行。"
+        ],
+        "followUpDirections": [
+          "如果 A 在 WATCH 之后、MULTI 之前已经发现库存不足并直接返回，这种情况下是否还需要 EXEC？请说明理由。",
+          "如果 B 的修改发生在 A 执行 MULTI 之后、EXEC 之前，结论是否变化？请解释被监视键的判定时机。",
+          "在重试次数有限的情况下，应如何设计循环结构，才能避免无限重试并把最终失败反馈给业务层？",
+          "如果 A 在 EXEC 之前因为网络超时没有收到响应，客户端应如何判断这次扣减是否已经生效？"
+        ],
+        "question": "假设 A 与 B 同时操作 stock:1001：A 先执行 WATCH stock:1001，然后 GET 得到 10，在本地计算后准备 MULTI，DECRBY stock:1001 1，再 EXEC。在 A 完成 GET 之后、EXEC 之前，B 将库存修改为 9 并已提交。请说明 A 的 EXEC 会得到什么结果，它与库存不足这类业务错误有什么区别，以及 A 接下来的代码应如何处理这个结果。"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Redis",
+        "focus": [
+          "乐观检查的提交条件",
+          "冲突重试与业务副作用"
+        ],
+        "id": "redis-watch-transaction",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "两个客户端更新同一个键",
+          "仅讨论 WATCH、MULTI、EXEC 路径"
+        ],
+        "sources": [
+          "https://redis.io/docs/latest/develop/interact/transactions/"
+        ],
+        "title": "Redis WATCH 的并发更新"
+      },
+      "topicId": "redis-watch-transaction"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "receiver-advertised window bounds how much data the receiver can buffer",
+                  "congestion window is an estimate of path capacity inferred from loss or delay signals",
+                  "sender's effective in-flight limit is the smaller of the receiver window and congestion window"
+                ],
+                "background": "Two hosts exchange a large file over one established TCP connection, and the sender needs to decide how much unacknowledged data it may have outstanding at any moment.",
+                "constraints": [
+                  "Assume standard TCP semantics as described in RFC 9293 and a single connection with no application-layer throttling.",
+                  "Explain the mechanisms and the signals they respond to; do not rely on specific constants or the internals of one congestion control algorithm.",
+                  "A conceptual answer of about two to three minutes is sufficient; no packet traces or capacity calculations are needed."
+                ],
+                "evaluationChecklist": [
+                  "Candidate distinguishes a limit that protects the receiver's buffer space from a limit that responds to the state of the network path.",
+                  "Candidate explains what information each limit is based on, such as advertised buffer space versus inferred loss or delay.",
+                  "Candidate explains how the sender combines the two limits to decide how much data can be in flight."
+                ],
+                "followUpDirections": [
+                  "Clarification: If the receiver advertises a zero window, what should the sender do, and how does the sender learn when it may resume?",
+                  "Practical application: Given a packet capture, what observable fields or patterns would help you tell whether the receiver or the network path is limiting throughput?",
+                  "Local trade-off: Why might a sender that ignores path congestion and transmits up to the receiver's advertised window cause problems even when the receiver has ample buffer space?"
+                ],
+                "question": "Explain how TCP determines how much unacknowledged data a sender may have in flight at one time, and describe how the mechanism that protects the receiver differs from the mechanism that responds to congestion on the network path."
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 5,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "receiver-advertised window bounds how much data the receiver can buffer",
+          "congestion window is an estimate of path capacity inferred from loss or delay signals",
+          "sender's effective in-flight limit is the smaller of the receiver window and congestion window"
+        ],
+        "background": "Two hosts exchange a large file over one established TCP connection, and the sender needs to decide how much unacknowledged data it may have outstanding at any moment.",
+        "constraints": [
+          "Assume standard TCP semantics as described in RFC 9293 and a single connection with no application-layer throttling.",
+          "Explain the mechanisms and the signals they respond to; do not rely on specific constants or the internals of one congestion control algorithm.",
+          "A conceptual answer of about two to three minutes is sufficient; no packet traces or capacity calculations are needed."
+        ],
+        "evaluationChecklist": [
+          "Candidate distinguishes a limit that protects the receiver's buffer space from a limit that responds to the state of the network path.",
+          "Candidate explains what information each limit is based on, such as advertised buffer space versus inferred loss or delay.",
+          "Candidate explains how the sender combines the two limits to decide how much data can be in flight."
+        ],
+        "followUpDirections": [
+          "Clarification: If the receiver advertises a zero window, what should the sender do, and how does the sender learn when it may resume?",
+          "Practical application: Given a packet capture, what observable fields or patterns would help you tell whether the receiver or the network path is limiting throughput?",
+          "Local trade-off: Why might a sender that ignores path congestion and transmits up to the receiver's advertised window cause problems even when the receiver has ample buffer space?"
+        ],
+        "question": "Explain how TCP determines how much unacknowledged data a sender may have in flight at one time, and describe how the mechanism that protects the receiver differs from the mechanism that responds to congestion on the network path."
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Networking",
+        "focus": [
+          "Receiver capacity versus path congestion",
+          "Sources of send-window limits"
+        ],
+        "id": "network-flow-congestion",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "foundation",
+        "scenarioConstraints": [
+          "Discuss TCP transport",
+          "Do not require constants from a particular kernel algorithm"
+        ],
+        "sources": [
+          "https://www.rfc-editor.org/rfc/rfc9293.html"
+        ],
+        "title": "TCP Flow Control and Congestion Control"
+      },
+      "topicId": "network-flow-congestion"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "共享缓存可能把为某用户生成的响应提供给其他请求者",
+                  "个性化响应应限定在单个用户的私有缓存中或不被存储",
+                  "同一 URL 下不同身份的响应需要在缓存键或缓存指令上被区分"
+                ],
+                "background": "你负责电商商品详情页的后端与缓存策略。页面主体的 HTML 对所有用户相同，但登录用户会看到会员价和购物车数量提示，访客看到普通价。CDN 作为遵循 RFC 9111 的共享缓存部署在源站前。",
+                "constraints": [
+                  "只讨论 HTTP 缓存语义（共享缓存与私有缓存的行为差异及相关响应指令），不讨论 CDN 产品的搭建与配置",
+                  "假设 CDN 为遵循 RFC 9111 的共享缓存，登录态通过 Cookie 携带，个性化差异仅体现在价格与购物车提示两处"
+                ],
+                "evaluationChecklist": [
+                  "能说明共享缓存为什么可能把一个用户的个性化响应复用给其他用户，并指出判断依据来自 RFC 9111 对共享缓存的约束",
+                  "能给出针对个性化响应的合理缓存控制方案（如限制存储范围或禁止存储），并解释各指令在共享缓存与私有缓存中的作用差异",
+                  "能说明若依赖缓存键区分身份，需要考虑哪些输入维度，并指出以 Cookie 作为变体维度可能带来的问题",
+                  "能区分不存储与需校验后再使用两类语义，并说明它们对访客页面与登录页面的适用性不同"
+                ],
+                "followUpDirections": [
+                  "若访客页面希望被共享缓存复用，而登录用户页面需要避免共享存储，你会如何在同一 URL 下拆分两类响应的缓存行为？请说明依据的 HTTP 指令。",
+                  "如果改为在源站按 Cookie 生成不同 HTML 后再由 CDN 缓存，Vary 头的使用会带来哪些风险？请说明基数与缓存效率的影响。",
+                  "请对比 no-cache 与 no-store 的语义差异，并说明在这个场景中哪一个更能避免个性化内容被存储。",
+                  "若只把价格部分改为客户端脚本异步加载，主页面可以安全共享缓存，这种方案的边界条件是什么？"
+                ],
+                "question": "同一商品 URL 同时服务访客和已登录用户，已登录用户的响应中包含会员价与购物车数量。如果该 URL 的响应经过共享缓存，你会如何设计它的缓存行为，避免已登录用户的个性化内容被其他人复用？请说明你依据的响应指令或缓存键选择。"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 6,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "共享缓存可能把为某用户生成的响应提供给其他请求者",
+          "个性化响应应限定在单个用户的私有缓存中或不被存储",
+          "同一 URL 下不同身份的响应需要在缓存键或缓存指令上被区分"
+        ],
+        "background": "你负责电商商品详情页的后端与缓存策略。页面主体的 HTML 对所有用户相同，但登录用户会看到会员价和购物车数量提示，访客看到普通价。CDN 作为遵循 RFC 9111 的共享缓存部署在源站前。",
+        "constraints": [
+          "只讨论 HTTP 缓存语义（共享缓存与私有缓存的行为差异及相关响应指令），不讨论 CDN 产品的搭建与配置",
+          "假设 CDN 为遵循 RFC 9111 的共享缓存，登录态通过 Cookie 携带，个性化差异仅体现在价格与购物车提示两处"
+        ],
+        "evaluationChecklist": [
+          "能说明共享缓存为什么可能把一个用户的个性化响应复用给其他用户，并指出判断依据来自 RFC 9111 对共享缓存的约束",
+          "能给出针对个性化响应的合理缓存控制方案（如限制存储范围或禁止存储），并解释各指令在共享缓存与私有缓存中的作用差异",
+          "能说明若依赖缓存键区分身份，需要考虑哪些输入维度，并指出以 Cookie 作为变体维度可能带来的问题",
+          "能区分不存储与需校验后再使用两类语义，并说明它们对访客页面与登录页面的适用性不同"
+        ],
+        "followUpDirections": [
+          "若访客页面希望被共享缓存复用，而登录用户页面需要避免共享存储，你会如何在同一 URL 下拆分两类响应的缓存行为？请说明依据的 HTTP 指令。",
+          "如果改为在源站按 Cookie 生成不同 HTML 后再由 CDN 缓存，Vary 头的使用会带来哪些风险？请说明基数与缓存效率的影响。",
+          "请对比 no-cache 与 no-store 的语义差异，并说明在这个场景中哪一个更能避免个性化内容被存储。",
+          "若只把价格部分改为客户端脚本异步加载，主页面可以安全共享缓存，这种方案的边界条件是什么？"
+        ],
+        "question": "同一商品 URL 同时服务访客和已登录用户，已登录用户的响应中包含会员价与购物车数量。如果该 URL 的响应经过共享缓存，你会如何设计它的缓存行为，避免已登录用户的个性化内容被其他人复用？请说明你依据的响应指令或缓存键选择。"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Networking",
+        "focus": [
+          "缓存键与响应变体",
+          "私人内容的共享边界"
+        ],
+        "id": "network-cdn-cache",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "同一商品 URL 同时服务访客与登录用户",
+          "仅讨论 HTTP 缓存策略而非搭建 CDN"
+        ],
+        "sources": [
+          "https://www.rfc-editor.org/rfc/rfc9111.html"
+        ],
+        "title": "CDN 缓存与个性化响应"
+      },
+      "topicId": "network-cdn-cache"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "the terminated child keeps a minimal process-table entry that holds its exit status until the parent collects it",
+                  "the parent's explicit status-collection call is what releases the leftover entry",
+                  "a zombie consumes no CPU or memory beyond that table entry, and killing it does not remove the entry"
+                ],
+                "background": "A backend service launches helper child processes and occasionally sees entries in ps output with state Z that persist after the children have finished their work.",
+                "constraints": [
+                  "Assume Linux with standard POSIX process termination semantics.",
+                  "Focus on the process-table entry and the parent-child relationship, not signal delivery details or kernel source code.",
+                  "Explain at the conceptual level suitable for a 2-3 minute answer; do not write C code."
+                ],
+                "evaluationChecklist": [
+                  "Defines a zombie process as a child that has terminated but whose process-table entry remains.",
+                  "Explains that the entry is kept so the exit status is available to the parent, and identifies that the parent's collection of that status removes the entry.",
+                  "Recognizes that a zombie holds no running resources beyond its table entry and that signaling it does not clear it."
+                ],
+                "followUpDirections": [
+                  "Clarification: What happens to a child's entry if its parent process exits before collecting the child's status, and how does that relate to orphan processes?",
+                  "Practical application: In a service where a parent spawns many short-lived children, what design choices in the parent would prevent accumulating zombies, and what trade-offs does each have?",
+                  "Diagnostic evidence: If ps shows many Z-state entries under one parent PID, what additional observations would you collect to confirm the parent is the cause rather than a stuck child?"
+                ],
+                "question": "Explain what a zombie process is on Linux, why its entry remains in the process table after the child has finished, and what must happen for that entry to be removed."
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 7,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "the terminated child keeps a minimal process-table entry that holds its exit status until the parent collects it",
+          "the parent's explicit status-collection call is what releases the leftover entry",
+          "a zombie consumes no CPU or memory beyond that table entry, and killing it does not remove the entry"
+        ],
+        "background": "A backend service launches helper child processes and occasionally sees entries in ps output with state Z that persist after the children have finished their work.",
+        "constraints": [
+          "Assume Linux with standard POSIX process termination semantics.",
+          "Focus on the process-table entry and the parent-child relationship, not signal delivery details or kernel source code.",
+          "Explain at the conceptual level suitable for a 2-3 minute answer; do not write C code."
+        ],
+        "evaluationChecklist": [
+          "Defines a zombie process as a child that has terminated but whose process-table entry remains.",
+          "Explains that the entry is kept so the exit status is available to the parent, and identifies that the parent's collection of that status removes the entry.",
+          "Recognizes that a zombie holds no running resources beyond its table entry and that signaling it does not clear it."
+        ],
+        "followUpDirections": [
+          "Clarification: What happens to a child's entry if its parent process exits before collecting the child's status, and how does that relate to orphan processes?",
+          "Practical application: In a service where a parent spawns many short-lived children, what design choices in the parent would prevent accumulating zombies, and what trade-offs does each have?",
+          "Diagnostic evidence: If ps shows many Z-state entries under one parent PID, what additional observations would you collect to confirm the parent is the cause rather than a stuck child?"
+        ],
+        "question": "Explain what a zombie process is on Linux, why its entry remains in the process table after the child has finished, and what must happen for that entry to be removed."
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Operating Systems",
+        "focus": [
+          "Retention and collection of exit status",
+          "Parent-child process lifetimes"
+        ],
+        "id": "os-zombie-process",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "foundation",
+        "scenarioConstraints": [
+          "Use Linux processes",
+          "Similar process names are not evidence of process state"
+        ],
+        "sources": [
+          "https://man7.org/linux/man-pages/"
+        ],
+        "title": "Zombie and Orphan Processes"
+      },
+      "topicId": "os-zombie-process"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "accept 返回的错误码直接决定排查方向",
+                  "进程已占用的描述符数量接近其可用上限",
+                  "连接关闭路径中有描述符未被释放"
+                ],
+                "background": "你负责的一个 Linux 上的网络服务，最近开始在日志中出现 accept 调用失败的记录，部分新连接无法建立。服务为单进程，监听一个端口，日志中目前只有通用的失败信息。",
+                "constraints": [
+                  "目前只知道 accept 失败开始出现，还没有具体的错误码、进程资源统计或系统级指标",
+                  "服务近期没有已知的发布变更，但你尚不确定负载是否有变化"
+                ],
+                "evaluationChecklist": [
+                  "能说出应先获取 accept 失败时的具体错误码或 errno，并解释它能缩小哪些方向",
+                  "能提出观察进程当前占用的资源数量与其上限之间关系的方法，并说明需要哪些数据",
+                  "能说明如何利用失败发生的时间线与资源变化的趋势来判断问题是否与持续增长有关",
+                  "能说明选择的下一步证据为何最有区分力，而不是直接下结论"
+                ],
+                "followUpDirections": [
+                  "如果你拿到了错误码为 EMFILE 的日志，你会如何解释它的含义，并确定它是进程级还是系统级的限制？",
+                  "如果发现进程占用的某类资源计数随时间持续上升，你会怎样判断增长来自正常并发还是连接未被正确关闭？",
+                  "如果资源计数在失败期间并未接近上限，你接下来会验证哪些假设，依据是什么？"
+                ],
+                "question": "线上 Linux 服务开始出现 accept 失败，但目前只有这一条通用记录，还没有错误码和资源数据。你会先收集哪些证据来判断问题方向？为什么选择这一项作为下一步？"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 8,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "accept 返回的错误码直接决定排查方向",
+          "进程已占用的描述符数量接近其可用上限",
+          "连接关闭路径中有描述符未被释放"
+        ],
+        "background": "你负责的一个 Linux 上的网络服务，最近开始在日志中出现 accept 调用失败的记录，部分新连接无法建立。服务为单进程，监听一个端口，日志中目前只有通用的失败信息。",
+        "constraints": [
+          "目前只知道 accept 失败开始出现，还没有具体的错误码、进程资源统计或系统级指标",
+          "服务近期没有已知的发布变更，但你尚不确定负载是否有变化"
+        ],
+        "evaluationChecklist": [
+          "能说出应先获取 accept 失败时的具体错误码或 errno，并解释它能缩小哪些方向",
+          "能提出观察进程当前占用的资源数量与其上限之间关系的方法，并说明需要哪些数据",
+          "能说明如何利用失败发生的时间线与资源变化的趋势来判断问题是否与持续增长有关",
+          "能说明选择的下一步证据为何最有区分力，而不是直接下结论"
+        ],
+        "followUpDirections": [
+          "如果你拿到了错误码为 EMFILE 的日志，你会如何解释它的含义，并确定它是进程级还是系统级的限制？",
+          "如果发现进程占用的某类资源计数随时间持续上升，你会怎样判断增长来自正常并发还是连接未被正确关闭？",
+          "如果资源计数在失败期间并未接近上限，你接下来会验证哪些假设，依据是什么？"
+        ],
+        "question": "线上 Linux 服务开始出现 accept 失败，但目前只有这一条通用记录，还没有错误码和资源数据。你会先收集哪些证据来判断问题方向？为什么选择这一项作为下一步？"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Operating Systems",
+        "focus": [
+          "资源耗尽的证据",
+          "连接与描述符生命周期"
+        ],
+        "id": "os-fd-exhaustion",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "troubleshooting",
+        "scenarioConstraints": [
+          "Linux 服务开始出现 accept 失败",
+          "尚未给出错误码和资源计数"
+        ],
+        "sources": [
+          "https://man7.org/linux/man-pages/"
+        ],
+        "title": "服务无法再接受新连接"
+      },
+      "topicId": "os-fd-exhaustion"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "Waiting consumers must re-check the queue condition after each wakeup rather than assume an item is available",
+                  "A consumer that finds the queue closed and empty must stop instead of blocking again",
+                  "Closing the queue must wake every blocked waiter, not only one, so none sleeps forever",
+                  "Blocked producers also need to observe the closed state and must not wait for space that will never appear"
+                ],
+                "background": "An order-processing service runs several producer threads that push jobs into a shared in-memory bounded queue and several worker threads that pop jobs from it. During a graceful shutdown, the service stops accepting new jobs and closes the queue, while some workers are idle and blocked waiting for jobs.",
+                "constraints": [
+                  "Assume a mutex and a condition-variable style primitive with wait, signal, and broadcast-like operations; do not rely on a specific library API.",
+                  "Close is a one-way transition: once closed, the queue never reopens, and items already enqueued may still be drained.",
+                  "Explain at the level of pseudocode or precise prose; no timeouts, retries, or persistence are involved."
+                ],
+                "evaluationChecklist": [
+                  "Explains that a consumer must re-check the queue state after waking, not assume an item exists, and gives a concise reason tied to the wait condition.",
+                  "Explains how a consumer should decide between taking an item, continuing to wait, and stopping once the queue is closed and empty.",
+                  "Explains what must happen to consumers that are already blocked when close is called, and why waking only one of them is insufficient.",
+                  "Mentions that blocked producers must also react to the closed state rather than waiting for free space indefinitely."
+                ],
+                "followUpDirections": [
+                  "Clarification: Ask the candidate whether items remaining in the queue at close time should be drained by workers or discarded, and how that choice changes the consumer's stopping condition.",
+                  "Practical application: Ask how a producer that is blocked on a full queue should behave when close happens, and what it should return or signal to its caller.",
+                  "Diagnostic evidence: Present the symptom that shutdown hangs with some worker threads still alive and a queue that is closed and empty; ask which observation would best distinguish a missed wakeup from a worker that is still processing an item, and why.",
+                  "Local trade-offs: Ask whether a single broadcast-style wakeup on close is preferable to per-waiter signaling, and what each approach costs in clarity and contention."
+                ],
+                "question": "Describe how a worker should decide, each time it wakes up, whether to take a job, keep waiting, or exit once the queue has been closed, and what must happen to workers that are already blocked at the moment close is called."
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 9,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "Waiting consumers must re-check the queue condition after each wakeup rather than assume an item is available",
+          "A consumer that finds the queue closed and empty must stop instead of blocking again",
+          "Closing the queue must wake every blocked waiter, not only one, so none sleeps forever",
+          "Blocked producers also need to observe the closed state and must not wait for space that will never appear"
+        ],
+        "background": "An order-processing service runs several producer threads that push jobs into a shared in-memory bounded queue and several worker threads that pop jobs from it. During a graceful shutdown, the service stops accepting new jobs and closes the queue, while some workers are idle and blocked waiting for jobs.",
+        "constraints": [
+          "Assume a mutex and a condition-variable style primitive with wait, signal, and broadcast-like operations; do not rely on a specific library API.",
+          "Close is a one-way transition: once closed, the queue never reopens, and items already enqueued may still be drained.",
+          "Explain at the level of pseudocode or precise prose; no timeouts, retries, or persistence are involved."
+        ],
+        "evaluationChecklist": [
+          "Explains that a consumer must re-check the queue state after waking, not assume an item exists, and gives a concise reason tied to the wait condition.",
+          "Explains how a consumer should decide between taking an item, continuing to wait, and stopping once the queue is closed and empty.",
+          "Explains what must happen to consumers that are already blocked when close is called, and why waking only one of them is insufficient.",
+          "Mentions that blocked producers must also react to the closed state rather than waiting for free space indefinitely."
+        ],
+        "followUpDirections": [
+          "Clarification: Ask the candidate whether items remaining in the queue at close time should be drained by workers or discarded, and how that choice changes the consumer's stopping condition.",
+          "Practical application: Ask how a producer that is blocked on a full queue should behave when close happens, and what it should return or signal to its caller.",
+          "Diagnostic evidence: Present the symptom that shutdown hangs with some worker threads still alive and a queue that is closed and empty; ask which observation would best distinguish a missed wakeup from a worker that is still processing an item, and why.",
+          "Local trade-offs: Ask whether a single broadcast-style wakeup on close is preferable to per-waiter signaling, and what each approach costs in clarity and contention."
+        ],
+        "question": "Describe how a worker should decide, each time it wakes up, whether to take a job, keep waiting, or exit once the queue has been closed, and what must happen to workers that are already blocked at the moment close is called."
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Concurrency",
+        "focus": [
+          "Producer-consumer wait predicates",
+          "Closed state and complete wakeups"
+        ],
+        "id": "concurrency-bounded-buffer",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "Multiple producers and consumers share a bounded queue",
+          "The queue may close before it fills"
+        ],
+        "sources": [
+          "https://man7.org/linux/man-pages/man7/pthreads.7.html"
+        ],
+        "title": "Ending and Waking a Bounded Buffer"
+      },
+      "topicId": "concurrency-bounded-buffer"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "位点先于外部写入提交后，崩溃可能使该消息结果丢失",
+                  "外部写入先于位点提交时，崩溃后同一消息可能被再次处理",
+                  "重复处理需要依靠幂等写入或业务去重键来收敛"
+                ],
+                "background": "你在支付对账团队负责一个 Kafka 消费者服务，它读取交易事件后把处理结果写入独立的 MySQL 对账表，这张表不在 Kafka 事务之内。",
+                "constraints": [
+                  "消费者为单实例、单分区顺序消费，使用手动提交位点（关闭自动提交）",
+                  "外部数据库写入与 Kafka 位点提交是两个独立操作，不假设它们可以原子完成",
+                  "讨论范围限于进程在两步之间崩溃后的恢复，不涉及 Kafka 集群故障或 rebalance 细节"
+                ],
+                "evaluationChecklist": [
+                  "能说明位点提交时点与外部写入先后的关系，并分别描述崩溃后重启可能出现的结果（丢失或重复）",
+                  "能指出在两者不原子的前提下，单靠位点提交时点无法同时避免丢失和重复",
+                  "能给出基于幂等写入或唯一业务键的合理应对，并说明其成立的前提",
+                  "结论中对不同顺序的恢复行为有明确区分，而非笼统地说“会有问题”"
+                ],
+                "followUpDirections": [
+                  "如果把位点提交放在数据库写入之前，请说明崩溃后重启会发生什么，以及这种结果能否接受的判断依据",
+                  "如果改为先写数据库再提交位点，请说明重启后该消息会如何被再次拉取，以及如何设计对账表的唯一键来避免重复记账",
+                  "追问：若数据库写入成功但提交位点的请求超时，如何判断这条消息是否已经处理过？",
+                  "追问：如果业务要求结果恰好一次且只能落在外部数据库，你会如何在数据库侧实现去重或状态机，这些方案的代价是什么？"
+                ],
+                "question": "该消费者每处理一条交易事件，都要先写入外部数据库，再提交该消息的位点。假设进程在数据库写入之后、位点提交之前崩溃，重启后这条消息会怎样？请再说明如果把两步顺序对调，崩溃后的结果会有什么不同，以及你会如何选择。"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 10,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "位点先于外部写入提交后，崩溃可能使该消息结果丢失",
+          "外部写入先于位点提交时，崩溃后同一消息可能被再次处理",
+          "重复处理需要依靠幂等写入或业务去重键来收敛"
+        ],
+        "background": "你在支付对账团队负责一个 Kafka 消费者服务，它读取交易事件后把处理结果写入独立的 MySQL 对账表，这张表不在 Kafka 事务之内。",
+        "constraints": [
+          "消费者为单实例、单分区顺序消费，使用手动提交位点（关闭自动提交）",
+          "外部数据库写入与 Kafka 位点提交是两个独立操作，不假设它们可以原子完成",
+          "讨论范围限于进程在两步之间崩溃后的恢复，不涉及 Kafka 集群故障或 rebalance 细节"
+        ],
+        "evaluationChecklist": [
+          "能说明位点提交时点与外部写入先后的关系，并分别描述崩溃后重启可能出现的结果（丢失或重复）",
+          "能指出在两者不原子的前提下，单靠位点提交时点无法同时避免丢失和重复",
+          "能给出基于幂等写入或唯一业务键的合理应对，并说明其成立的前提",
+          "结论中对不同顺序的恢复行为有明确区分，而非笼统地说“会有问题”"
+        ],
+        "followUpDirections": [
+          "如果把位点提交放在数据库写入之前，请说明崩溃后重启会发生什么，以及这种结果能否接受的判断依据",
+          "如果改为先写数据库再提交位点，请说明重启后该消息会如何被再次拉取，以及如何设计对账表的唯一键来避免重复记账",
+          "追问：若数据库写入成功但提交位点的请求超时，如何判断这条消息是否已经处理过？",
+          "追问：如果业务要求结果恰好一次且只能落在外部数据库，你会如何在数据库侧实现去重或状态机，这些方案的代价是什么？"
+        ],
+        "question": "该消费者每处理一条交易事件，都要先写入外部数据库，再提交该消息的位点。假设进程在数据库写入之后、位点提交之前崩溃，重启后这条消息会怎样？请再说明如果把两步顺序对调，崩溃后的结果会有什么不同，以及你会如何选择。"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Messaging",
+        "focus": [
+          "处理结果与消费位置的确认顺序",
+          "进程崩溃后的恢复范围"
+        ],
+        "id": "mq-offset-commit",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "消费者把结果写入外部数据库",
+          "不能假设外部写入属于 Kafka 事务"
+        ],
+        "sources": [
+          "https://kafka.apache.org/41/design/design/"
+        ],
+        "title": "Kafka 位点与业务处理先后"
+      },
+      "topicId": "mq-offset-commit"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "consumed offsets and produced output records are committed together as one Kafka-internal unit",
+                  "an external email is not rolled back when the Kafka transaction is aborted or retried",
+                  "duplicate emails after retries require deduplication or idempotency on the external side, which Kafka's guarantee does not provide"
+                ],
+                "background": "A stream service reads records from an input topic, transforms each record, writes the result to an output topic, and its transform step also sends a confirmation email to a customer for each processed record.",
+                "constraints": [
+                  "Assume the email is sent by an external HTTP service that is not part of Kafka and does not participate in Kafka's transaction protocol.",
+                  "Assume the email is sent inside the transform step, before the Kafka transaction that covers the consumed offsets and produced output is committed.",
+                  "Explain at the level of guarantees and boundaries; do not write client configuration names, class names, or code."
+                ],
+                "evaluationChecklist": [
+                  "Explains that the exactly-once guarantee covers the consumed offset advancement and the produced output records as one unit within Kafka, rather than all effects of the processing step.",
+                  "Identifies that the email is an external side effect outside the Kafka transaction boundary, so the guarantee does not cover it and retries can cause it to repeat.",
+                  "Distinguishes between Kafka-internal exactly-once semantics and end-to-end exactly-once effects, and states that the latter needs external deduplication or idempotent operations."
+                ],
+                "followUpDirections": [
+                  "Clarification: If the email were sent only after the Kafka transaction commits, what failure cases would remain, and which side would the candidate expect to see duplicates or losses?",
+                  "Practical application: What information would a recipient-side or sender-side deduplication key need to contain for the email operation to be safe to retry, and where should that key be stored?",
+                  "Local trade-offs: Compare sending the email directly from the transform step with recording a pending notification as an output record and sending it from a separate consumer, focusing on what each approach changes about the guarantee and its failure modes."
+                ],
+                "question": "In a Kafka consume-transform-produce pipeline using exactly-once processing, what does the exactly-once guarantee cover, and is the sending of an email for each record covered by it? Explain why."
+              },
+              "verdict": {
+                "accepted": false,
+                "issues": [
+                  "The constraint stating the email service 'does not participate in Kafka's transaction protocol' supplies the causal reason the email falls outside the guarantee, which is the answer proposition. Describe the email as an external HTTP call and let the candidate derive the boundary."
+                ]
+              }
+            },
+            {
+              "proposal": {
+                "answerTerms": [
+                  "consumed offsets and produced output records are committed together as one Kafka-internal unit",
+                  "an external email is not rolled back when the Kafka transaction is aborted or retried",
+                  "duplicate emails after retries require deduplication or idempotency on the external side, which Kafka's guarantee does not provide"
+                ],
+                "background": "A stream service reads records from an input topic, transforms each record, writes the result to an output topic, and its transform step also sends a confirmation email to a customer for each processed record.",
+                "constraints": [
+                  "Assume the email is sent by a call to an external HTTP service that is outside Kafka.",
+                  "Assume the email call is made inside the transform step, before the Kafka transaction that covers the consumed offsets and produced output is committed.",
+                  "Explain at the level of guarantees and boundaries; do not write client configuration names, class names, or code."
+                ],
+                "evaluationChecklist": [
+                  "Explains that the exactly-once guarantee covers the consumed offset advancement and the produced output records as one unit within Kafka, rather than all effects of the processing step.",
+                  "Identifies that the email is an external side effect outside the Kafka transaction boundary, so the guarantee does not cover it and retries can cause it to repeat.",
+                  "Distinguishes between Kafka-internal exactly-once semantics and end-to-end exactly-once effects, and states that the latter needs external deduplication or idempotent operations."
+                ],
+                "followUpDirections": [
+                  "Clarification: If the email were sent only after the Kafka transaction commits, what failure cases would remain, and which side would the candidate expect to see duplicates or losses?",
+                  "Practical application: What information would a recipient-side or sender-side deduplication key need to contain for the email operation to be safe to retry, and where should that key be stored?",
+                  "Local trade-offs: Compare sending the email directly from the transform step with recording a pending notification as an output record and sending it from a separate consumer, focusing on what each approach changes about the guarantee and its failure modes."
+                ],
+                "question": "In a Kafka consume-transform-produce pipeline using exactly-once processing, what does the exactly-once guarantee cover, and is the sending of an email for each record covered by it? Explain why."
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 11,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "consumed offsets and produced output records are committed together as one Kafka-internal unit",
+          "an external email is not rolled back when the Kafka transaction is aborted or retried",
+          "duplicate emails after retries require deduplication or idempotency on the external side, which Kafka's guarantee does not provide"
+        ],
+        "background": "A stream service reads records from an input topic, transforms each record, writes the result to an output topic, and its transform step also sends a confirmation email to a customer for each processed record.",
+        "constraints": [
+          "Assume the email is sent by a call to an external HTTP service that is outside Kafka.",
+          "Assume the email call is made inside the transform step, before the Kafka transaction that covers the consumed offsets and produced output is committed.",
+          "Explain at the level of guarantees and boundaries; do not write client configuration names, class names, or code."
+        ],
+        "evaluationChecklist": [
+          "Explains that the exactly-once guarantee covers the consumed offset advancement and the produced output records as one unit within Kafka, rather than all effects of the processing step.",
+          "Identifies that the email is an external side effect outside the Kafka transaction boundary, so the guarantee does not cover it and retries can cause it to repeat.",
+          "Distinguishes between Kafka-internal exactly-once semantics and end-to-end exactly-once effects, and states that the latter needs external deduplication or idempotent operations."
+        ],
+        "followUpDirections": [
+          "Clarification: If the email were sent only after the Kafka transaction commits, what failure cases would remain, and which side would the candidate expect to see duplicates or losses?",
+          "Practical application: What information would a recipient-side or sender-side deduplication key need to contain for the email operation to be safe to retry, and where should that key be stored?",
+          "Local trade-offs: Compare sending the email directly from the transform step with recording a pending notification as an output record and sending it from a separate consumer, focusing on what each approach changes about the guarantee and its failure modes."
+        ],
+        "question": "In a Kafka consume-transform-produce pipeline using exactly-once processing, what does the exactly-once guarantee cover, and is the sending of an email for each record covered by it? Explain why."
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Messaging",
+        "focus": [
+          "Operations covered by a transaction",
+          "Boundaries of external side effects"
+        ],
+        "id": "mq-exactly-once",
+        "level": "mid-to-senior",
+        "priority": "advanced",
+        "questionForm": "foundation",
+        "scenarioConstraints": [
+          "Start with Kafka consume-transform-produce",
+          "Clarify whether external actions such as email are covered"
+        ],
+        "sources": [
+          "https://kafka.apache.org/41/design/design/"
+        ],
+        "title": "The Scope of Exactly-Once Messaging"
+      },
+      "topicId": "mq-exactly-once"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "墙上时钟在校时时可能发生跳变或速率调整，因此其差值不一定等于真实经过的时间",
+                  "单调时钟只保证同一机器内单调递增，适合测量本地时间间隔，但不对应挂钟时刻",
+                  "跨机器的墙上时间戳受时钟偏差影响，不能仅凭时间戳严格判定事件先后"
+                ],
+                "background": "你在 Linux 服务端开发中需要处理超时与日志排查，熟悉 clock_gettime 的基本用法，但不需要了解内核实现细节。",
+                "constraints": [
+                  "讨论范围限定在 Linux 用户态，使用 CLOCK_REALTIME 与 CLOCK_MONOTONIC 两类时钟的语义",
+                  "不假设不同机器的时钟严格同步，也不假设系统在测量期间不会校时"
+                ],
+                "evaluationChecklist": [
+                  "能说明墙上时钟与单调时钟的核心区别，包括是否对应挂钟时间以及是否受系统时间调整影响",
+                  "能区分本机内测量耗时或超时与跨节点比较日志时间戳两种场景各自适用的时钟依据",
+                  "能解释在无法保证时钟同步时，跨节点时间戳只能作为参考，不宜直接当作严格先后依据"
+                ],
+                "followUpDirections": [
+                  "如果在一次超时计时的起点与终点之间，系统恰好进行了一次时间校正，分别用墙上时钟和单调时钟测得的间隔会有什么不同？",
+                  "为什么单调时钟的读数通常不能直接拿来与另一台机器的读数比较？",
+                  "若要在多台机器的日志中还原请求的大致先后顺序，你会考虑哪些信息，而不只依赖时间戳？"
+                ],
+                "question": "请比较墙上时钟与单调时钟的区别，并说明在 Linux 上它们分别适合用来做什么。"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 12,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "墙上时钟在校时时可能发生跳变或速率调整，因此其差值不一定等于真实经过的时间",
+          "单调时钟只保证同一机器内单调递增，适合测量本地时间间隔，但不对应挂钟时刻",
+          "跨机器的墙上时间戳受时钟偏差影响，不能仅凭时间戳严格判定事件先后"
+        ],
+        "background": "你在 Linux 服务端开发中需要处理超时与日志排查，熟悉 clock_gettime 的基本用法，但不需要了解内核实现细节。",
+        "constraints": [
+          "讨论范围限定在 Linux 用户态，使用 CLOCK_REALTIME 与 CLOCK_MONOTONIC 两类时钟的语义",
+          "不假设不同机器的时钟严格同步，也不假设系统在测量期间不会校时"
+        ],
+        "evaluationChecklist": [
+          "能说明墙上时钟与单调时钟的核心区别，包括是否对应挂钟时间以及是否受系统时间调整影响",
+          "能区分本机内测量耗时或超时与跨节点比较日志时间戳两种场景各自适用的时钟依据",
+          "能解释在无法保证时钟同步时，跨节点时间戳只能作为参考，不宜直接当作严格先后依据"
+        ],
+        "followUpDirections": [
+          "如果在一次超时计时的起点与终点之间，系统恰好进行了一次时间校正，分别用墙上时钟和单调时钟测得的间隔会有什么不同？",
+          "为什么单调时钟的读数通常不能直接拿来与另一台机器的读数比较？",
+          "若要在多台机器的日志中还原请求的大致先后顺序，你会考虑哪些信息，而不只依赖时间戳？"
+        ],
+        "question": "请比较墙上时钟与单调时钟的区别，并说明在 Linux 上它们分别适合用来做什么。"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Distributed Systems",
+        "focus": [
+          "校时对时间差的影响",
+          "跨机器时间戳的顺序边界"
+        ],
+        "id": "distributed-clock",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "foundation",
+        "scenarioConstraints": [
+          "分别讨论本机超时与跨节点日志",
+          "不假设所有机器时钟严格同步"
+        ],
+        "sources": [
+          "https://man7.org/linux/man-pages/man2/clock_gettime.2.html"
+        ],
+        "title": "墙上时钟与单调时钟"
+      },
+      "topicId": "distributed-clock"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "Any read quorum and any earlier completed write quorum share at least one replica, so the read contacts a replica holding the write.",
+                  "Each replica response carries a version, and the reader picks the highest-version value among the responses.",
+                  "Overlap alone does not identify which value is newest when writes are concurrent or incomplete, so ordering information must come from the stored versions."
+                ],
+                "background": "A replicated key-value store keeps three copies of each key, and a client treats a write as successful once two replicas acknowledge it.",
+                "constraints": [
+                  "Assume N=3, W=2 and R=2, with no leader, no consensus protocol and crash-stop failures only.",
+                  "Limit the opening to a read that starts after a write has fully completed; leave concurrent writes for follow-up.",
+                  "Explain the mechanism at the level of replica sets and responses, without formal proofs or capacity estimates."
+                ],
+                "evaluationChecklist": [
+                  "Explains concretely why any read quorum must intersect the write quorum of an already completed write.",
+                  "Connects the intersection to what the read can observe, and states what information must accompany replica values for the read to use them correctly.",
+                  "Distinguishes between the guarantee that the read contacts an up-to-date replica and the guarantee that the read returns the correct value without further information."
+                ],
+                "followUpDirections": [
+                  "Clarification: Ask how the answer changes if the write was acknowledged by only one replica and the client received a timeout for the second.",
+                  "Practical application: Ask how a stale replica that responded to the read would be brought up to date, and what extra work the read path would do.",
+                  "Local trade-offs: Ask what breaks if R is lowered to 1 with W still 2, and what consistency the client can still claim.",
+                  "Concurrency boundary: Ask whether two concurrent writes with the same quorum sizes can leave the store in a state where no read can determine a single order, and what linearizability would require beyond quorum overlap."
+                ],
+                "question": "In this store, what does the overlap between a read quorum and a previously completed write quorum establish about the values a later read can see, and what else does the read need to choose the correct value among its responses?"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 13,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "Any read quorum and any earlier completed write quorum share at least one replica, so the read contacts a replica holding the write.",
+          "Each replica response carries a version, and the reader picks the highest-version value among the responses.",
+          "Overlap alone does not identify which value is newest when writes are concurrent or incomplete, so ordering information must come from the stored versions."
+        ],
+        "background": "A replicated key-value store keeps three copies of each key, and a client treats a write as successful once two replicas acknowledge it.",
+        "constraints": [
+          "Assume N=3, W=2 and R=2, with no leader, no consensus protocol and crash-stop failures only.",
+          "Limit the opening to a read that starts after a write has fully completed; leave concurrent writes for follow-up.",
+          "Explain the mechanism at the level of replica sets and responses, without formal proofs or capacity estimates."
+        ],
+        "evaluationChecklist": [
+          "Explains concretely why any read quorum must intersect the write quorum of an already completed write.",
+          "Connects the intersection to what the read can observe, and states what information must accompany replica values for the read to use them correctly.",
+          "Distinguishes between the guarantee that the read contacts an up-to-date replica and the guarantee that the read returns the correct value without further information."
+        ],
+        "followUpDirections": [
+          "Clarification: Ask how the answer changes if the write was acknowledged by only one replica and the client received a timeout for the second.",
+          "Practical application: Ask how a stale replica that responded to the read would be brought up to date, and what extra work the read path would do.",
+          "Local trade-offs: Ask what breaks if R is lowered to 1 with W still 2, and what consistency the client can still claim.",
+          "Concurrency boundary: Ask whether two concurrent writes with the same quorum sizes can leave the store in a state where no read can determine a single order, and what linearizability would require beyond quorum overlap."
+        ],
+        "question": "In this store, what does the overlap between a read quorum and a previously completed write quorum establish about the values a later read can see, and what else does the read need to choose the correct value among its responses?"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Distributed Systems",
+        "focus": [
+          "What set overlap establishes",
+          "Version conflicts and concurrent operations"
+        ],
+        "id": "distributed-quorum-read",
+        "level": "mid-to-senior",
+        "priority": "advanced",
+        "questionForm": "foundation",
+        "scenarioConstraints": [
+          "Discuss read and write replica sets in a replicated key-value store",
+          "R+W>N alone is not sufficient proof of linearizability"
+        ],
+        "sources": [
+          "https://etcd.io/docs/v3.6/learning/api_guarantees/"
+        ],
+        "title": "Quorum Overlap and Read-Write Consistency"
+      },
+      "topicId": "distributed-quorum-read"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "订单所属主体需与服务端会话中已认证的主体比对",
+                  "请求参数中的订单编号不能单独作为授权依据",
+                  "判定结果需决定是否返回详情而不仅是是否登录"
+                ],
+                "background": "某电商后端提供订单详情接口 GET /api/orders/{orderId}。该接口已通过登录态校验，当前实现在校验通过后直接按路径中的 orderId 查询订单并返回完整详情。",
+                "constraints": [
+                  "只讨论服务端对本次订单详情请求的访问判定，不涉及前端展示、网关配置或整体架构设计",
+                  "假设服务端通过会话或令牌识别已登录用户，订单记录中保存了所属用户的标识",
+                  "不考虑管理员、客服等其他角色的访问规则"
+                ],
+                "evaluationChecklist": [
+                  "能说明服务端判定时需要的主体信息应来自已认证的会话或令牌，而不是请求参数",
+                  "能说明需要把订单与当前认证主体的关联关系与本次访问结合起来判断，并在不满足时拒绝返回详情",
+                  "能说明仅凭用户已登录或订单编号存在不足以决定本次访问是否允许"
+                ],
+                "followUpDirections": [
+                  "如果订单存在但当前用户无权访问，与订单不存在相比，对外返回的响应应该如何设计？为什么？",
+                  "如果只在前端隐藏订单入口，为什么不能替代服务端对该次请求的判定？",
+                  "如果后续引入客服角色可以查看任意订单，判定逻辑应如何调整，而该调整又如何与原有判定保持一致？"
+                ],
+                "question": "假设该接口只做了登录态校验，之后直接按请求中的 orderId 查询并返回详情。用户 A 登录后，把请求中的 orderId 换成用户 B 的订单编号，服务端在这次访问中应该如何决定是否返回详情？请说明判定依据，以及判定所需的信息应从哪里获得。"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 14,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "订单所属主体需与服务端会话中已认证的主体比对",
+          "请求参数中的订单编号不能单独作为授权依据",
+          "判定结果需决定是否返回详情而不仅是是否登录"
+        ],
+        "background": "某电商后端提供订单详情接口 GET /api/orders/{orderId}。该接口已通过登录态校验，当前实现在校验通过后直接按路径中的 orderId 查询订单并返回完整详情。",
+        "constraints": [
+          "只讨论服务端对本次订单详情请求的访问判定，不涉及前端展示、网关配置或整体架构设计",
+          "假设服务端通过会话或令牌识别已登录用户，订单记录中保存了所属用户的标识",
+          "不考虑管理员、客服等其他角色的访问规则"
+        ],
+        "evaluationChecklist": [
+          "能说明服务端判定时需要的主体信息应来自已认证的会话或令牌，而不是请求参数",
+          "能说明需要把订单与当前认证主体的关联关系与本次访问结合起来判断，并在不满足时拒绝返回详情",
+          "能说明仅凭用户已登录或订单编号存在不足以决定本次访问是否允许"
+        ],
+        "followUpDirections": [
+          "如果订单存在但当前用户无权访问，与订单不存在相比，对外返回的响应应该如何设计？为什么？",
+          "如果只在前端隐藏订单入口，为什么不能替代服务端对该次请求的判定？",
+          "如果后续引入客服角色可以查看任意订单，判定逻辑应如何调整，而该调整又如何与原有判定保持一致？"
+        ],
+        "question": "假设该接口只做了登录态校验，之后直接按请求中的 orderId 查询并返回详情。用户 A 登录后，把请求中的 orderId 换成用户 B 的订单编号，服务端在这次访问中应该如何决定是否返回详情？请说明判定依据，以及判定所需的信息应从哪里获得。"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Security",
+        "focus": [
+          "身份与对象级权限",
+          "访问条件与资源归属"
+        ],
+        "id": "security-object-access",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "已登录用户请求订单详情",
+          "只讨论服务端对单次资源访问的判定"
+        ],
+        "sources": [
+          "https://cheatsheetseries.owasp.org/"
+        ],
+        "title": "改一个资源编号能看到什么"
+      },
+      "topicId": "security-object-access"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "a resize copies every element currently stored into a new, larger buffer, so its cost is proportional to the current size",
+                  "with capacity multiplied by a fixed factor each time, resizes occur at exponentially spaced sizes, so total copy work over n appends is bounded by a constant multiple of n",
+                  "the rare expensive append is spread across the many cheap appends before it, so the average per append is constant even though the worst single append is linear"
+                ],
+                "background": "A developer is reasoning about an array-backed list that stores elements contiguously and must grow its underlying buffer when it runs out of space.",
+                "constraints": [
+                  "Assume the list starts empty, the underlying buffer has a fixed capacity, and appending when full allocates a new buffer with capacity multiplied by a constant factor greater than 1, then copies the existing elements over.",
+                  "Assume element copies and element writes each cost one unit, and ignore allocator behavior and memory fragmentation; explain at the level of a standard algorithms course.",
+                  "Focus on the single-threaded case and on n consecutive appends; you do not need to discuss persistence, concurrency, or language-specific library implementations."
+                ],
+                "evaluationChecklist": [
+                  "Candidate correctly states the worst-case cost of one append that triggers a resize and identifies that it depends on the number of elements currently stored.",
+                  "Candidate explains why the expensive resizes are infrequent across a sequence of appends, using the growth factor rather than just saying the average is small.",
+                  "Candidate distinguishes worst-case cost of a single operation from amortized cost per operation over the sequence, and gives a concise correct reason the amortized cost stays constant."
+                ],
+                "followUpDirections": [
+                  "Clarification: ask how the aggregate copy count changes if the capacity grows by a constant additive amount instead of a multiplicative factor, and what amortized cost results.",
+                  "Practical application: ask when this amortized guarantee is not sufficient for a latency-sensitive append path, and what the candidate would verify before relying on it.",
+                  "Local trade-off: ask about the memory overhead of a larger growth factor versus the number of resizes, and how the candidate would choose the factor for a workload with a known size distribution.",
+                  "Diagnostic evidence: if the candidate mentions shrinking, ask what shrink policy would avoid repeated resizes when an list alternates between adding and removing a single element near a capacity boundary."
+                ],
+                "question": "For an array-backed list that starts empty and grows by a constant multiplicative factor whenever it is full, what is the cost of a single append that triggers a resize, and why is the amortized cost per append over n consecutive appends still constant?"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 15,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "a resize copies every element currently stored into a new, larger buffer, so its cost is proportional to the current size",
+          "with capacity multiplied by a fixed factor each time, resizes occur at exponentially spaced sizes, so total copy work over n appends is bounded by a constant multiple of n",
+          "the rare expensive append is spread across the many cheap appends before it, so the average per append is constant even though the worst single append is linear"
+        ],
+        "background": "A developer is reasoning about an array-backed list that stores elements contiguously and must grow its underlying buffer when it runs out of space.",
+        "constraints": [
+          "Assume the list starts empty, the underlying buffer has a fixed capacity, and appending when full allocates a new buffer with capacity multiplied by a constant factor greater than 1, then copies the existing elements over.",
+          "Assume element copies and element writes each cost one unit, and ignore allocator behavior and memory fragmentation; explain at the level of a standard algorithms course.",
+          "Focus on the single-threaded case and on n consecutive appends; you do not need to discuss persistence, concurrency, or language-specific library implementations."
+        ],
+        "evaluationChecklist": [
+          "Candidate correctly states the worst-case cost of one append that triggers a resize and identifies that it depends on the number of elements currently stored.",
+          "Candidate explains why the expensive resizes are infrequent across a sequence of appends, using the growth factor rather than just saying the average is small.",
+          "Candidate distinguishes worst-case cost of a single operation from amortized cost per operation over the sequence, and gives a concise correct reason the amortized cost stays constant."
+        ],
+        "followUpDirections": [
+          "Clarification: ask how the aggregate copy count changes if the capacity grows by a constant additive amount instead of a multiplicative factor, and what amortized cost results.",
+          "Practical application: ask when this amortized guarantee is not sufficient for a latency-sensitive append path, and what the candidate would verify before relying on it.",
+          "Local trade-off: ask about the memory overhead of a larger growth factor versus the number of resizes, and how the candidate would choose the factor for a workload with a known size distribution.",
+          "Diagnostic evidence: if the candidate mentions shrinking, ask what shrink policy would avoid repeated resizes when an list alternates between adding and removing a single element near a capacity boundary."
+        ],
+        "question": "For an array-backed list that starts empty and grows by a constant multiplicative factor whenever it is full, what is the cost of a single append that triggers a resize, and why is the amortized cost per append over n consecutive appends still constant?"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Data Structures",
+        "focus": [
+          "Cost of one resize",
+          "Growth policy and aggregate cost"
+        ],
+        "id": "ds-amortized-growth",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "foundation",
+        "scenarioConstraints": [
+          "Append n elements consecutively",
+          "Distinguish worst-case per operation from amortized complexity"
+        ],
+        "sources": [
+          "https://opendatastructures.org/"
+        ],
+        "title": "Dynamic Array Growth and Amortized Complexity"
+      },
+      "topicId": "ds-amortized-growth"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "容器进程与宿主机共用同一个操作系统内核",
+                  "namespace 限定进程可见的资源视图",
+                  "cgroup 对进程组施加资源用量上限"
+                ],
+                "background": "候选人是后端平台工程师，需要向团队说明容器与虚拟机的差异。环境为 Linux 主机上使用 Docker 运行容器，不限定具体版本。",
+                "constraints": [
+                  "只比较 Linux 容器与传统虚拟机在隔离层次上的差异，不涉及 Windows 容器或其他运行时",
+                  "资源限制只讨论内存与 CPU 上限的设定方式，不展开调度、扩容或集群层面的策略"
+                ],
+                "evaluationChecklist": [
+                  "能说明容器与虚拟机的隔离边界位于不同层次，并指出容器不具备独立的客户机内核",
+                  "能解释 namespace 如何让容器内进程看到隔离的资源视图，同时仍运行在宿主机之上",
+                  "能说明 cgroup 如何对容器内进程的资源用量施加上限，并与 namespace 的职责区分开"
+                ],
+                "followUpDirections": [
+                  "如果容器内进程越界访问宿主机上的其他进程信息，候选人会如何判断这是视图隔离的问题还是资源限制的问题？",
+                  "请进一步说明容器内 CPU 与内存超限时内核分别会采取什么动作，以及两者在可观测性上有何不同。",
+                  "对比一下容器共享内核带来的安全边界风险，与虚拟机中 hypervisor 隔离的主要差异在哪里？"
+                ],
+                "question": "请比较 Linux 容器与传统虚拟机在隔离边界上的主要区别，并解释在 docker run 中设置内存上限后，这一限制是通过哪种机制生效的。"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 16,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "容器进程与宿主机共用同一个操作系统内核",
+          "namespace 限定进程可见的资源视图",
+          "cgroup 对进程组施加资源用量上限"
+        ],
+        "background": "候选人是后端平台工程师，需要向团队说明容器与虚拟机的差异。环境为 Linux 主机上使用 Docker 运行容器，不限定具体版本。",
+        "constraints": [
+          "只比较 Linux 容器与传统虚拟机在隔离层次上的差异，不涉及 Windows 容器或其他运行时",
+          "资源限制只讨论内存与 CPU 上限的设定方式，不展开调度、扩容或集群层面的策略"
+        ],
+        "evaluationChecklist": [
+          "能说明容器与虚拟机的隔离边界位于不同层次，并指出容器不具备独立的客户机内核",
+          "能解释 namespace 如何让容器内进程看到隔离的资源视图，同时仍运行在宿主机之上",
+          "能说明 cgroup 如何对容器内进程的资源用量施加上限，并与 namespace 的职责区分开"
+        ],
+        "followUpDirections": [
+          "如果容器内进程越界访问宿主机上的其他进程信息，候选人会如何判断这是视图隔离的问题还是资源限制的问题？",
+          "请进一步说明容器内 CPU 与内存超限时内核分别会采取什么动作，以及两者在可观测性上有何不同。",
+          "对比一下容器共享内核带来的安全边界风险，与虚拟机中 hypervisor 隔离的主要差异在哪里？"
+        ],
+        "question": "请比较 Linux 容器与传统虚拟机在隔离边界上的主要区别，并解释在 docker run 中设置内存上限后，这一限制是通过哪种机制生效的。"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Engineering",
+        "focus": [
+          "内核共享与隔离边界",
+          "资源配额与进程视图"
+        ],
+        "id": "engineering-container-isolation",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "foundation",
+        "scenarioConstraints": [
+          "以 Linux 容器为例",
+          "不把容器当成自带独立内核的虚拟机"
+        ],
+        "sources": [
+          "https://docs.docker.com/engine/containers/resource_constraints/"
+        ],
+        "title": "容器隔离与虚拟机"
+      },
+      "topicId": "engineering-container-isolation"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "a liveness failure makes the kubelet restart the container",
+                  "a readiness failure removes the pod from Service endpoints without restarting it",
+                  "a database check in liveness can restart every replica during a shared dependency outage",
+                  "readiness reflects whether this pod should receive traffic right now"
+                ],
+                "background": "The payments-api is a stateless HTTP service with several replicas behind one Kubernetes Service. Each request calls a PostgreSQL database that runs outside the cluster, and the team is reviewing the probe configuration for this one Deployment.",
+                "constraints": [
+                  "Assume the kubelet executes HTTP probes against the container, and that no startup probe is configured yet.",
+                  "Explain behavior at the level of kubelet actions and traffic routing, not the internal code of the probe handlers.",
+                  "Assume Kubernetes v1.25 or later and that the database outage affects all replicas at the same time."
+                ],
+                "evaluationChecklist": [
+                  "The candidate states what the kubelet does when a liveness probe fails and what it does when a readiness probe fails, distinguishing restart from traffic removal.",
+                  "The candidate chooses a probe for the database connectivity signal and justifies the choice by the effect of that probe's failure on all replicas.",
+                  "The candidate explains the trade-off between the two probes in terms of what each failure causes for this service during a shared dependency outage."
+                ],
+                "followUpDirections": [
+                  "Clarification: Ask how the candidate would define a shallow liveness check versus a dependency-aware readiness check for this service, and what each one proves.",
+                  "Practical application: Ask the candidate to describe how a rolling restart of replicas would behave if the database check were placed in liveness, using only the kubelet actions already discussed.",
+                  "Diagnostic evidence: Give the observation that restart counts climb across all replicas while the database is down, and ask which Kubernetes events or pod status fields the candidate would inspect first to confirm which probe is failing.",
+                  "Local trade-off: Ask when a startup probe would be justified for this service and how it changes the interaction between the liveness and readiness probes during initialization."
+                ],
+                "question": "The payments-api service runs as several HTTP replicas on Kubernetes and depends on PostgreSQL. The team is deciding whether connectivity to the database should be checked by the liveness probe or the readiness probe. Explain what the kubelet does when each of these probes fails, and which probe should reflect the database outage, with your reasoning."
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 17,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "a liveness failure makes the kubelet restart the container",
+          "a readiness failure removes the pod from Service endpoints without restarting it",
+          "a database check in liveness can restart every replica during a shared dependency outage",
+          "readiness reflects whether this pod should receive traffic right now"
+        ],
+        "background": "The payments-api is a stateless HTTP service with several replicas behind one Kubernetes Service. Each request calls a PostgreSQL database that runs outside the cluster, and the team is reviewing the probe configuration for this one Deployment.",
+        "constraints": [
+          "Assume the kubelet executes HTTP probes against the container, and that no startup probe is configured yet.",
+          "Explain behavior at the level of kubelet actions and traffic routing, not the internal code of the probe handlers.",
+          "Assume Kubernetes v1.25 or later and that the database outage affects all replicas at the same time."
+        ],
+        "evaluationChecklist": [
+          "The candidate states what the kubelet does when a liveness probe fails and what it does when a readiness probe fails, distinguishing restart from traffic removal.",
+          "The candidate chooses a probe for the database connectivity signal and justifies the choice by the effect of that probe's failure on all replicas.",
+          "The candidate explains the trade-off between the two probes in terms of what each failure causes for this service during a shared dependency outage."
+        ],
+        "followUpDirections": [
+          "Clarification: Ask how the candidate would define a shallow liveness check versus a dependency-aware readiness check for this service, and what each one proves.",
+          "Practical application: Ask the candidate to describe how a rolling restart of replicas would behave if the database check were placed in liveness, using only the kubelet actions already discussed.",
+          "Diagnostic evidence: Give the observation that restart counts climb across all replicas while the database is down, and ask which Kubernetes events or pod status fields the candidate would inspect first to confirm which probe is failing.",
+          "Local trade-off: Ask when a startup probe would be justified for this service and how it changes the interaction between the liveness and readiness probes during initialization."
+        ],
+        "question": "The payments-api service runs as several HTTP replicas on Kubernetes and depends on PostgreSQL. The team is deciding whether connectivity to the database should be checked by the liveness probe or the readiness probe. Explain what the kubelet does when each of these probes fails, and which probe should reflect the database outage, with your reasoning."
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Engineering",
+        "focus": [
+          "Restarting versus removing traffic",
+          "Cascading effects of dependency failures"
+        ],
+        "id": "engineering-health-probes",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "An HTTP service runs on Kubernetes",
+          "Discuss the probes for one service"
+        ],
+        "sources": [
+          "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/"
+        ],
+        "title": "Liveness, Readiness and Startup Probes"
+      },
+      "topicId": "engineering-health-probes"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "新增一个反向提交抵消原改动",
+                  "已推送的公共历史不宜改写",
+                  "协作者已基于原提交继续开发",
+                  "强制推送导致他人本地分支分叉"
+                ],
+                "background": "你在一个多人共用的主分支上工作，团队成员会频繁拉取该分支并在其基础上继续提交。假设该分支没有特殊的保护规则限制你的操作，且你具备推送权限。",
+                "constraints": [
+                  "假设错误提交只包含一组需要整体撤销的改动，不需要挑选其中部分代码保留",
+                  "其他人在这次提交之后已经有新的提交推送到同一分支",
+                  "讨论范围限于 Git 层面的处理方式，不涉及发布流程或回滚部署"
+                ],
+                "evaluationChecklist": [
+                  "能说明为什么在已共享的分支上不应直接改写已推送的历史，并解释这对其他协作者的影响",
+                  "能说明撤销后的分支状态如何同时消除错误改动并保留他人之后的提交",
+                  "能说明执行后如何确认该改动已被抵消，以及如何让团队成员同步到新状态"
+                ],
+                "followUpDirections": [
+                  "如果被撤销的是一个合并提交，撤销后再次合并同一分支时可能出现什么问题，你会如何处理？",
+                  "假设撤销时与后续提交产生冲突，你会怎样定位冲突来源并解决它？",
+                  "如果团队最终决定必须改写已推送的历史，你会如何协调其他成员的本地分支，避免他们把旧历史重新推回远端？"
+                ],
+                "question": "一次提交被误推到团队共用的主分支，之后已有多名同事在其基础上继续提交并推送。现在你需要撤销这次提交的全部改动，但要保留其他人之后的工作。你会如何处理这个分支，为什么这样做？"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 18,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "新增一个反向提交抵消原改动",
+          "已推送的公共历史不宜改写",
+          "协作者已基于原提交继续开发",
+          "强制推送导致他人本地分支分叉"
+        ],
+        "background": "你在一个多人共用的主分支上工作，团队成员会频繁拉取该分支并在其基础上继续提交。假设该分支没有特殊的保护规则限制你的操作，且你具备推送权限。",
+        "constraints": [
+          "假设错误提交只包含一组需要整体撤销的改动，不需要挑选其中部分代码保留",
+          "其他人在这次提交之后已经有新的提交推送到同一分支",
+          "讨论范围限于 Git 层面的处理方式，不涉及发布流程或回滚部署"
+        ],
+        "evaluationChecklist": [
+          "能说明为什么在已共享的分支上不应直接改写已推送的历史，并解释这对其他协作者的影响",
+          "能说明撤销后的分支状态如何同时消除错误改动并保留他人之后的提交",
+          "能说明执行后如何确认该改动已被抵消，以及如何让团队成员同步到新状态"
+        ],
+        "followUpDirections": [
+          "如果被撤销的是一个合并提交，撤销后再次合并同一分支时可能出现什么问题，你会如何处理？",
+          "假设撤销时与后续提交产生冲突，你会怎样定位冲突来源并解决它？",
+          "如果团队最终决定必须改写已推送的历史，你会如何协调其他成员的本地分支，避免他们把旧历史重新推回远端？"
+        ],
+        "question": "一次提交被误推到团队共用的主分支，之后已有多名同事在其基础上继续提交并推送。现在你需要撤销这次提交的全部改动，但要保留其他人之后的工作。你会如何处理这个分支，为什么这样做？"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Engineering",
+        "focus": [
+          "历史重写与反向提交",
+          "共享分支的协作影响"
+        ],
+        "id": "engineering-git-recovery",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "错误提交已推到多人使用的分支",
+          "只撤销该改动且保留其他人的后续工作"
+        ],
+        "sources": [
+          "https://git-scm.com/docs/git-revert"
+        ],
+        "title": "已发布提交的撤销"
+      },
+      "topicId": "engineering-git-recovery"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "new versions are written as fresh entries instead of overwriting existing sorted data",
+                  "background merges combine sorted runs and discard superseded versions",
+                  "reads may have to consult several sorted runs until they are merged",
+                  "merge work rewrites the same data repeatedly, adding disk I/O cost"
+                ],
+                "background": "A team is evaluating a single-node, LSM-style key-value engine for a workload with many small updates to existing keys.",
+                "constraints": [
+                  "Assume sorted data is stored in files on disk; the compaction policy (leveled, tiered, or other) is not specified.",
+                  "Explain at a conceptual level; no particular product, file format, or configuration is assumed.",
+                  "Focus on the write path and the compaction trade-off, not on cluster design or capacity numbers."
+                ],
+                "evaluationChecklist": [
+                  "Does the candidate explain that writes avoid in-place updates of sorted files, using a mechanism such as new entries plus later merging?",
+                  "Does the candidate connect compaction to merging sorted runs and removing obsolete versions?",
+                  "Does the candidate name at least one cost of compaction, such as extra rewrite I/O, or a read or space effect it helps control?"
+                ],
+                "followUpDirections": [
+                  "Clarification: Ask the candidate how a read for a key that has several versions across files determines which value to return.",
+                  "Practical application: Ask how the candidate would observe, from engine metrics or logs, that compaction is falling behind and what that would look like for reads.",
+                  "Local trade-offs: Ask how choosing more aggressive compaction versus less aggressive compaction would shift the balance between write cost, read cost, and space usage, and what would justify each choice.",
+                  "Diagnostic evidence: If the candidate proposes a cause for slowing writes, ask what single observation would confirm or rule it out before changing any setting."
+                ],
+                "question": "Why can an LSM-style key-value engine accept a stream of updates without modifying existing sorted files in place, and what does compaction have to do with the costs that follow?"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 19,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "new versions are written as fresh entries instead of overwriting existing sorted data",
+          "background merges combine sorted runs and discard superseded versions",
+          "reads may have to consult several sorted runs until they are merged",
+          "merge work rewrites the same data repeatedly, adding disk I/O cost"
+        ],
+        "background": "A team is evaluating a single-node, LSM-style key-value engine for a workload with many small updates to existing keys.",
+        "constraints": [
+          "Assume sorted data is stored in files on disk; the compaction policy (leveled, tiered, or other) is not specified.",
+          "Explain at a conceptual level; no particular product, file format, or configuration is assumed.",
+          "Focus on the write path and the compaction trade-off, not on cluster design or capacity numbers."
+        ],
+        "evaluationChecklist": [
+          "Does the candidate explain that writes avoid in-place updates of sorted files, using a mechanism such as new entries plus later merging?",
+          "Does the candidate connect compaction to merging sorted runs and removing obsolete versions?",
+          "Does the candidate name at least one cost of compaction, such as extra rewrite I/O, or a read or space effect it helps control?"
+        ],
+        "followUpDirections": [
+          "Clarification: Ask the candidate how a read for a key that has several versions across files determines which value to return.",
+          "Practical application: Ask how the candidate would observe, from engine metrics or logs, that compaction is falling behind and what that would look like for reads.",
+          "Local trade-offs: Ask how choosing more aggressive compaction versus less aggressive compaction would shift the balance between write cost, read cost, and space usage, and what would justify each choice.",
+          "Diagnostic evidence: If the candidate proposes a cause for slowing writes, ask what single observation would confirm or rule it out before changing any setting."
+        ],
+        "question": "Why can an LSM-style key-value engine accept a stream of updates without modifying existing sorted files in place, and what does compaction have to do with the costs that follow?"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Search and Storage",
+        "focus": [
+          "Sorted files and write paths",
+          "Read, write and space amplification"
+        ],
+        "id": "storage-lsm-compaction",
+        "level": "mid-to-senior",
+        "priority": "advanced",
+        "questionForm": "foundation",
+        "scenarioConstraints": [
+          "Discuss an LSM-style key-value engine",
+          "Do not select a product or design a cluster"
+        ],
+        "sources": [
+          "https://github.com/facebook/rocksdb/wiki/Compaction"
+        ],
+        "title": "LSM Writes and Compaction"
+      },
+      "topicId": "storage-lsm-compaction"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "同一条写语句内完成状态前置判定与状态转移",
+                  "并发写入者需等待另一方事务结束后再重新判定条件",
+                  "以受影响行数区分抢到核销权与未抢到"
+                ],
+                "background": "你在电商后端负责优惠券核销接口。券表记录券的当前状态，核销记录表记录每次核销对应的订单，两张表位于同一个 PostgreSQL 数据库，核销逻辑在一个数据库事务中完成。",
+                "constraints": [
+                  "假设使用 PostgreSQL 默认的 READ COMMITTED 隔离级别，只讨论单数据库、单事务内的实现，不涉及跨服务或分布式事务",
+                  "只需说明保证同一张券只能成功核销一次的关键写法与原理，不需要设计完整接口或容灾方案"
+                ],
+                "evaluationChecklist": [
+                  "能说明核销时的'券仍可用'判断与状态改为已使用需要作为一个不可分割的数据库操作完成，而不是先读后写两步分离",
+                  "能解释为什么两个并发请求中只有一个会被判定为成功，涉及到另一个事务在同一行上的等待或重新判定",
+                  "能说明如何利用数据库执行结果（例如影响行数）作为核销是否成功的依据，并解释其与应用层先查询判断的区别"
+                ],
+                "followUpDirections": [
+                  "如果第二个请求到达时，第一个请求已经核销成功，接口应返回什么结果？请说明理由，并考虑如何区分'券已被他人使用'与'同一订单重复提交'。",
+                  "若核销记录写入与券状态更新在同一事务中，其中一步失败时整个事务会发生什么？请说明原因。",
+                  "在 READ COMMITTED 下，同一事务内的两次查询看到的数据是否一致？请结合券状态判断说明你的理解。"
+                ],
+                "question": "一张未使用的优惠券同时收到两个核销请求。请说明在这个 PostgreSQL 数据库中，核销逻辑应如何保证该券只能成功核销一次，并解释其中的关键原理。"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 20,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "同一条写语句内完成状态前置判定与状态转移",
+          "并发写入者需等待另一方事务结束后再重新判定条件",
+          "以受影响行数区分抢到核销权与未抢到"
+        ],
+        "background": "你在电商后端负责优惠券核销接口。券表记录券的当前状态，核销记录表记录每次核销对应的订单，两张表位于同一个 PostgreSQL 数据库，核销逻辑在一个数据库事务中完成。",
+        "constraints": [
+          "假设使用 PostgreSQL 默认的 READ COMMITTED 隔离级别，只讨论单数据库、单事务内的实现，不涉及跨服务或分布式事务",
+          "只需说明保证同一张券只能成功核销一次的关键写法与原理，不需要设计完整接口或容灾方案"
+        ],
+        "evaluationChecklist": [
+          "能说明核销时的'券仍可用'判断与状态改为已使用需要作为一个不可分割的数据库操作完成，而不是先读后写两步分离",
+          "能解释为什么两个并发请求中只有一个会被判定为成功，涉及到另一个事务在同一行上的等待或重新判定",
+          "能说明如何利用数据库执行结果（例如影响行数）作为核销是否成功的依据，并解释其与应用层先查询判断的区别"
+        ],
+        "followUpDirections": [
+          "如果第二个请求到达时，第一个请求已经核销成功，接口应返回什么结果？请说明理由，并考虑如何区分'券已被他人使用'与'同一订单重复提交'。",
+          "若核销记录写入与券状态更新在同一事务中，其中一步失败时整个事务会发生什么？请说明原因。",
+          "在 READ COMMITTED 下，同一事务内的两次查询看到的数据是否一致？请结合券状态判断说明你的理解。"
+        ],
+        "question": "一张未使用的优惠券同时收到两个核销请求。请说明在这个 PostgreSQL 数据库中，核销逻辑应如何保证该券只能成功核销一次，并解释其中的关键原理。"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Business Scenarios",
+        "focus": [
+          "状态转移的前置条件",
+          "重复请求的既有结果"
+        ],
+        "id": "business-coupon-redeem",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "同一张券只能成功使用一次",
+          "核销记录与券状态在同一数据库"
+        ],
+        "sources": [
+          "https://www.postgresql.org/docs/18/transaction-iso.html"
+        ],
+        "title": "优惠券并发核销"
+      },
+      "topicId": "business-coupon-redeem"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "the outer container is a new object, but its elements are the same objects as in the original",
+                  "a mutation made through one reference to a shared inner list is visible through the other reference",
+                  "the copy operation duplicates only one level of containers"
+                ],
+                "background": "A service keeps a request template and creates per-job configs from it. The template is a nested list, and the code below runs in CPython 3.11.\n\n```python\ntemplate = [[\"retry\", 3], [\"timeout\", 5]]\njob_a = list(template)\njob_a[0][1] = 10\n```",
+                "constraints": [
+                  "Explain the answer in terms of object identity and references, not bytecode or performance.",
+                  "Ignore threads and concurrency; the code runs once, sequentially.",
+                  "Assume no other code modifies either list between the lines shown."
+                ],
+                "evaluationChecklist": [
+                  "The candidate predicts the final value of template[0][1] and explains it using object references rather than just stating the result.",
+                  "The candidate distinguishes what job_a itself references from what its elements reference, showing that the outer list is new but the inner lists are not duplicated.",
+                  "The candidate explains why the change through job_a affects template, and does not conflate equality (==) with identity (is)."
+                ],
+                "followUpDirections": [
+                  "Clarification: Ask the candidate what the difference is between list copying and copy.deepcopy, and when each is appropriate for a request template.",
+                  "Practical application: Ask how the candidate would build per-job configs so that changing one job's retry count does not affect the template, and what trade-offs (readability, cost, maintenance) the approach has.",
+                  "Local trade-offs: Ask whether using tuples for the inner pairs would change the design, and what the candidate would expect to happen if a caller needs to mutate nested values later."
+                ],
+                "question": "Predict the final value of template[0][1] after the code runs, and explain what job_a shares with template and why."
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 21,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "the outer container is a new object, but its elements are the same objects as in the original",
+          "a mutation made through one reference to a shared inner list is visible through the other reference",
+          "the copy operation duplicates only one level of containers"
+        ],
+        "background": "A service keeps a request template and creates per-job configs from it. The template is a nested list, and the code below runs in CPython 3.11.\n\n```python\ntemplate = [[\"retry\", 3], [\"timeout\", 5]]\njob_a = list(template)\njob_a[0][1] = 10\n```",
+        "constraints": [
+          "Explain the answer in terms of object identity and references, not bytecode or performance.",
+          "Ignore threads and concurrency; the code runs once, sequentially.",
+          "Assume no other code modifies either list between the lines shown."
+        ],
+        "evaluationChecklist": [
+          "The candidate predicts the final value of template[0][1] and explains it using object references rather than just stating the result.",
+          "The candidate distinguishes what job_a itself references from what its elements reference, showing that the outer list is new but the inner lists are not duplicated.",
+          "The candidate explains why the change through job_a affects template, and does not conflate equality (==) with identity (is)."
+        ],
+        "followUpDirections": [
+          "Clarification: Ask the candidate what the difference is between list copying and copy.deepcopy, and when each is appropriate for a request template.",
+          "Practical application: Ask how the candidate would build per-job configs so that changing one job's retry count does not affect the template, and what trade-offs (readability, cost, maintenance) the approach has.",
+          "Local trade-offs: Ask whether using tuples for the inner pairs would change the design, and what the candidate would expect to happen if a caller needs to mutate nested values later."
+        ],
+        "question": "Predict the final value of template[0][1] after the code runs, and explain what job_a shares with template and why."
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Runtime",
+        "focus": [
+          "Container copies and shared references",
+          "Scope of mutation isolation"
+        ],
+        "id": "runtime-shallow-copy",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "Use nested Python lists",
+          "Use fenced Markdown with a language tag when code is necessary"
+        ],
+        "sources": [
+          "https://docs.python.org/3/library/"
+        ],
+        "title": "Nested Mutation After a Shallow Copy"
+      },
+      "topicId": "runtime-shallow-copy"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "协程只在等待异步操作时才会交还事件循环控制权",
+                  "同步调用期间事件循环线程无法执行其他任务",
+                  "同步库调用阻塞的是整个线程而非单个协程"
+                ],
+                "background": "某后端服务使用 Python asyncio 单事件循环处理请求，handle_request 在同一个事件循环线程中运行，并在后台启动一个心跳任务每隔约0.5秒输出一次 tick。",
+                "constraints": [
+                  "假设使用 Python 3.11 标准库默认事件循环，单线程运行",
+                  "fetch_profile 内部调用的 requests 为同步库，远端接口响应约需2秒",
+                  "只讨论该进程内 tick 输出的时间分布，不涉及多进程或多线程部署方案"
+                ],
+                "evaluationChecklist": [
+                  "能描述 heartbeat 的 tick 在 fetch_profile 执行期间的实际输出情况，而不是只说“会阻塞”",
+                  "能解释原因：协程只在异步等待点交还控制权，同步调用期间事件循环线程被占用，其他任务无法被调度",
+                  "能区分 asyncio.sleep 这类异步等待与同步阻塞调用对事件循环的不同影响"
+                ],
+                "followUpDirections": [
+                  "如果把 requests.get 换成异步 HTTP 客户端，tick 的输出节奏会发生什么变化，为什么？",
+                  "如果不能修改 fetch_profile 的实现，有哪些方式可以把同步调用移出事件循环线程？各自的取舍是什么？",
+                  "在线上观察到请求延迟升高且心跳任务明显抖动时，你会用哪些观测手段确认是同步调用导致的事件循环阻塞？"
+                ],
+                "question": "请结合下面的代码，描述 handle_request 执行期间 heartbeat 任务的 tick 输出呈现怎样的时间分布，并解释原因。\n\n```python\nimport asyncio\nimport requests\n\nasync def fetch_profile(uid):\n    return requests.get(f'https://api.example.com/users/{uid}', timeout=5).json()\n\nasync def heartbeat():\n    for i in range(4):\n        print('tick', i)\n        await asyncio.sleep(0.5)\n\nasync def handle_request():\n    task = asyncio.create_task(heartbeat())\n    profile = await fetch_profile(42)\n    print('profile', profile)\n    await task\n\nasyncio.run(handle_request())\n```"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 22,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "协程只在等待异步操作时才会交还事件循环控制权",
+          "同步调用期间事件循环线程无法执行其他任务",
+          "同步库调用阻塞的是整个线程而非单个协程"
+        ],
+        "background": "某后端服务使用 Python asyncio 单事件循环处理请求，handle_request 在同一个事件循环线程中运行，并在后台启动一个心跳任务每隔约0.5秒输出一次 tick。",
+        "constraints": [
+          "假设使用 Python 3.11 标准库默认事件循环，单线程运行",
+          "fetch_profile 内部调用的 requests 为同步库，远端接口响应约需2秒",
+          "只讨论该进程内 tick 输出的时间分布，不涉及多进程或多线程部署方案"
+        ],
+        "evaluationChecklist": [
+          "能描述 heartbeat 的 tick 在 fetch_profile 执行期间的实际输出情况，而不是只说“会阻塞”",
+          "能解释原因：协程只在异步等待点交还控制权，同步调用期间事件循环线程被占用，其他任务无法被调度",
+          "能区分 asyncio.sleep 这类异步等待与同步阻塞调用对事件循环的不同影响"
+        ],
+        "followUpDirections": [
+          "如果把 requests.get 换成异步 HTTP 客户端，tick 的输出节奏会发生什么变化，为什么？",
+          "如果不能修改 fetch_profile 的实现，有哪些方式可以把同步调用移出事件循环线程？各自的取舍是什么？",
+          "在线上观察到请求延迟升高且心跳任务明显抖动时，你会用哪些观测手段确认是同步调用导致的事件循环阻塞？"
+        ],
+        "question": "请结合下面的代码，描述 handle_request 执行期间 heartbeat 任务的 tick 输出呈现怎样的时间分布，并解释原因。\n\n```python\nimport asyncio\nimport requests\n\nasync def fetch_profile(uid):\n    return requests.get(f'https://api.example.com/users/{uid}', timeout=5).json()\n\nasync def heartbeat():\n    for i in range(4):\n        print('tick', i)\n        await asyncio.sleep(0.5)\n\nasync def handle_request():\n    task = asyncio.create_task(heartbeat())\n    profile = await fetch_profile(42)\n    print('profile', profile)\n    await task\n\nasyncio.run(handle_request())\n```"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Runtime",
+        "focus": [
+          "事件循环上的阻塞",
+          "任务调度与异步 I/O 的区别"
+        ],
+        "id": "runtime-async-blocking",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "以 Python asyncio 单事件循环为例",
+          "函数内部可能调用同步库"
+        ],
+        "sources": [
+          "https://docs.python.org/3/library/"
+        ],
+        "title": "异步函数中的同步等待"
+      },
+      "topicId": "runtime-async-blocking"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "the reader's refill writes a value it read before the writer's commit",
+                  "the delete removes only what was cached before it and cannot cancel an in-flight refill",
+                  "the cache write has no version or ordering check against the database update"
+                ],
+                "background": "A product-detail service uses cache-aside: readers check a cache key first and load from the database on a miss, and writers update the database before removing the cached entry.",
+                "constraints": [
+                  "Assume a single cache node, a plain DEL after the database commit, and a plain SET with a TTL on refill, with no locks, version numbers, or conditional writes around cache operations.",
+                  "Initial state: the database row holds v1 and the cache key is absent. Reader R misses the cache and reads v1 from the database. Writer W updates the row to v2, commits, and then deletes the cache key. Reader R then writes the value it already read into the cache.",
+                  "Ignore replication lag and multi-key transactions; the question concerns only this one row and key."
+                ],
+                "evaluationChecklist": [
+                  "Explains what value remains in the cache after both operations finish and why the delete did not remove it.",
+                  "Identifies that the refill value was read before the commit and was written after the delete, so the cache can disagree with the database.",
+                  "Distinguishes what the cache-aside steps guarantee from what they leave unordered, without claiming a universal guarantee across all cache systems."
+                ],
+                "followUpDirections": [
+                  "Clarification: Ask how the outcome changes if the writer deletes the cache key before committing the database update, and whether the candidate can state the assumed commit timing.",
+                  "Practical application: Ask which local mechanisms, such as a short delayed second delete or a versioned write, would narrow the window, and what residual risk each leaves.",
+                  "Local trade-offs: Ask the candidate to compare deleting versus updating the cache on write for this product-detail case, including what happens when two writers race.",
+                  "Diagnostic evidence: Ask what observation (for example, comparing cached and database values for one key after a write) would confirm that a stale refill occurred rather than a failed delete."
+                ],
+                "question": "Given the ordering of operations described, what value does the cache hold once both the reader and the writer have finished, and which cache-aside behavior determines that outcome?"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 23,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "the reader's refill writes a value it read before the writer's commit",
+          "the delete removes only what was cached before it and cannot cancel an in-flight refill",
+          "the cache write has no version or ordering check against the database update"
+        ],
+        "background": "A product-detail service uses cache-aside: readers check a cache key first and load from the database on a miss, and writers update the database before removing the cached entry.",
+        "constraints": [
+          "Assume a single cache node, a plain DEL after the database commit, and a plain SET with a TTL on refill, with no locks, version numbers, or conditional writes around cache operations.",
+          "Initial state: the database row holds v1 and the cache key is absent. Reader R misses the cache and reads v1 from the database. Writer W updates the row to v2, commits, and then deletes the cache key. Reader R then writes the value it already read into the cache.",
+          "Ignore replication lag and multi-key transactions; the question concerns only this one row and key."
+        ],
+        "evaluationChecklist": [
+          "Explains what value remains in the cache after both operations finish and why the delete did not remove it.",
+          "Identifies that the refill value was read before the commit and was written after the delete, so the cache can disagree with the database.",
+          "Distinguishes what the cache-aside steps guarantee from what they leave unordered, without claiming a universal guarantee across all cache systems."
+        ],
+        "followUpDirections": [
+          "Clarification: Ask how the outcome changes if the writer deletes the cache key before committing the database update, and whether the candidate can state the assumed commit timing.",
+          "Practical application: Ask which local mechanisms, such as a short delayed second delete or a versioned write, would narrow the window, and what residual risk each leaves.",
+          "Local trade-offs: Ask the candidate to compare deleting versus updating the cache on write for this product-detail case, including what happens when two writers race.",
+          "Diagnostic evidence: Ask what observation (for example, comparing cached and database values for one key after a write) would confirm that a stale refill occurred rather than a failed delete."
+        ],
+        "question": "Given the ordering of operations described, what value does the cache hold once both the reader and the writer have finished, and which cache-aside behavior determines that outcome?"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Caching",
+        "focus": [
+          "Cache-aside read/write steps",
+          "Stale refill ordering",
+          "Local trade-offs of deleting vs updating cache"
+        ],
+        "id": "cache-selection",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "Database initially contains v1 and the cache key is absent; a writer commits v2",
+          "A reader fetches v1, the writer commits and deletes the cache, then the reader caches v1"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://redis.io/docs/latest/develop/"
+        ],
+        "title": "Cache Refill and Consistency"
+      },
+      "topicId": "cache-selection"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "唯一约束拒绝第二次插入",
+                  "幂等记录与业务更新同事务提交",
+                  "超时后结果未知需按幂等键查询"
+                ],
+                "background": "你在负责订单支付确认的后端服务，客户端在网络不稳定时会用相同的幂等键重试同一笔订单的确认请求。服务端使用关系型数据库，业务更新与幂等记录写入位于同一个本地事务中，隔离级别为 READ COMMITTED。",
+                "constraints": [
+                  "假设只讨论单个数据库实例上的本地事务，不涉及跨服务分布式事务",
+                  "假设幂等记录以幂等键作为唯一约束字段存储，两次请求的幂等键完全相同"
+                ],
+                "evaluationChecklist": [
+                  "能说明两个并发请求中，后到者在写入幂等记录时如何被唯一约束拦截，以及这如何防止业务更新被重复执行",
+                  "能说明事务回滚或提交的时机与幂等记录可见性的关系，指出只有提交后的结果才对另一请求可见",
+                  "能解释客户端超时并不代表服务端一定失败，因此重试时需要以幂等键为依据获取已有结果，而不是盲目重新执行业务逻辑"
+                ],
+                "followUpDirections": [
+                  "如果先查询幂等记录是否存在、再插入，两个请求同时执行时会出现什么问题，唯一约束在其中起什么作用？",
+                  "如果第一个请求在提交前因为应用进程崩溃而中断，第二个请求到来时会看到什么，结果是否一致？",
+                  "若重试请求到来时第一个请求仍未结束，服务端应返回什么状态，客户端应如何处理？"
+                ],
+                "question": "同一订单的两个确认请求使用相同幂等键，且业务更新与幂等记录写入在同一个事务中。请说明服务端如何保证业务只被执行一次，并解释客户端在超时后重试时，为什么不能简单地认为第一次请求已经失败。"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 24,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "唯一约束拒绝第二次插入",
+          "幂等记录与业务更新同事务提交",
+          "超时后结果未知需按幂等键查询"
+        ],
+        "background": "你在负责订单支付确认的后端服务，客户端在网络不稳定时会用相同的幂等键重试同一笔订单的确认请求。服务端使用关系型数据库，业务更新与幂等记录写入位于同一个本地事务中，隔离级别为 READ COMMITTED。",
+        "constraints": [
+          "假设只讨论单个数据库实例上的本地事务，不涉及跨服务分布式事务",
+          "假设幂等记录以幂等键作为唯一约束字段存储，两次请求的幂等键完全相同"
+        ],
+        "evaluationChecklist": [
+          "能说明两个并发请求中，后到者在写入幂等记录时如何被唯一约束拦截，以及这如何防止业务更新被重复执行",
+          "能说明事务回滚或提交的时机与幂等记录可见性的关系，指出只有提交后的结果才对另一请求可见",
+          "能解释客户端超时并不代表服务端一定失败，因此重试时需要以幂等键为依据获取已有结果，而不是盲目重新执行业务逻辑"
+        ],
+        "followUpDirections": [
+          "如果先查询幂等记录是否存在、再插入，两个请求同时执行时会出现什么问题，唯一约束在其中起什么作用？",
+          "如果第一个请求在提交前因为应用进程崩溃而中断，第二个请求到来时会看到什么，结果是否一致？",
+          "若重试请求到来时第一个请求仍未结束，服务端应返回什么状态，客户端应如何处理？"
+        ],
+        "question": "同一订单的两个确认请求使用相同幂等键，且业务更新与幂等记录写入在同一个事务中。请说明服务端如何保证业务只被执行一次，并解释客户端在超时后重试时，为什么不能简单地认为第一次请求已经失败。"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Correctness",
+        "focus": [
+          "幂等键与唯一约束",
+          "并发检查再写入",
+          "超时不等于失败"
+        ],
+        "id": "idempotency-retries",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "同一订单的两个请求使用相同幂等键",
+          "业务更新与幂等记录写入同一个数据库事务"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://www.rfc-editor.org/rfc/rfc9110.html"
+        ],
+        "title": "幂等键与重试结果"
+      },
+      "topicId": "idempotency-retries"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "Both transactions can read the same stock value before either commits their write",
+                  "Each UPDATE writes an application-computed value, overwriting the other transaction's change",
+                  "A statement sees only data committed before that statement began, so the second read does not reflect the first transaction's uncommitted decrement"
+                ],
+                "background": "An inventory service decrements the stock of a single product (initial stock 1) for each order. Each order runs as a transaction that reads the current stock, subtracts one in application code, and writes the result back.",
+                "constraints": [
+                  "Database is PostgreSQL 18 with the default READ COMMITTED isolation level; autocommit is off and each transaction issues its own statements and COMMIT.",
+                  "Both transactions operate on the same product row, and their statements may interleave in any order the database allows. Describe the specific interleaving you assume.",
+                  "Answer at the level of the SQL statements and their visible results; do not discuss index design, connection pooling, or multi-service architecture."
+                ],
+                "evaluationChecklist": [
+                  "Explains which value each transaction reads and writes for the interleaving the candidate chooses, using the stated initial stock",
+                  "Identifies the resulting stored stock value and gives a reason tied to when each read sees committed data and what each write sets",
+                  "Recognizes that the write-back uses a value computed earlier in application code rather than the row's current value at write time"
+                ],
+                "followUpDirections": [
+                  "Clarification: Ask the candidate to restate what READ COMMITTED guarantees about what a single SELECT sees, and what it does not guarantee across two statements in one transaction.",
+                  "Practical application: Ask how the same decrement could be rewritten as a single statement so the database computes the new value, and what the affected-row count tells the application.",
+                  "Local trade-offs: Ask the candidate to compare a conditional update checked by affected-row count against holding a row lock with SELECT FOR UPDATE until commit, focusing on what each approach costs when many orders target the same product."
+                ],
+                "question": "Walk through one plausible interleaving of two concurrent order transactions that each decrement this product's stock by reading it, subtracting one in application code, and writing the result back. What final stock value is stored, and why?"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 25,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "Both transactions can read the same stock value before either commits their write",
+          "Each UPDATE writes an application-computed value, overwriting the other transaction's change",
+          "A statement sees only data committed before that statement began, so the second read does not reflect the first transaction's uncommitted decrement"
+        ],
+        "background": "An inventory service decrements the stock of a single product (initial stock 1) for each order. Each order runs as a transaction that reads the current stock, subtracts one in application code, and writes the result back.",
+        "constraints": [
+          "Database is PostgreSQL 18 with the default READ COMMITTED isolation level; autocommit is off and each transaction issues its own statements and COMMIT.",
+          "Both transactions operate on the same product row, and their statements may interleave in any order the database allows. Describe the specific interleaving you assume.",
+          "Answer at the level of the SQL statements and their visible results; do not discuss index design, connection pooling, or multi-service architecture."
+        ],
+        "evaluationChecklist": [
+          "Explains which value each transaction reads and writes for the interleaving the candidate chooses, using the stated initial stock",
+          "Identifies the resulting stored stock value and gives a reason tied to when each read sees committed data and what each write sets",
+          "Recognizes that the write-back uses a value computed earlier in application code rather than the row's current value at write time"
+        ],
+        "followUpDirections": [
+          "Clarification: Ask the candidate to restate what READ COMMITTED guarantees about what a single SELECT sees, and what it does not guarantee across two statements in one transaction.",
+          "Practical application: Ask how the same decrement could be rewritten as a single statement so the database computes the new value, and what the affected-row count tells the application.",
+          "Local trade-offs: Ask the candidate to compare a conditional update checked by affected-row count against holding a row lock with SELECT FOR UPDATE until commit, focusing on what each approach costs when many orders target the same product."
+        ],
+        "question": "Walk through one plausible interleaving of two concurrent order transactions that each decrement this product's stock by reading it, subtracting one in application code, and writing the result back. What final stock value is stored, and why?"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Consistency",
+        "focus": [
+          "Read-modify-write and lost updates",
+          "Conditional updates and affected-row counts",
+          "Row locks held until commit"
+        ],
+        "id": "database-concurrency",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "PostgreSQL READ COMMITTED with initial stock 1",
+          "Two transactions each SELECT stock, subtract one in application code, then write back the computed value"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://www.postgresql.org/docs/18/transaction-iso.html"
+        ],
+        "title": "Inventory Updates and Transaction Concurrency"
+      },
+      "topicId": "database-concurrency"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "主库提交确认后，副本可能尚未应用包含该修改的日志",
+                  "写后读可将该用户的读请求路由到主库，或比较副本复制位置与写入位置后再决定读哪里"
+                ],
+                "background": "用户资料服务使用 PostgreSQL 主从架构，所有写请求进入主库，查询请求由只读副本承接；本题假设当前环境为异步流复制，且不讨论同步复制配置。",
+                "constraints": [
+                  "写入路径为异步复制，主库确认提交时不等待只读副本应用该日志",
+                  "只讨论单个用户写后立即读昵称的场景，不涉及跨地域或多副本容灾方案"
+                ],
+                "evaluationChecklist": [
+                  "能解释用户更新成功后仍在副本读到旧值的机制，说明主库提交确认与副本应用日志之间不同步",
+                  "能提出一个局部读路径调整，例如写后短时间内将该用户读请求路由到主库，并说明其代价",
+                  "能说明如何借助复制位置或写入时间判断副本是否已包含该用户的更新，并能指出判断依据的局限"
+                ],
+                "followUpDirections": [
+                  "如果副本在不同时刻追赶进度不同，如何判断某个副本能否满足该用户的读请求？",
+                  "临时把该用户读请求转到主库会带来哪些负载或一致性代价，应如何限定其持续时间？",
+                  "若应用层只能拿到主库返回的提交成功信息而无法访问复制位置，还能用什么方式缩小读取旧值的概率？"
+                ],
+                "question": "用户在个人资料页修改昵称，主库返回成功，随后页面立即从只读副本加载资料，却显示修改前的昵称。请解释这种现象为什么可能发生，并说明对刚完成写入的用户，读取路径可以怎样做局部调整，使其看到自己的更新。"
+              },
+              "verdict": {
+                "accepted": false,
+                "issues": [
+                  "constraints 第一条“主库确认提交时不等待只读副本应用该日志”直接陈述了题目要求解释的因果机制，等于给出了待求结论。应只保留环境事实（如异步流复制、只读副本承接查询），不要写出提交确认与副本应用之间的关系。"
+                ]
+              }
+            },
+            {
+              "proposal": {
+                "answerTerms": [
+                  "主库提交确认后，副本可能尚未应用包含该修改的日志",
+                  "写后读可将该用户的读请求路由到主库，或比较副本复制位置与写入位置后再决定读哪里"
+                ],
+                "background": "用户资料服务使用 PostgreSQL 主从架构，所有写请求进入主库，查询请求由只读副本承接；本题假设当前环境为异步流复制，且不讨论同步复制配置。",
+                "constraints": [
+                  "环境为 PostgreSQL 异步流复制，讨论范围限定为一个主库与一个只读副本",
+                  "只讨论单个用户写后立即读昵称的场景，不涉及跨地域或多副本容灾方案"
+                ],
+                "evaluationChecklist": [
+                  "能解释用户更新成功后仍在副本读到旧值的机制，说明主库提交确认与副本应用日志之间不同步",
+                  "能提出一个局部读路径调整，例如写后短时间内将该用户读请求路由到主库，并说明其代价",
+                  "能说明如何借助复制位置或写入时间判断副本是否已包含该用户的更新，并能指出判断依据的局限"
+                ],
+                "followUpDirections": [
+                  "如果副本在不同时刻追赶进度不同，如何判断某个副本能否满足该用户的读请求？",
+                  "临时把该用户读请求转到主库会带来哪些负载或一致性代价，应如何限定其持续时间？",
+                  "若应用层只能拿到主库返回的提交成功信息而无法访问复制位置，还能用什么方式缩小读取旧值的概率？"
+                ],
+                "question": "用户在个人资料页修改昵称，主库返回成功，随后页面立即从只读副本加载资料，却显示修改前的昵称。请解释这种现象为什么可能发生，并说明对刚完成写入的用户，读取路径可以怎样做局部调整，使其看到自己的更新。"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 26,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "主库提交确认后，副本可能尚未应用包含该修改的日志",
+          "写后读可将该用户的读请求路由到主库，或比较副本复制位置与写入位置后再决定读哪里"
+        ],
+        "background": "用户资料服务使用 PostgreSQL 主从架构，所有写请求进入主库，查询请求由只读副本承接；本题假设当前环境为异步流复制，且不讨论同步复制配置。",
+        "constraints": [
+          "环境为 PostgreSQL 异步流复制，讨论范围限定为一个主库与一个只读副本",
+          "只讨论单个用户写后立即读昵称的场景，不涉及跨地域或多副本容灾方案"
+        ],
+        "evaluationChecklist": [
+          "能解释用户更新成功后仍在副本读到旧值的机制，说明主库提交确认与副本应用日志之间不同步",
+          "能提出一个局部读路径调整，例如写后短时间内将该用户读请求路由到主库，并说明其代价",
+          "能说明如何借助复制位置或写入时间判断副本是否已包含该用户的更新，并能指出判断依据的局限"
+        ],
+        "followUpDirections": [
+          "如果副本在不同时刻追赶进度不同，如何判断某个副本能否满足该用户的读请求？",
+          "临时把该用户读请求转到主库会带来哪些负载或一致性代价，应如何限定其持续时间？",
+          "若应用层只能拿到主库返回的提交成功信息而无法访问复制位置，还能用什么方式缩小读取旧值的概率？"
+        ],
+        "question": "用户在个人资料页修改昵称，主库返回成功，随后页面立即从只读副本加载资料，却显示修改前的昵称。请解释这种现象为什么可能发生，并说明对刚完成写入的用户，读取路径可以怎样做局部调整，使其看到自己的更新。"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Availability",
+        "focus": [
+          "提交确认与复制延迟",
+          "读己之写",
+          "临时读主库的代价"
+        ],
+        "id": "replication-failover",
+        "level": "mid-to-senior",
+        "priority": "advanced",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "主库提交成功不等待异步副本应用日志",
+          "用户更新昵称成功后，立即从只读副本查询昵称"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://www.postgresql.org/docs/18/warm-standby.html"
+        ],
+        "title": "异步复制与读己之写"
+      },
+      "topicId": "replication-failover"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "the remainder depends on the divisor, so changing N changes the target node for many keys",
+                  "keys stored under the old mapping are looked up on the wrong node after N changes, so existing data becomes unreachable without migration",
+                  "a ring-based mapping limits movement to nearby keys, unlike a modulus that depends on the total node count"
+                ],
+                "background": "A cache cluster has node indices 0 to N-1. The client library picks the node for each key from the key's hash and the current node count, and it has no lookup table.",
+                "constraints": [
+                  "Hashes are nonnegative integers and node indices start at 0.",
+                  "The client computes the node only from hash(key) and the current N, with no lookup table or metadata service.",
+                  "Assume the hash function itself is unchanged; focus on the routing rule only. Do not estimate capacity or traffic."
+                ],
+                "evaluationChecklist": [
+                  "The candidate computes the node for hash 5 when N is 3 and when N is 4, and shows the modulo arithmetic.",
+                  "The candidate explains that the same hash maps to different nodes because the divisor changed, not because the key or hash changed.",
+                  "The candidate explains the practical consequence for keys already stored under the old routing, such as misses or stale reads without a migration step."
+                ],
+                "followUpDirections": [
+                  "Clarification: Ask the candidate to estimate, for a uniformly distributed hash, roughly what fraction of keys keep the same node when going from 3 to 4 nodes, and to justify the estimate.",
+                  "Practical application: Ask how a team could migrate or warm keys during the change while limiting cache misses, and what assumptions the migration plan makes.",
+                  "Local trade-offs: Ask what a ring-based mapping changes about how keys move when a node is added, and what new costs it introduces, such as uneven load or the need for virtual nodes. Mark uncertain claims as uncertain."
+                ],
+                "question": "A service stores cache entries on nodes chosen by hash(key) % N. The cluster grows from 3 nodes to 4. For a key whose hash is 5, which node does the client select before and after the change, and what does this imply for entries that were already written under the 3-node routing?"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 27,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "the remainder depends on the divisor, so changing N changes the target node for many keys",
+          "keys stored under the old mapping are looked up on the wrong node after N changes, so existing data becomes unreachable without migration",
+          "a ring-based mapping limits movement to nearby keys, unlike a modulus that depends on the total node count"
+        ],
+        "background": "A cache cluster has node indices 0 to N-1. The client library picks the node for each key from the key's hash and the current node count, and it has no lookup table.",
+        "constraints": [
+          "Hashes are nonnegative integers and node indices start at 0.",
+          "The client computes the node only from hash(key) and the current N, with no lookup table or metadata service.",
+          "Assume the hash function itself is unchanged; focus on the routing rule only. Do not estimate capacity or traffic."
+        ],
+        "evaluationChecklist": [
+          "The candidate computes the node for hash 5 when N is 3 and when N is 4, and shows the modulo arithmetic.",
+          "The candidate explains that the same hash maps to different nodes because the divisor changed, not because the key or hash changed.",
+          "The candidate explains the practical consequence for keys already stored under the old routing, such as misses or stale reads without a migration step."
+        ],
+        "followUpDirections": [
+          "Clarification: Ask the candidate to estimate, for a uniformly distributed hash, roughly what fraction of keys keep the same node when going from 3 to 4 nodes, and to justify the estimate.",
+          "Practical application: Ask how a team could migrate or warm keys during the change while limiting cache misses, and what assumptions the migration plan makes.",
+          "Local trade-offs: Ask what a ring-based mapping changes about how keys move when a node is added, and what new costs it introduces, such as uneven load or the need for virtual nodes. Mark uncertain claims as uncertain."
+        ],
+        "question": "A service stores cache entries on nodes chosen by hash(key) % N. The cluster grows from 3 nodes to 4. For a key whose hash is 5, which node does the client select before and after the change, and what does this imply for entries that were already written under the 3-node routing?"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Scalability",
+        "focus": [
+          "hash(key) % N",
+          "Mapping changes when N increases",
+          "Basic boundaries of consistent hashing"
+        ],
+        "id": "sharding-growth",
+        "level": "mid-to-senior",
+        "priority": "advanced",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "Routing uses hash(key) % N with nonnegative integer hashes",
+          "Node count changes from 3 to 4; inspect a key whose hash is 5"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/"
+        ],
+        "title": "Hash Modulo and Key Remapping"
+      },
+      "topicId": "sharding-growth"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "各层尝试次数相乘得到到达 C 的最坏调用数",
+                  "上游超时后 C 已开始的工作不会自动停止",
+                  "截止时间需要沿调用链传递且由下游主动检查"
+                ],
+                "background": "你负责一个后端服务调用链，A 通过同步 RPC 调用 B，B 再调用 C。三层之间的调用都设置了超时。",
+                "constraints": [
+                  "每层在调用失败后最多额外重试 2 次，即每层最多发起 3 次尝试，各层重试逻辑相互独立，没有全局重试预算或熔断。",
+                  "C 持续超时，客户端超时后不会自动撤销 C 已经开始执行的操作。"
+                ],
+                "evaluationChecklist": [
+                  "能说明一次用户请求最坏情况下到达 C 的调用次数是由各层尝试次数的组合关系决定的，并给出具体计算过程。",
+                  "能解释客户端超时后 C 可能仍在执行，因此上游看到超时并不代表 C 未生效，并说明 C 在这些调用中可能处于的状态。",
+                  "能说明如果要让 C 知道调用方已放弃，需要沿调用链传递截止时间或取消信号，并指出这需要下游配合检查的前提。"
+                ],
+                "followUpDirections": [
+                  "如果 C 的操作包含写入，请说明上游重试可能带来的副作用，并讨论幂等性在其中起什么作用。",
+                  "请说明截止时间应如何从 A 传递到 B 再到 C，每一跳应如何根据剩余时间设置超时。",
+                  "在排障时，你会用哪些观测证据来确认 C 收到的调用量高于用户请求量，并说明每项证据能区分什么。"
+                ],
+                "question": "假设一次用户请求进入 A 后，C 持续超时，请估算最坏情况下这一次用户请求会有多少次调用到达 C，并说明 C 在这些调用中可能处于什么状态。"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 28,
+      "lang": "zh",
+      "question": {
+        "answerTerms": [
+          "各层尝试次数相乘得到到达 C 的最坏调用数",
+          "上游超时后 C 已开始的工作不会自动停止",
+          "截止时间需要沿调用链传递且由下游主动检查"
+        ],
+        "background": "你负责一个后端服务调用链，A 通过同步 RPC 调用 B，B 再调用 C。三层之间的调用都设置了超时。",
+        "constraints": [
+          "每层在调用失败后最多额外重试 2 次，即每层最多发起 3 次尝试，各层重试逻辑相互独立，没有全局重试预算或熔断。",
+          "C 持续超时，客户端超时后不会自动撤销 C 已经开始执行的操作。"
+        ],
+        "evaluationChecklist": [
+          "能说明一次用户请求最坏情况下到达 C 的调用次数是由各层尝试次数的组合关系决定的，并给出具体计算过程。",
+          "能解释客户端超时后 C 可能仍在执行，因此上游看到超时并不代表 C 未生效，并说明 C 在这些调用中可能处于的状态。",
+          "能说明如果要让 C 知道调用方已放弃，需要沿调用链传递截止时间或取消信号，并指出这需要下游配合检查的前提。"
+        ],
+        "followUpDirections": [
+          "如果 C 的操作包含写入，请说明上游重试可能带来的副作用，并讨论幂等性在其中起什么作用。",
+          "请说明截止时间应如何从 A 传递到 B 再到 C，每一跳应如何根据剩余时间设置超时。",
+          "在排障时，你会用哪些观测证据来确认 C 收到的调用量高于用户请求量，并说明每项证据能区分什么。"
+        ],
+        "question": "假设一次用户请求进入 A 后，C 持续超时，请估算最坏情况下这一次用户请求会有多少次调用到达 C，并说明 C 在这些调用中可能处于什么状态。"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Performance",
+        "focus": [
+          "超时与服务端执行状态",
+          "重试次数相乘",
+          "截止时间与取消语义"
+        ],
+        "id": "rpc-tail-latency",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "scenario",
+        "scenarioConstraints": [
+          "调用链 A → B → C，每层失败后最多额外重试 2 次",
+          "C 持续超时；客户端超时不会自动撤销 C 已开始的操作"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/"
+        ],
+        "title": "RPC 超时与重试放大"
+      },
+      "topicId": "rpc-tail-latency"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "Misses concentrated on a small set of keys point to a few hot records leaving the cache",
+                  "Requests for records that do not exist are not cached, so each one reaches the database",
+                  "Many concurrent rebuilds of one popular key after it leaves the cache multiply origin reads",
+                  "Expiry timing clustered across many keys can cause simultaneous misses"
+                ],
+                "background": "A product-detail read path uses Redis as a cache in front of a relational database, and the database is the source of truth. Over a ten-minute window, monitoring shows the cache hit rate falling from about 95% to about 60%, while database read queries roughly quadruple. Redis CPU, memory and command latency stay flat, and no application deployment occurred during the window.",
+                "constraints": [
+                  "Reason from these observations only; do not assume a single root cause yet, and state what remains unknown.",
+                  "Focus on choosing the next piece of evidence and explaining what it would let you distinguish; you do not need to design a remediation or estimate capacity.",
+                  "Assume you can inspect application logs, request-level samples of cache misses, and Redis key-level statistics, but you cannot change production data during the investigation."
+                ],
+                "evaluationChecklist": [
+                  "Proposes a specific next piece of evidence that can discriminate between plausible sources of the added origin traffic, rather than generic actions like restarting Redis or scaling the database.",
+                  "Explains what outcome of that evidence would support one explanation over another, showing causal reasoning rather than keyword recall.",
+                  "Acknowledges uncertainty about which explanation is correct given the limited observations and asks for or justifies the next evidence accordingly."
+                ],
+                "followUpDirections": [
+                  "Clarification: If the candidate asks what the cache-miss requests look like, supply one observation at a time, such as the distribution of requested identifiers across misses, and ask how it changes the hypothesis.",
+                  "Diagnostic evidence: If the candidate proposes checking whether specific missed identifiers exist in the database, provide a plausible result and ask what it rules in or out.",
+                  "Diagnostic evidence: If the candidate proposes examining when cached entries were written or are scheduled to leave the cache, supply a timing pattern and ask what it suggests and what it cannot prove.",
+                  "Local trade-offs: Ask the candidate what the cost or risk of their proposed evidence collection would be in production, such as sampling overhead or log volume."
+                ],
+                "question": "Given these observations, what would you check next to determine where the additional database reads are coming from, and why would that check help you tell the possible explanations apart?"
+              },
+              "verdict": {
+                "accepted": false,
+                "issues": [
+                  "The third constraint enumerates the diagnostic evidence sources (application logs, request-level miss samples, Redis key-level statistics) that the candidate is supposed to propose and choose among. Troubleshooting constraints must not list the checks; the constraint should state only the access limits, such as no production data changes, and leave the choice of evidence to the candidate."
+                ]
+              }
+            },
+            {
+              "proposal": {
+                "answerTerms": [
+                  "Misses concentrated on a small set of keys point to a few hot records leaving the cache",
+                  "Requests for records that do not exist are not cached, so each one reaches the database",
+                  "Many concurrent rebuilds of one popular key after it leaves the cache multiply origin reads",
+                  "Expiry timing clustered across many keys can cause simultaneous misses"
+                ],
+                "background": "A product-detail read path uses Redis as a cache in front of a relational database, and the database is the source of truth. Over a ten-minute window, monitoring shows the cache hit rate falling from about 95% to about 60%, while database read queries roughly quadruple. Redis CPU, memory and command latency stay flat, and no application deployment occurred during the window.",
+                "constraints": [
+                  "Reason from these observations only; do not assume a single root cause yet, and state what remains unknown.",
+                  "Focus on choosing the next piece of evidence and explaining what it would let you distinguish; you do not need to design a remediation or estimate capacity.",
+                  "Assume production data and keys must not be modified during the investigation, but you may gather further read-only information from the systems involved."
+                ],
+                "evaluationChecklist": [
+                  "Proposes a specific next piece of evidence that can discriminate between plausible sources of the added origin traffic, rather than generic actions like restarting Redis or scaling the database.",
+                  "Explains what outcome of that evidence would support one explanation over another, showing causal reasoning rather than keyword recall.",
+                  "Acknowledges uncertainty about which explanation is correct given the limited observations and asks for or justifies the next evidence accordingly."
+                ],
+                "followUpDirections": [
+                  "Clarification: If the candidate asks what the cache-miss requests look like, supply one observation at a time, such as the distribution of requested identifiers across misses, and ask how it changes the hypothesis.",
+                  "Diagnostic evidence: If the candidate proposes checking whether specific missed identifiers exist in the database, provide a plausible result and ask what it rules in or out.",
+                  "Diagnostic evidence: If the candidate proposes examining when cached entries were written or are scheduled to leave the cache, supply a timing pattern and ask what it suggests and what it cannot prove.",
+                  "Local trade-offs: Ask the candidate what the cost or risk of their proposed evidence collection would be in production, such as sampling overhead or log volume."
+                ],
+                "question": "Given these observations, what would you check next to determine where the additional database reads are coming from, and why would that check help you tell the possible explanations apart?"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "index": 29,
+      "lang": "en",
+      "question": {
+        "answerTerms": [
+          "Misses concentrated on a small set of keys point to a few hot records leaving the cache",
+          "Requests for records that do not exist are not cached, so each one reaches the database",
+          "Many concurrent rebuilds of one popular key after it leaves the cache multiply origin reads",
+          "Expiry timing clustered across many keys can cause simultaneous misses"
+        ],
+        "background": "A product-detail read path uses Redis as a cache in front of a relational database, and the database is the source of truth. Over a ten-minute window, monitoring shows the cache hit rate falling from about 95% to about 60%, while database read queries roughly quadruple. Redis CPU, memory and command latency stay flat, and no application deployment occurred during the window.",
+        "constraints": [
+          "Reason from these observations only; do not assume a single root cause yet, and state what remains unknown.",
+          "Focus on choosing the next piece of evidence and explaining what it would let you distinguish; you do not need to design a remediation or estimate capacity.",
+          "Assume production data and keys must not be modified during the investigation, but you may gather further read-only information from the systems involved."
+        ],
+        "evaluationChecklist": [
+          "Proposes a specific next piece of evidence that can discriminate between plausible sources of the added origin traffic, rather than generic actions like restarting Redis or scaling the database.",
+          "Explains what outcome of that evidence would support one explanation over another, showing causal reasoning rather than keyword recall.",
+          "Acknowledges uncertainty about which explanation is correct given the limited observations and asks for or justifies the next evidence accordingly."
+        ],
+        "followUpDirections": [
+          "Clarification: If the candidate asks what the cache-miss requests look like, supply one observation at a time, such as the distribution of requested identifiers across misses, and ask how it changes the hypothesis.",
+          "Diagnostic evidence: If the candidate proposes checking whether specific missed identifiers exist in the database, provide a plausible result and ask what it rules in or out.",
+          "Diagnostic evidence: If the candidate proposes examining when cached entries were written or are scheduled to leave the cache, supply a timing pattern and ask what it suggests and what it cannot prove.",
+          "Local trade-offs: Ask the candidate what the cost or risk of their proposed evidence collection would be in production, such as sampling overhead or log volume."
+        ],
+        "question": "Given these observations, what would you check next to determine where the additional database reads are coming from, and why would that check help you tell the possible explanations apart?"
+      },
+      "status": "generated_and_reviewed",
+      "topic": {
+        "category": "Redis",
+        "focus": [
+          "Distinguish origin-traffic causes using key distributions, expiry distributions and database hit results",
+          "Cache penetration, hot-key expiry and mass expiry are private diagnostic directions, not required labels"
+        ],
+        "id": "redis-cache-failures",
+        "level": "mid-to-senior",
+        "priority": "core",
+        "questionForm": "troubleshooting",
+        "scenarioConstraints": [
+          "Open with limited observations of one origin-traffic incident, not complete trigger descriptions of several failures; supply neither a root cause nor a menu of diagnoses",
+          "Ask for the next diagnostic evidence and reasoning; leave unknown key validity, popularity and expiry behavior for the candidate to ask about, and omit irrelevant version, value-type or persistence context"
+        ],
+        "sources": [
+          "https://javaguide.cn/home.html",
+          "https://redis.io/docs/latest/develop/"
+        ],
+        "title": "Cache Misses and Database Pressure"
+      },
+      "topicId": "redis-cache-failures"
+    }
+  ],
+  "scope": "P1 seed generation only. No personal history, drafts, source code, voice calls or application configuration writes. Provider review is not independent manual certification.",
+  "usage": {
+    "prices": [],
+    "records": [
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:26.538Z",
+        "estimatedUsd": null,
+        "id": 77,
+        "inputTokens": 2281,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 551,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:21.125Z",
+        "estimatedUsd": null,
+        "id": 76,
+        "inputTokens": 4252,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1210,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:16.775Z",
+        "estimatedUsd": null,
+        "id": 75,
+        "inputTokens": 2293,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 743,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:05.272Z",
+        "estimatedUsd": null,
+        "id": 74,
+        "inputTokens": 3202,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2090,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:04.390Z",
+        "estimatedUsd": null,
+        "id": 73,
+        "inputTokens": 2074,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 361,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:02.588Z",
+        "estimatedUsd": null,
+        "id": 72,
+        "inputTokens": 1965,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 365,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:02.454Z",
+        "estimatedUsd": null,
+        "id": 71,
+        "inputTokens": 1910,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 629,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:57.099Z",
+        "estimatedUsd": null,
+        "id": 70,
+        "inputTokens": 4130,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1231,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:54.073Z",
+        "estimatedUsd": null,
+        "id": 69,
+        "inputTokens": 3116,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1705,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:51.624Z",
+        "estimatedUsd": null,
+        "id": 68,
+        "inputTokens": 1902,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 843,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:50.236Z",
+        "estimatedUsd": null,
+        "id": 67,
+        "inputTokens": 3323,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2231,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:48.565Z",
+        "estimatedUsd": null,
+        "id": 66,
+        "inputTokens": 2075,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:44.866Z",
+        "estimatedUsd": null,
+        "id": 65,
+        "inputTokens": 3116,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1496,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:41.391Z",
+        "estimatedUsd": null,
+        "id": 64,
+        "inputTokens": 3289,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1674,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:41.281Z",
+        "estimatedUsd": null,
+        "id": 63,
+        "inputTokens": 2087,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 594,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:39.677Z",
+        "estimatedUsd": null,
+        "id": 62,
+        "inputTokens": 3111,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1516,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:38.852Z",
+        "estimatedUsd": null,
+        "id": 61,
+        "inputTokens": 1945,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:35.678Z",
+        "estimatedUsd": null,
+        "id": 60,
+        "inputTokens": 2079,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1067,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:33.494Z",
+        "estimatedUsd": null,
+        "id": 59,
+        "inputTokens": 3290,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 660,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:31.235Z",
+        "estimatedUsd": null,
+        "id": 58,
+        "inputTokens": 1954,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 314,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:29.279Z",
+        "estimatedUsd": null,
+        "id": 57,
+        "inputTokens": 3258,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2260,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:26.048Z",
+        "estimatedUsd": null,
+        "id": 56,
+        "inputTokens": 3103,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1543,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:25.220Z",
+        "estimatedUsd": null,
+        "id": 55,
+        "inputTokens": 1921,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:21.338Z",
+        "estimatedUsd": null,
+        "id": 54,
+        "inputTokens": 3258,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1273,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:21.115Z",
+        "estimatedUsd": null,
+        "id": 53,
+        "inputTokens": 3262,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1642,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:18.459Z",
+        "estimatedUsd": null,
+        "id": 52,
+        "inputTokens": 1969,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 501,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:14.039Z",
+        "estimatedUsd": null,
+        "id": 51,
+        "inputTokens": 3051,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1790,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:13.088Z",
+        "estimatedUsd": null,
+        "id": 50,
+        "inputTokens": 1853,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:12.858Z",
+        "estimatedUsd": null,
+        "id": 49,
+        "inputTokens": 3262,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1186,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:12.079Z",
+        "estimatedUsd": null,
+        "id": 48,
+        "inputTokens": 1859,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:09.683Z",
+        "estimatedUsd": null,
+        "id": 47,
+        "inputTokens": 3060,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1526,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:05.038Z",
+        "estimatedUsd": null,
+        "id": 46,
+        "inputTokens": 3264,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1464,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:03.607Z",
+        "estimatedUsd": null,
+        "id": 45,
+        "inputTokens": 3258,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1270,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:02.600Z",
+        "estimatedUsd": null,
+        "id": 44,
+        "inputTokens": 3060,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1153,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:00.138Z",
+        "estimatedUsd": null,
+        "id": 43,
+        "inputTokens": 2127,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 410,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:57.234Z",
+        "estimatedUsd": null,
+        "id": 42,
+        "inputTokens": 3264,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1268,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:54.365Z",
+        "estimatedUsd": null,
+        "id": 41,
+        "inputTokens": 3258,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1459,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:51.707Z",
+        "estimatedUsd": null,
+        "id": 40,
+        "inputTokens": 2169,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 350,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:49.380Z",
+        "estimatedUsd": null,
+        "id": 39,
+        "inputTokens": 3073,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1937,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:48.619Z",
+        "estimatedUsd": null,
+        "id": 38,
+        "inputTokens": 3264,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1446,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:48.561Z",
+        "estimatedUsd": null,
+        "id": 37,
+        "inputTokens": 1900,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:45.168Z",
+        "estimatedUsd": null,
+        "id": 36,
+        "inputTokens": 2025,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 601,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:42.488Z",
+        "estimatedUsd": null,
+        "id": 35,
+        "inputTokens": 3053,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1538,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:38.894Z",
+        "estimatedUsd": null,
+        "id": 34,
+        "inputTokens": 2029,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 625,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:36.348Z",
+        "estimatedUsd": null,
+        "id": 33,
+        "inputTokens": 3251,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2030,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:35.182Z",
+        "estimatedUsd": null,
+        "id": 32,
+        "inputTokens": 2176,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:34.636Z",
+        "estimatedUsd": null,
+        "id": 31,
+        "inputTokens": 3085,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1935,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:33.802Z",
+        "estimatedUsd": null,
+        "id": 30,
+        "inputTokens": 1907,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:33.590Z",
+        "estimatedUsd": null,
+        "id": 29,
+        "inputTokens": 3973,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1274,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:27.829Z",
+        "estimatedUsd": null,
+        "id": 28,
+        "inputTokens": 2044,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 955,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:25.613Z",
+        "estimatedUsd": null,
+        "id": 27,
+        "inputTokens": 3070,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1815,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:24.226Z",
+        "estimatedUsd": null,
+        "id": 26,
+        "inputTokens": 3276,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1527,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:21.270Z",
+        "estimatedUsd": null,
+        "id": 25,
+        "inputTokens": 2053,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 410,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:15.078Z",
+        "estimatedUsd": null,
+        "id": 24,
+        "inputTokens": 3059,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2184,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:12.321Z",
+        "estimatedUsd": null,
+        "id": 23,
+        "inputTokens": 3272,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1409,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:12.120Z",
+        "estimatedUsd": null,
+        "id": 22,
+        "inputTokens": 1871,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 382,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:11.888Z",
+        "estimatedUsd": null,
+        "id": 21,
+        "inputTokens": 3070,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2333,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:10.032Z",
+        "estimatedUsd": null,
+        "id": 20,
+        "inputTokens": 1890,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 339,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:08.158Z",
+        "estimatedUsd": null,
+        "id": 19,
+        "inputTokens": 2189,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 608,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:02.256Z",
+        "estimatedUsd": null,
+        "id": 18,
+        "inputTokens": 3262,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1568,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:01.353Z",
+        "estimatedUsd": null,
+        "id": 17,
+        "inputTokens": 3043,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1455,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:59.168Z",
+        "estimatedUsd": null,
+        "id": 16,
+        "inputTokens": 2037,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 437,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:58.047Z",
+        "estimatedUsd": null,
+        "id": 15,
+        "inputTokens": 2209,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 507,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:56.689Z",
+        "estimatedUsd": null,
+        "id": 14,
+        "inputTokens": 3280,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1783,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:55.806Z",
+        "estimatedUsd": null,
+        "id": 13,
+        "inputTokens": 1937,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:47.014Z",
+        "estimatedUsd": null,
+        "id": 12,
+        "inputTokens": 3060,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1579,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:46.205Z",
+        "estimatedUsd": null,
+        "id": 11,
+        "inputTokens": 3273,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2064,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:44.660Z",
+        "estimatedUsd": null,
+        "id": 10,
+        "inputTokens": 1985,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 292,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:41.930Z",
+        "estimatedUsd": null,
+        "id": 9,
+        "inputTokens": 3057,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2600,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:35.899Z",
+        "estimatedUsd": null,
+        "id": 8,
+        "inputTokens": 3273,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1619,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 256,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:35.173Z",
+        "estimatedUsd": null,
+        "id": 7,
+        "inputTokens": 1293,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:34.330Z",
+        "estimatedUsd": null,
+        "id": 6,
+        "inputTokens": 3085,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1754,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 256,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:33.643Z",
+        "estimatedUsd": null,
+        "id": 5,
+        "inputTokens": 1091,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:28.908Z",
+        "estimatedUsd": null,
+        "id": 4,
+        "inputTokens": 3057,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1551,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:28.693Z",
+        "estimatedUsd": null,
+        "id": 3,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "transport_error"
+      },
+      {
+        "cacheReadTokens": 1408,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:28.690Z",
+        "estimatedUsd": null,
+        "id": 2,
+        "inputTokens": 1701,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 461,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1408,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:28.689Z",
+        "estimatedUsd": null,
+        "id": 1,
+        "inputTokens": 1703,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 661,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      }
+    ]
+  }
+}

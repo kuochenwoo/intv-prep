@@ -126,5 +126,58 @@
     ],
     "reviewNote": "Visitor identity, event identity and aggregation window are distinct. Approximate distinct counts cannot produce an exact membership list or be naively subtracted for arbitrary window deletion. Numerical error and late-data contracts are candidate choices, not hidden mandatory products. Newly authored training seed; model quality and numerical consistency have not been acceptance-tested in this iteration.",
     "capacityExample": "At 100m events/day and 300 B/event: 30 GB/day and 900 GB for 30 days before indexes/replicas; average is about 1157 events/s and peak about 11574/s at 10x. Aggregate/sketch storage depends on the explicitly selected windows and dimensional cardinality."
+  },
+  {
+    "scenarioId": "product-search",
+    "sources": [
+      "https://www.elastic.co/docs/manage-data/data-store/near-real-time-search"
+    ],
+    "reviewNote": "All scale and service objectives are local training assumptions. Ask the candidate to define authority, failure boundaries and degraded behavior; do not prescribe a vendor or require every optional deep dive. Capacity arithmetic below excludes indexes, replication, compression and operational overhead unless stated.",
+    "capacityExample": "At 10m source documents x 4 KB = 40 GB decimal source payload. At 1000 updates/s x 4 KB = 4 MB/s update payload before transport overhead. Search index size must be estimated separately, not assumed equal to source size."
+  },
+  {
+    "scenarioId": "configuration-platform",
+    "sources": [
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/",
+      "https://openfeature.dev/specification/"
+    ],
+    "reviewNote": "All scale and service objectives are local training assumptions. Ask the candidate to define authority, failure boundaries and degraded behavior; do not prescribe a vendor or require every optional deep dive. Capacity arithmetic below excludes indexes, replication, compression and operational overhead unless stated.",
+    "capacityExample": "At 100k clients and a 100 KB bundle, a full fanout is 10 GB decimal. Polling every 30 s averages about 3333 polls/s; conditional empty responses differ from transferring the full bundle. Fanout timing and regional replicas need separate estimates."
+  },
+  {
+    "scenarioId": "log-search-platform",
+    "sources": [
+      "https://opentelemetry.io/docs/concepts/signals/logs/",
+      "https://www.elastic.co/docs/manage-data/data-store/near-real-time-search"
+    ],
+    "reviewNote": "All scale and service objectives are local training assumptions. Ask the candidate to define authority, failure boundaries and degraded behavior; do not prescribe a vendor or require every optional deep dive. Capacity arithmetic below excludes indexes, replication, compression and operational overhead unless stated.",
+    "capacityExample": "At 1bn logs/day x 1 KB = 1 TB/day decimal; 7 hot days = 7 TB raw, 90 total days = 90 TB raw including hot days. Average ingestion is about 11574 logs/s; 10x peak is about 115741/s. Compression and index expansion need independent measurements."
+  },
+  {
+    "scenarioId": "durable-workflow",
+    "sources": [
+      "https://docs.temporal.io/workflow-execution",
+      "https://docs.stripe.com/api/idempotent_requests"
+    ],
+    "reviewNote": "All scale and service objectives are local training assumptions. Ask the candidate to define authority, failure boundaries and degraded behavior; do not prescribe a vendor or require every optional deep dive. Capacity arithmetic below excludes indexes, replication, compression and operational overhead unless stated.",
+    "capacityExample": "At 1m workflows/day x 10 steps x 3 history events/step x 500 B/event = 15 GB/day and 1.35 TB over 90 days decimal. This excludes retries, wait events and payload blobs. Active workflow count depends on duration distribution, not daily starts alone."
+  },
+  {
+    "scenarioId": "distributed-kv",
+    "sources": [
+      "https://etcd.io/docs/v3.6/learning/api_guarantees/",
+      "https://github.com/facebook/rocksdb/wiki/Compaction"
+    ],
+    "reviewNote": "All scale and service objectives are local training assumptions. Ask the candidate to define authority, failure boundaries and degraded behavior; do not prescribe a vendor or require every optional deep dive. Capacity arithmetic below excludes indexes, replication, compression and operational overhead unless stated.",
+    "capacityExample": "At 100m records x 2 KB = 200 GB logical payload decimal; three complete replicas require 600 GB before indexes, write logs and compaction headroom. At 100k ops/s and read/write ratio 4:1, 20k writes/s x 2 KB = 40 MB/s incoming write payload before replication."
+  },
+  {
+    "scenarioId": "live-streaming",
+    "sources": [
+      "https://www.rfc-editor.org/rfc/rfc8216.html",
+      "https://www.w3.org/TR/webrtc/"
+    ],
+    "reviewNote": "All scale and service objectives are local training assumptions. Ask the candidate to define authority, failure boundaries and degraded behavior; do not prescribe a vendor or require every optional deep dive. Capacity arithmetic below excludes indexes, replication, compression and operational overhead unless stated.",
+    "capacityExample": "At 1m concurrent viewers x 3 Mbps = 3 Tbps viewer delivery bandwidth, before protocol overhead. At 10k broadcasters x 3 Mbps = 30 Gbps source ingestion. One hour of one 3 Mbps rendition is 1.35 GB decimal; multiple renditions and replicas add separately."
   }
 ]

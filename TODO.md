@@ -4,6 +4,18 @@ Updated: 2026-10-16 (Asia/Tokyo).
 
 This list records the agreed next step and future feature ideas. Recording an item does not start its implementation. Finish AI-quality calibration before adding the deferred features below.
 
+## Broader technical library — 2026-10-16
+
+- [x] Add 60 bilingual P1 seeds: 180 total, with 65 foundation, 98 scenario and 17 troubleshooting openings; 146 core and 34 advanced topics across 19 categories.
+- [x] Add six complete P2 scenarios: product search, configuration/flags, centralized logs, durable workflows, distributed KV and live streaming (26 total). Include local scale assumptions, authoring references and capacity examples.
+- [x] Test all P1/P2 content contracts and bilingual offline caches; check the expanded native UI with computer use.
+- [x] Run a bounded real P1 question-library batch: DeepSeek first, Claude fallback after an actual DeepSeek connection/TLS failure. No voice calls. Preserve original semantic failures, targeted corrections and independent review limits.
+- [x] Remove answer-bearing assumptions from two legacy seeds and strengthen premise/checkpoint review rules; preserve IDs, existing cached questions and histories.
+- [ ] Optional further semantic refinement: diagnose why a model can still require one particular hypothesis or an unasked boundary after passing its own reviewer. Do not count such samples as human-accepted.
+- [ ] Real multi-stage acceptance for the six newest P2 scenarios; current coverage is content, offline persistence, native selection and regression only.
+
+See [coverage and acceptance](docs/LIBRARY_EXPANSION_2026-10-16.md). Previous batches below retain their original scope and counts. Future test defaults: no voice; DeepSeek for text, Claude on DeepSeek API failure; OpenAI remains voice-only.
+
 ## Completed baseline
 
 - [x] P0: project setup and real local C++20 judging in Function and ACM modes.

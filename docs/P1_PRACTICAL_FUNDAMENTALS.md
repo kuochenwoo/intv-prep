@@ -1,5 +1,7 @@
 # Practical fundamentals and system-design coverage — 2026-10-16
 
+> Later expansion: the library now has 180 P1 topics and 26 P2 scenarios. See [broader coverage and acceptance](LIBRARY_EXPANSION_2026-10-16.md); the counts and implementation-only status below describe the earlier step.
+
 > Subsequent status: the user authorized P1 testing. See [P1 acceptance](P1_ACCEPTANCE_2026-10-16.md) for 103 passing checks, native UI acceptance, 49 real DeepSeek attempts and remaining limits. The development-only statements below describe the initial implementation step.
 
 ## Development scope and status

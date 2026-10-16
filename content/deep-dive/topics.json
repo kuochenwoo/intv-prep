@@ -210,9 +210,9 @@
     "id": "replication-failover",
     "category": "Availability",
     "title": "异步复制与读己之写",
-    "focus": ["提交确认与复制延迟", "读己之写", "临时读主库的代价"],
+    "focus": ["提交确认与复制延迟", "读己之写", "可选追问：临时读主库的代价"],
     "scenarioConstraints": [
-      "主库提交成功不等待异步副本应用日志",
+      "主库与只读副本采用 PostgreSQL 异步流复制",
       "用户更新昵称成功后，立即从只读副本查询昵称"
     ],
     "level": "mid-to-senior",
@@ -221,10 +221,10 @@
       "focus": [
         "Commit acknowledgement and replication lag",
         "Read-your-writes",
-        "Cost of temporarily reading from the primary"
+        "Optional follow-up: cost of temporarily reading from the primary"
       ],
       "scenarioConstraints": [
-        "Primary commit acknowledgement does not wait for an asynchronous replica to apply the log",
+        "A primary and a read replica use PostgreSQL asynchronous streaming replication",
         "A user updates a nickname successfully, then immediately reads it from the replica"
       ]
     },
@@ -268,22 +268,26 @@
     "id": "rpc-tail-latency",
     "category": "Performance",
     "title": "RPC 超时与重试放大",
-    "focus": ["超时与服务端执行状态", "重试次数相乘", "截止时间与取消语义"],
+    "focus": [
+      "逐层计算重试次数",
+      "超时后执行状态的不确定性",
+      "可选追问：截止时间与取消语义"
+    ],
     "scenarioConstraints": [
       "调用链 A → B → C，每层失败后最多额外重试 2 次",
-      "C 持续超时；客户端超时不会自动撤销 C 已开始的操作"
+      "仅观察到对 C 的调用持续超时，未提供 C 内部的执行结果"
     ],
     "level": "mid-to-senior",
     "en": {
       "title": "RPC Timeouts and Retry Amplification",
       "focus": [
-        "Timeout vs server execution state",
-        "Multiplication of retry counts",
-        "Deadlines and cancellation semantics"
+        "Calculate attempts across retrying layers",
+        "Uncertainty of execution after a timeout",
+        "Optional follow-up: deadline and cancellation semantics"
       ],
       "scenarioConstraints": [
         "Call chain A → B → C; each layer allows at most two additional retries",
-        "C keeps timing out; a client timeout does not automatically undo work already started at C"
+        "Calls to C keep timing out; no internal execution result from C is supplied"
       ]
     },
     "questionForm": "scenario",
@@ -3321,6 +3325,1488 @@
       "scenarioConstraints": [
         "Compare one business read/write; SQL/NoSQL labels do not determine every consistency guarantee",
         "State the storage/search engine and consistency boundary; explain one access or update path"
+      ]
+    }
+  },
+  {
+    "id": "db-unique-race",
+    "category": "Database",
+    "title": "唯一约束与并发注册",
+    "focus": ["先查后插入的竞态", "唯一冲突的业务处理"],
+    "scenarioConstraints": ["同一邮箱可能被并发注册", "讨论单个数据库中的写入"],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/ddl-constraints.html"],
+    "en": {
+      "title": "Unique Constraints and Concurrent Registration",
+      "focus": ["Check-then-insert races", "Handling uniqueness conflicts"],
+      "scenarioConstraints": [
+        "The same email may be registered concurrently",
+        "Discuss writes in one database"
+      ]
+    }
+  },
+  {
+    "id": "db-foreign-key",
+    "category": "Database",
+    "title": "外键约束与应用校验",
+    "focus": ["引用完整性的检查时机", "并发删除下的约束边界"],
+    "scenarioConstraints": ["使用关系数据库", "不要求设计跨库外键方案"],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/ddl-constraints.html"],
+    "en": {
+      "title": "Foreign Keys and Application Validation",
+      "focus": [
+        "When referential integrity is checked",
+        "Constraint boundaries during concurrent deletion"
+      ],
+      "scenarioConstraints": [
+        "Use a relational database",
+        "Do not design cross-database foreign keys"
+      ]
+    }
+  },
+  {
+    "id": "db-window-functions",
+    "category": "Database",
+    "title": "窗口函数与分组聚合",
+    "focus": ["保留明细行与分组折叠", "并列排序的业务含义"],
+    "scenarioConstraints": [
+      "按部门比较员工薪资",
+      "同薪员工可能存在且要明确并列规则"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/tutorial-window.html"],
+    "en": {
+      "title": "Window Functions and Grouped Aggregation",
+      "focus": [
+        "Preserving detail rows versus collapsing groups",
+        "Business meaning of ranking ties"
+      ],
+      "scenarioConstraints": [
+        "Compare employee salaries within departments",
+        "Equal salaries exist and tie semantics must be stated"
+      ]
+    }
+  },
+  {
+    "id": "db-long-transaction",
+    "category": "Database",
+    "title": "PostgreSQL 表空间持续增长",
+    "focus": ["版本保留与清理进度", "事务年龄的可验证证据"],
+    "scenarioConstraints": [
+      "PostgreSQL 表持续更新后空间增长",
+      "尚未确认是哪类后台或会话行为造成"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/routine-vacuuming.html"],
+    "en": {
+      "title": "Growing PostgreSQL Table Storage",
+      "focus": [
+        "Version retention and cleanup progress",
+        "Verifiable evidence of transaction age"
+      ],
+      "scenarioConstraints": [
+        "A PostgreSQL table grows during sustained updates",
+        "The responsible background or session behavior is not yet established"
+      ]
+    }
+  },
+  {
+    "id": "db-prepared-plan",
+    "category": "Database",
+    "title": "预编译语句与执行计划",
+    "focus": ["解析复用与计划选择", "参数分布改变的影响"],
+    "scenarioConstraints": [
+      "以 PostgreSQL 预备语句为例",
+      "不把预编译等同于所有参数共享最优计划"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "advanced",
+    "sources": ["https://www.postgresql.org/docs/18/sql-prepare.html"],
+    "en": {
+      "title": "Prepared Statements and Query Plans",
+      "focus": [
+        "Parse reuse and plan selection",
+        "Effects of changing parameter distributions"
+      ],
+      "scenarioConstraints": [
+        "Use PostgreSQL prepared statements",
+        "Do not equate preparation with one optimal plan for every parameter"
+      ]
+    }
+  },
+  {
+    "id": "db-backup-restore",
+    "category": "Database",
+    "title": "备份成功与恢复验证",
+    "focus": ["恢复点与日志连续性", "隔离恢复演练"],
+    "scenarioConstraints": [
+      "已有关系数据库备份任务成功记录",
+      "只讨论一次可验证的数据恢复而非完整容灾架构"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/continuous-archiving.html"],
+    "en": {
+      "title": "Backup Success and Restore Validation",
+      "focus": [
+        "Recovery points and log continuity",
+        "Isolated restore drills"
+      ],
+      "scenarioConstraints": [
+        "A relational database backup job reports success",
+        "Discuss one verifiable data restore rather than a complete disaster recovery architecture"
+      ]
+    }
+  },
+  {
+    "id": "redis-replication-ack",
+    "category": "Redis",
+    "title": "Redis 复制确认与数据丢失窗口",
+    "focus": ["异步复制的确认边界", "WAIT 与故障切换的保证范围"],
+    "scenarioConstraints": [
+      "讨论 Redis 主从复制",
+      "明确区分客户端成功响应与切换后的持久保证"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://redis.io/docs/latest/operate/oss_and_stack/management/replication/"
+    ],
+    "en": {
+      "title": "Redis Replication Acknowledgements and Loss Windows",
+      "focus": [
+        "Acknowledgement boundaries of asynchronous replication",
+        "Scope of WAIT and failover guarantees"
+      ],
+      "scenarioConstraints": [
+        "Discuss Redis primary-replica replication",
+        "Distinguish client success responses from durability after failover"
+      ]
+    }
+  },
+  {
+    "id": "redis-sentinel",
+    "category": "Redis",
+    "title": "Sentinel 与 Cluster 的职责",
+    "focus": ["主从监控与故障切换", "分片与路由的责任边界"],
+    "scenarioConstraints": [
+      "比较两种 Redis 部署方式",
+      "不要求给出大规模集群容量方案"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://redis.io/docs/latest/operate/oss_and_stack/management/sentinel/"
+    ],
+    "en": {
+      "title": "Sentinel and Cluster Responsibilities",
+      "focus": [
+        "Monitoring and failover",
+        "Boundaries of partitioning and routing"
+      ],
+      "scenarioConstraints": [
+        "Compare two Redis deployment modes",
+        "Do not require a large-cluster capacity plan"
+      ]
+    }
+  },
+  {
+    "id": "redis-watch-transaction",
+    "category": "Redis",
+    "title": "Redis WATCH 的并发更新",
+    "focus": ["乐观检查的提交条件", "冲突重试与业务副作用"],
+    "scenarioConstraints": [
+      "两个客户端更新同一个键",
+      "仅讨论 WATCH、MULTI、EXEC 路径"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://redis.io/docs/latest/develop/interact/transactions/"],
+    "en": {
+      "title": "Concurrent Updates with Redis WATCH",
+      "focus": [
+        "Commit conditions of optimistic checks",
+        "Conflict retries and business side effects"
+      ],
+      "scenarioConstraints": [
+        "Two clients update the same key",
+        "Discuss only the WATCH, MULTI and EXEC path"
+      ]
+    }
+  },
+  {
+    "id": "redis-scan-iteration",
+    "category": "Redis",
+    "title": "在线遍历 Redis 键空间",
+    "focus": ["游标遍历期间的变动", "重复处理与完整性边界"],
+    "scenarioConstraints": [
+      "键集合在遍历时仍会变化",
+      "任务可以分批完成且不能长时间阻塞服务"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://redis.io/docs/latest/commands/scan/"],
+    "en": {
+      "title": "Iterating Redis Keys Online",
+      "focus": [
+        "Changes during cursor iteration",
+        "Duplicate processing and completeness boundaries"
+      ],
+      "scenarioConstraints": [
+        "The key set changes during iteration",
+        "Work may run in batches and must not block the service for a long period"
+      ]
+    }
+  },
+  {
+    "id": "redis-memory-diagnosis",
+    "category": "Redis",
+    "title": "Redis 内存曲线与键数量",
+    "focus": ["逻辑数据与分配内存的区别", "基于样本缩小原因范围"],
+    "scenarioConstraints": [
+      "键数量稳定但进程内存增加",
+      "没有给出键大小或分配器指标的结论"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": ["https://redis.io/docs/latest/commands/memory-stats/"],
+    "en": {
+      "title": "Redis Memory Growth and Key Counts",
+      "focus": [
+        "Logical data versus allocated memory",
+        "Narrowing causes using samples"
+      ],
+      "scenarioConstraints": [
+        "Key count is stable while process memory rises",
+        "No conclusion about value sizes or allocator metrics is supplied"
+      ]
+    }
+  },
+  {
+    "id": "network-flow-congestion",
+    "category": "Networking",
+    "title": "TCP 流量控制与拥塞控制",
+    "focus": ["接收端容量与路径拥塞", "发送窗口的限制来源"],
+    "scenarioConstraints": ["讨论 TCP 传输", "不要求背诵某个内核算法的常数"],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9293.html"],
+    "en": {
+      "title": "TCP Flow Control and Congestion Control",
+      "focus": [
+        "Receiver capacity versus path congestion",
+        "Sources of send-window limits"
+      ],
+      "scenarioConstraints": [
+        "Discuss TCP transport",
+        "Do not require constants from a particular kernel algorithm"
+      ]
+    }
+  },
+  {
+    "id": "network-handshake",
+    "category": "Networking",
+    "title": "TCP 建连为何需要双向确认",
+    "focus": ["序列空间初始化", "延迟或重复报文的影响"],
+    "scenarioConstraints": [
+      "讨论普通主动打开与被动打开",
+      "不考 TCP Fast Open 等扩展"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9293.html"],
+    "en": {
+      "title": "Why TCP Connection Setup Needs Mutual Confirmation",
+      "focus": [
+        "Initializing sequence spaces",
+        "Effects of delayed or duplicate packets"
+      ],
+      "scenarioConstraints": [
+        "Discuss ordinary active and passive opens",
+        "Exclude extensions such as TCP Fast Open"
+      ]
+    }
+  },
+  {
+    "id": "network-keepalive",
+    "category": "Networking",
+    "title": "HTTP 连接复用与 TCP Keepalive",
+    "focus": ["应用连接复用的目的", "空闲探测的保证边界"],
+    "scenarioConstraints": [
+      "讨论 HTTP/1.1 客户端连接池",
+      "业务超时仍由应用定义"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9112.html"],
+    "en": {
+      "title": "HTTP Connection Reuse and TCP Keepalive",
+      "focus": [
+        "Purpose of application connection reuse",
+        "Limits of idle probes"
+      ],
+      "scenarioConstraints": [
+        "Discuss an HTTP/1.1 client connection pool",
+        "Business deadlines remain application-defined"
+      ]
+    }
+  },
+  {
+    "id": "network-proxy-layer",
+    "category": "Networking",
+    "title": "四层与七层负载均衡",
+    "focus": ["路由决策可见的信息", "TLS 终止的位置与代价"],
+    "scenarioConstraints": ["以 HTTPS 请求为例", "仅比较单次请求的转发路径"],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://docs.nginx.com/nginx/admin-guide/load-balancer/tcp-udp-load-balancer/"
+    ],
+    "en": {
+      "title": "Layer 4 and Layer 7 Load Balancing",
+      "focus": [
+        "Information available for routing",
+        "TLS termination location and cost"
+      ],
+      "scenarioConstraints": [
+        "Use an HTTPS request",
+        "Compare only the forwarding path for one request"
+      ]
+    }
+  },
+  {
+    "id": "network-cdn-cache",
+    "category": "Networking",
+    "title": "CDN 缓存与个性化响应",
+    "focus": ["缓存键与响应变体", "私人内容的共享边界"],
+    "scenarioConstraints": [
+      "同一商品 URL 同时服务访客与登录用户",
+      "仅讨论 HTTP 缓存策略而非搭建 CDN"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9111.html"],
+    "en": {
+      "title": "CDN Caching and Personalized Responses",
+      "focus": [
+        "Cache keys and response variants",
+        "Sharing boundaries for private content"
+      ],
+      "scenarioConstraints": [
+        "One product URL serves visitors and signed-in users",
+        "Discuss HTTP cache policy rather than building a CDN"
+      ]
+    }
+  },
+  {
+    "id": "network-idle-reset",
+    "category": "Networking",
+    "title": "复用连接后的偶发请求失败",
+    "focus": ["连接生命周期的证据", "安全重试与结果未知"],
+    "scenarioConstraints": [
+      "客户端使用连接池且故障不持续",
+      "未确认失败发生在发送前还是响应途中"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": ["https://www.rfc-editor.org/rfc/rfc9293.html"],
+    "en": {
+      "title": "Intermittent Failures on Reused Connections",
+      "focus": [
+        "Evidence about connection lifetimes",
+        "Safe retries and unknown outcomes"
+      ],
+      "scenarioConstraints": [
+        "The client uses a pool and failures are intermittent",
+        "Whether failure occurs before sending or during the response is unknown"
+      ]
+    }
+  },
+  {
+    "id": "os-zombie-process",
+    "category": "Operating Systems",
+    "title": "僵尸进程与孤儿进程",
+    "focus": ["退出状态的保留与回收", "父子进程生命周期"],
+    "scenarioConstraints": ["以 Linux 进程为例", "不把进程名相似当成状态证据"],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://man7.org/linux/man-pages/"],
+    "en": {
+      "title": "Zombie and Orphan Processes",
+      "focus": [
+        "Retention and collection of exit status",
+        "Parent-child process lifetimes"
+      ],
+      "scenarioConstraints": [
+        "Use Linux processes",
+        "Similar process names are not evidence of process state"
+      ]
+    }
+  },
+  {
+    "id": "os-signal-shutdown",
+    "category": "Operating Systems",
+    "title": "服务收到终止信号之后",
+    "focus": ["信号处理的安全边界", "停止接收与在途任务退出"],
+    "scenarioConstraints": ["Linux 服务收到 SIGTERM", "只讨论单进程的退出行为"],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://man7.org/linux/man-pages/"],
+    "en": {
+      "title": "After a Service Receives a Termination Signal",
+      "focus": [
+        "Safety boundaries of signal handling",
+        "Stopping admission and draining in-flight work"
+      ],
+      "scenarioConstraints": [
+        "A Linux service receives SIGTERM",
+        "Discuss shutdown behavior in one process"
+      ]
+    }
+  },
+  {
+    "id": "os-mmap-write",
+    "category": "Operating Systems",
+    "title": "mmap 与普通文件读写",
+    "focus": ["映射访问与缺页", "可见性与持久性的区别"],
+    "scenarioConstraints": [
+      "讨论本地普通文件的共享映射",
+      "不假设映射写入天然原子或已落盘"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "advanced",
+    "sources": ["https://man7.org/linux/man-pages/"],
+    "en": {
+      "title": "mmap and Ordinary File I/O",
+      "focus": [
+        "Mapped access and page faults",
+        "Visibility versus durability"
+      ],
+      "scenarioConstraints": [
+        "Discuss a shared mapping of a local regular file",
+        "Do not assume mapped writes are inherently atomic or durable"
+      ]
+    }
+  },
+  {
+    "id": "os-context-switch",
+    "category": "Operating Systems",
+    "title": "上下文切换与线程数量",
+    "focus": ["调度状态与切换开销", "并发数量与吞吐的关系"],
+    "scenarioConstraints": ["任务会混合计算和等待", "不预设线程越少或越多越好"],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://man7.org/linux/man-pages/"],
+    "en": {
+      "title": "Context Switches and Thread Counts",
+      "focus": [
+        "Scheduling state and switching costs",
+        "Concurrency levels versus throughput"
+      ],
+      "scenarioConstraints": [
+        "Tasks mix computation and waiting",
+        "Do not assume fewer or more threads are always better"
+      ]
+    }
+  },
+  {
+    "id": "os-fd-exhaustion",
+    "category": "Operating Systems",
+    "title": "服务无法再接受新连接",
+    "focus": ["资源耗尽的证据", "连接与描述符生命周期"],
+    "scenarioConstraints": [
+      "Linux 服务开始出现 accept 失败",
+      "尚未给出错误码和资源计数"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": ["https://man7.org/linux/man-pages/"],
+    "en": {
+      "title": "A Service Cannot Accept New Connections",
+      "focus": [
+        "Evidence of resource exhaustion",
+        "Connection and descriptor lifetimes"
+      ],
+      "scenarioConstraints": [
+        "A Linux service starts failing to accept connections",
+        "Error codes and resource counts are not yet supplied"
+      ]
+    }
+  },
+  {
+    "id": "concurrency-semaphore",
+    "category": "Concurrency",
+    "title": "信号量与互斥锁的边界",
+    "focus": ["许可计数与所有权", "异常路径上的配额归还"],
+    "scenarioConstraints": ["以限制并发外部请求为例", "不绑定某种语言的线程库"],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"],
+    "en": {
+      "title": "Semaphores and Mutex Boundaries",
+      "focus": [
+        "Permit counts and ownership",
+        "Returning permits on exceptional paths"
+      ],
+      "scenarioConstraints": [
+        "Use a limit on concurrent external requests",
+        "Do not depend on one language runtime"
+      ]
+    }
+  },
+  {
+    "id": "concurrency-barrier",
+    "category": "Concurrency",
+    "title": "屏障与倒计数等待",
+    "focus": ["参与者到达与阶段推进", "单次等待与可复用阶段"],
+    "scenarioConstraints": [
+      "多个工作任务需要协调阶段",
+      "讨论同步语义而非框架 API 名称"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"],
+    "en": {
+      "title": "Barriers and Countdown Waiting",
+      "focus": [
+        "Participant arrival and phase advancement",
+        "One-shot waiting and reusable phases"
+      ],
+      "scenarioConstraints": [
+        "Workers need coordinated phases",
+        "Discuss synchronization semantics rather than framework API names"
+      ]
+    }
+  },
+  {
+    "id": "concurrency-false-sharing",
+    "category": "Concurrency",
+    "title": "相邻计数器与并行性能",
+    "focus": ["缓存行共享与一致性开销", "验证假设的对照实验"],
+    "scenarioConstraints": [
+      "不同线程写各自独立计数器",
+      "逻辑上没有共享读改写变量"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"],
+    "en": {
+      "title": "Adjacent Counters and Parallel Performance",
+      "focus": [
+        "Cache-line sharing and coherence overhead",
+        "Controlled experiments to validate a hypothesis"
+      ],
+      "scenarioConstraints": [
+        "Threads write separate counters",
+        "There is no logically shared read-modify-write variable"
+      ]
+    }
+  },
+  {
+    "id": "concurrency-bounded-buffer",
+    "category": "Concurrency",
+    "title": "有界缓冲区的结束与唤醒",
+    "focus": ["生产消费的等待谓词", "关闭状态与唤醒完整性"],
+    "scenarioConstraints": [
+      "多个生产者与消费者共享有界队列",
+      "允许在任务未满时主动关闭队列"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://man7.org/linux/man-pages/man7/pthreads.7.html"],
+    "en": {
+      "title": "Ending and Waking a Bounded Buffer",
+      "focus": [
+        "Producer-consumer wait predicates",
+        "Closed state and complete wakeups"
+      ],
+      "scenarioConstraints": [
+        "Multiple producers and consumers share a bounded queue",
+        "The queue may close before it fills"
+      ]
+    }
+  },
+  {
+    "id": "mq-offset-commit",
+    "category": "Messaging",
+    "title": "Kafka 位点与业务处理先后",
+    "focus": ["处理结果与消费位置的确认顺序", "进程崩溃后的恢复范围"],
+    "scenarioConstraints": [
+      "消费者把结果写入外部数据库",
+      "不能假设外部写入属于 Kafka 事务"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://kafka.apache.org/41/design/design/"],
+    "en": {
+      "title": "Kafka Offsets and Business Processing Order",
+      "focus": [
+        "Ordering of result persistence and offset commits",
+        "Recovery scope after a process crash"
+      ],
+      "scenarioConstraints": [
+        "A consumer writes results to an external database",
+        "Do not assume that external writes join a Kafka transaction"
+      ]
+    }
+  },
+  {
+    "id": "mq-acks-isr",
+    "category": "Messaging",
+    "title": "Kafka acks 与同步副本",
+    "focus": ["生产确认与副本条件", "副本不足时的可用性选择"],
+    "scenarioConstraints": [
+      "使用复制分区",
+      "说明 acks 与 min.insync.replicas 的组合而非仅背配置名"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://kafka.apache.org/41/design/design/"],
+    "en": {
+      "title": "Kafka Acknowledgements and In-Sync Replicas",
+      "focus": [
+        "Producer acknowledgements and replica conditions",
+        "Availability choices with insufficient replicas"
+      ],
+      "scenarioConstraints": [
+        "Use a replicated partition",
+        "Explain the interaction of acks and min.insync.replicas rather than only naming settings"
+      ]
+    }
+  },
+  {
+    "id": "mq-exactly-once",
+    "category": "Messaging",
+    "title": "消息恰好一次的范围",
+    "focus": ["事务覆盖的操作集合", "外部副作用的边界"],
+    "scenarioConstraints": [
+      "以 Kafka 消费后再生产为起点",
+      "需要明确发邮件等外部动作是否在保证内"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "advanced",
+    "sources": ["https://kafka.apache.org/41/design/design/"],
+    "en": {
+      "title": "The Scope of Exactly-Once Messaging",
+      "focus": [
+        "Operations covered by a transaction",
+        "Boundaries of external side effects"
+      ],
+      "scenarioConstraints": [
+        "Start with Kafka consume-transform-produce",
+        "Clarify whether external actions such as email are covered"
+      ]
+    }
+  },
+  {
+    "id": "mq-retention-compaction",
+    "category": "Messaging",
+    "title": "Kafka 保留与日志压缩",
+    "focus": ["按时间保留与按键保留", "删除标记及历史回放"],
+    "scenarioConstraints": [
+      "比较事件历史与最新状态两种需求",
+      "不假定压缩会立即删除所有旧记录"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://kafka.apache.org/41/design/design/"],
+    "en": {
+      "title": "Kafka Retention and Log Compaction",
+      "focus": [
+        "Time-based retention versus key-based retention",
+        "Tombstones and history replay"
+      ],
+      "scenarioConstraints": [
+        "Compare event history and latest-state needs",
+        "Do not assume compaction immediately removes all older records"
+      ]
+    }
+  },
+  {
+    "id": "mq-partition-growth",
+    "category": "Messaging",
+    "title": "增加 Kafka 分区后的键顺序",
+    "focus": ["分区映射变化", "跨旧新分区的读取边界"],
+    "scenarioConstraints": [
+      "生产者按键哈希选择分区",
+      "业务要求同一订单的事件有序处理"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://kafka.apache.org/41/design/design/"],
+    "en": {
+      "title": "Key Ordering After Adding Kafka Partitions",
+      "focus": [
+        "Changes in partition mapping",
+        "Read-order boundaries across old and new partitions"
+      ],
+      "scenarioConstraints": [
+        "Producers hash keys to choose partitions",
+        "Events for one order must be processed in order"
+      ]
+    }
+  },
+  {
+    "id": "distributed-clock",
+    "category": "Distributed Systems",
+    "title": "墙上时钟与单调时钟",
+    "focus": ["校时对时间差的影响", "跨机器时间戳的顺序边界"],
+    "scenarioConstraints": [
+      "分别讨论本机超时与跨节点日志",
+      "不假设所有机器时钟严格同步"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://man7.org/linux/man-pages/man2/clock_gettime.2.html"],
+    "en": {
+      "title": "Wall Clocks and Monotonic Clocks",
+      "focus": [
+        "Clock corrections and elapsed time",
+        "Ordering limits of timestamps across machines"
+      ],
+      "scenarioConstraints": [
+        "Discuss local deadlines and cross-node logs separately",
+        "Do not assume perfectly synchronized clocks"
+      ]
+    }
+  },
+  {
+    "id": "distributed-discovery",
+    "category": "Distributed Systems",
+    "title": "服务地址更新与本地缓存",
+    "focus": ["注册信息新鲜度", "过期地址与请求恢复"],
+    "scenarioConstraints": [
+      "客户端缓存服务实例列表",
+      "只讨论一次实例替换而非设计服务治理平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://etcd.io/docs/v3.6/learning/api_guarantees/"],
+    "en": {
+      "title": "Service Address Updates and Local Caches",
+      "focus": [
+        "Freshness of registration data",
+        "Stale addresses and request recovery"
+      ],
+      "scenarioConstraints": [
+        "A client caches service instances",
+        "Discuss one instance replacement rather than a service governance platform"
+      ]
+    }
+  },
+  {
+    "id": "distributed-config-version",
+    "category": "Distributed Systems",
+    "title": "配置并发发布与旧版本覆盖",
+    "focus": ["版本前置条件", "冲突后的读取与重试"],
+    "scenarioConstraints": [
+      "两个运维客户端更新同一配置",
+      "使用支持条件更新的存储而非分布式事务"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://etcd.io/docs/v3.6/learning/api_guarantees/"],
+    "en": {
+      "title": "Concurrent Configuration Updates",
+      "focus": [
+        "Version preconditions",
+        "Reading and retrying after a conflict"
+      ],
+      "scenarioConstraints": [
+        "Two operators update one configuration",
+        "Use a store with conditional updates rather than a distributed transaction"
+      ]
+    }
+  },
+  {
+    "id": "distributed-quorum-read",
+    "category": "Distributed Systems",
+    "title": "多数派交叠与读写一致性",
+    "focus": ["集合交叠提供的信息", "版本冲突与并发操作"],
+    "scenarioConstraints": [
+      "讨论复制键值存储的读写副本集合",
+      "不把 R+W>N 单独视为线性一致性的充分证明"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "advanced",
+    "sources": ["https://etcd.io/docs/v3.6/learning/api_guarantees/"],
+    "en": {
+      "title": "Quorum Overlap and Read-Write Consistency",
+      "focus": [
+        "What set overlap establishes",
+        "Version conflicts and concurrent operations"
+      ],
+      "scenarioConstraints": [
+        "Discuss read and write replica sets in a replicated key-value store",
+        "R+W>N alone is not sufficient proof of linearizability"
+      ]
+    }
+  },
+  {
+    "id": "security-object-access",
+    "category": "Security",
+    "title": "改一个资源编号能看到什么",
+    "focus": ["身份与对象级权限", "访问条件与资源归属"],
+    "scenarioConstraints": [
+      "已登录用户请求订单详情",
+      "只讨论服务端对单次资源访问的判定"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://cheatsheetseries.owasp.org/"],
+    "en": {
+      "title": "Access Through a Changed Resource Identifier",
+      "focus": [
+        "Identity and object-level permissions",
+        "Access conditions and resource ownership"
+      ],
+      "scenarioConstraints": [
+        "A signed-in user requests an order",
+        "Discuss server-side authorization for one resource access"
+      ]
+    }
+  },
+  {
+    "id": "security-refresh-rotation",
+    "category": "Security",
+    "title": "刷新令牌轮换与并发请求",
+    "focus": ["轮换后的令牌状态", "并发使用与盗用信号"],
+    "scenarioConstraints": [
+      "客户端可能同时刷新两次",
+      "讨论一个令牌族而非完整认证平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": ["https://cheatsheetseries.owasp.org/"],
+    "en": {
+      "title": "Refresh Token Rotation and Concurrent Requests",
+      "focus": [
+        "Token state after rotation",
+        "Concurrent use and theft signals"
+      ],
+      "scenarioConstraints": [
+        "A client may refresh twice concurrently",
+        "Discuss one token family rather than a complete identity platform"
+      ]
+    }
+  },
+  {
+    "id": "security-hmac-signature",
+    "category": "Security",
+    "title": "签名、加密与消息认证",
+    "focus": ["机密性与完整性", "共享密钥认证与公开验证"],
+    "scenarioConstraints": ["以服务回调校验为例", "不要求手写密码算法"],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://cheatsheetseries.owasp.org/"],
+    "en": {
+      "title": "Signatures, Encryption and Message Authentication",
+      "focus": [
+        "Confidentiality and integrity",
+        "Shared-secret authentication versus public verification"
+      ],
+      "scenarioConstraints": [
+        "Use service callback verification",
+        "Do not implement cryptographic primitives"
+      ]
+    }
+  },
+  {
+    "id": "security-path-traversal",
+    "category": "Security",
+    "title": "下载文件路径与访问边界",
+    "focus": ["路径解析与根目录约束", "符号链接和检查后使用"],
+    "scenarioConstraints": [
+      "下载接口接收用户提供的文件标识",
+      "文件可能包含嵌套目录且权限受限"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://cheatsheetseries.owasp.org/"],
+    "en": {
+      "title": "Download Paths and Access Boundaries",
+      "focus": [
+        "Path resolution and root constraints",
+        "Symlinks and check-then-use"
+      ],
+      "scenarioConstraints": [
+        "A download endpoint receives a user-provided file identifier",
+        "Files may be nested and access is restricted"
+      ]
+    }
+  },
+  {
+    "id": "ds-array-list",
+    "category": "Data Structures",
+    "title": "动态数组与链表的实际代价",
+    "focus": ["索引访问与移动开销", "局部性与分配成本"],
+    "scenarioConstraints": [
+      "比较同一批数据的顺序遍历与中间插入",
+      "说明是否已经持有插入位置"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://opendatastructures.org/"],
+    "en": {
+      "title": "Practical Costs of Dynamic Arrays and Linked Lists",
+      "focus": ["Indexing and movement costs", "Locality and allocation costs"],
+      "scenarioConstraints": [
+        "Compare sequential traversal and middle insertion for the same data",
+        "State whether the insertion position is already available"
+      ]
+    }
+  },
+  {
+    "id": "ds-amortized-growth",
+    "category": "Data Structures",
+    "title": "动态数组扩容与均摊复杂度",
+    "focus": ["单次扩容成本", "增长策略与累计成本"],
+    "scenarioConstraints": [
+      "连续追加 n 个元素",
+      "明确区分单次最坏与均摊复杂度"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://opendatastructures.org/"],
+    "en": {
+      "title": "Dynamic Array Growth and Amortized Complexity",
+      "focus": ["Cost of one resize", "Growth policy and aggregate cost"],
+      "scenarioConstraints": [
+        "Append n elements consecutively",
+        "Distinguish worst-case per operation from amortized complexity"
+      ]
+    }
+  },
+  {
+    "id": "ds-trie-prefix",
+    "category": "Data Structures",
+    "title": "前缀查找与字符串索引",
+    "focus": ["前缀结构与查找路径", "字符集和节点内存"],
+    "scenarioConstraints": [
+      "词典需要查询给定前缀是否存在",
+      "不要求设计完整搜索建议系统"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://opendatastructures.org/ods-cpp/13_1_BinaryTrie_digital_sea.html"
+    ],
+    "en": {
+      "title": "Prefix Lookup and String Indexes",
+      "focus": [
+        "Prefix structures and lookup paths",
+        "Alphabets and node memory"
+      ],
+      "scenarioConstraints": [
+        "A dictionary checks whether a prefix exists",
+        "Do not design a complete autocomplete system"
+      ]
+    }
+  },
+  {
+    "id": "ds-external-sort",
+    "category": "Data Structures",
+    "title": "内存放不下的日志排序",
+    "focus": ["有序分段与归并", "I/O 和缓冲区约束"],
+    "scenarioConstraints": [
+      "输入文件大于可用内存且要求全量精确排序",
+      "可使用临时磁盘但不能一次读入全部数据"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "advanced",
+    "sources": ["https://opendatastructures.org/"],
+    "en": {
+      "title": "Sorting Logs Larger Than Memory",
+      "focus": ["Sorted runs and merging", "I/O and buffer constraints"],
+      "scenarioConstraints": [
+        "The input exceeds memory and requires a complete exact sort",
+        "Temporary disk is allowed but loading all data at once is not"
+      ]
+    }
+  },
+  {
+    "id": "engineering-container-isolation",
+    "category": "Engineering",
+    "title": "容器隔离与虚拟机",
+    "focus": ["内核共享与隔离边界", "资源配额与进程视图"],
+    "scenarioConstraints": [
+      "以 Linux 容器为例",
+      "不把容器当成自带独立内核的虚拟机"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://docs.docker.com/engine/security/",
+      "https://docs.docker.com/engine/containers/resource_constraints/"
+    ],
+    "en": {
+      "title": "Container Isolation and Virtual Machines",
+      "focus": [
+        "Shared kernels and isolation boundaries",
+        "Resource limits and process views"
+      ],
+      "scenarioConstraints": [
+        "Use Linux containers",
+        "Do not treat a container as a virtual machine with its own kernel"
+      ]
+    }
+  },
+  {
+    "id": "engineering-container-cpu",
+    "category": "Engineering",
+    "title": "容器延迟上升但宿主机空闲",
+    "focus": ["容器配额与宿主利用率的区别", "调度和等待的证据"],
+    "scenarioConstraints": [
+      "容器内请求变慢而宿主 CPU 不高",
+      "尚未确认是配额、锁还是外部等待"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "troubleshooting",
+    "priority": "core",
+    "sources": [
+      "https://docs.docker.com/engine/containers/resource_constraints/"
+    ],
+    "en": {
+      "title": "Container Latency on an Idle Host",
+      "focus": [
+        "Container quotas versus host utilization",
+        "Evidence about scheduling and waits"
+      ],
+      "scenarioConstraints": [
+        "Requests slow inside a container while host CPU is low",
+        "Quotas, locks and external waits remain unconfirmed"
+      ]
+    }
+  },
+  {
+    "id": "engineering-health-probes",
+    "category": "Engineering",
+    "title": "存活、就绪与启动探针",
+    "focus": ["重启与摘流的区别", "依赖故障时的连锁影响"],
+    "scenarioConstraints": [
+      "Kubernetes 中的 HTTP 服务",
+      "只讨论一个服务的探针行为"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/"
+    ],
+    "en": {
+      "title": "Liveness, Readiness and Startup Probes",
+      "focus": [
+        "Restarting versus removing traffic",
+        "Cascading effects of dependency failures"
+      ],
+      "scenarioConstraints": [
+        "An HTTP service runs on Kubernetes",
+        "Discuss the probes for one service"
+      ]
+    }
+  },
+  {
+    "id": "engineering-git-recovery",
+    "category": "Engineering",
+    "title": "已发布提交的撤销",
+    "focus": ["历史重写与反向提交", "共享分支的协作影响"],
+    "scenarioConstraints": [
+      "错误提交已推到多人使用的分支",
+      "只撤销该改动且保留其他人的后续工作"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://git-scm.com/docs/git-revert"],
+    "en": {
+      "title": "Undoing a Published Git Commit",
+      "focus": [
+        "Rewriting history versus inverse commits",
+        "Effects on collaborators on a shared branch"
+      ],
+      "scenarioConstraints": [
+        "A bad commit is already on a shared branch",
+        "Undo that change while preserving later work by others"
+      ]
+    }
+  },
+  {
+    "id": "engineering-schema-compatibility",
+    "category": "Engineering",
+    "title": "消息字段演进与旧消费者",
+    "focus": ["缺省值与字段兼容", "发布顺序与回滚边界"],
+    "scenarioConstraints": [
+      "新旧消费者会短期共存",
+      "讨论一条消息的字段变更而非完整发布平台"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://protobuf.dev/programming-guides/proto3/#updating"],
+    "en": {
+      "title": "Message Schema Evolution and Old Consumers",
+      "focus": [
+        "Defaults and field compatibility",
+        "Release order and rollback boundaries"
+      ],
+      "scenarioConstraints": [
+        "Old and new consumers coexist temporarily",
+        "Discuss field changes in one message rather than an entire release platform"
+      ]
+    }
+  },
+  {
+    "id": "storage-lsm-compaction",
+    "category": "Search and Storage",
+    "title": "LSM 写入与压缩合并",
+    "focus": ["有序文件与写入路径", "读写放大和空间放大"],
+    "scenarioConstraints": [
+      "讨论 LSM 类键值引擎",
+      "不要求选择某个产品或设计集群"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "advanced",
+    "sources": ["https://github.com/facebook/rocksdb/wiki/Compaction"],
+    "en": {
+      "title": "LSM Writes and Compaction",
+      "focus": [
+        "Sorted files and write paths",
+        "Read, write and space amplification"
+      ],
+      "scenarioConstraints": [
+        "Discuss an LSM-style key-value engine",
+        "Do not select a product or design a cluster"
+      ]
+    }
+  },
+  {
+    "id": "search-analyzer",
+    "category": "Search and Storage",
+    "title": "中文搜索与精确标识匹配",
+    "focus": ["分词字段与精确字段", "索引与查询时处理的一致性"],
+    "scenarioConstraints": [
+      "商品名需要全文搜索而 SKU 需要精确匹配",
+      "只讨论字段映射与单次查询语义"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://www.elastic.co/docs/manage-data/data-store/near-real-time-search"
+    ],
+    "en": {
+      "title": "Chinese Search and Exact Identifier Matching",
+      "focus": [
+        "Analyzed fields versus exact fields",
+        "Consistency of index-time and query-time processing"
+      ],
+      "scenarioConstraints": [
+        "Product names need full-text search while SKUs need exact matching",
+        "Discuss field mapping and single-query semantics"
+      ]
+    }
+  },
+  {
+    "id": "storage-delete-tombstone",
+    "category": "Search and Storage",
+    "title": "删除记录为什么还占空间",
+    "focus": ["逻辑删除与物理回收", "旧版本读取和恢复边界"],
+    "scenarioConstraints": [
+      "使用追加写存储引擎",
+      "只讨论一条记录删除后的生命周期"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": [
+      "https://github.com/facebook/rocksdb/wiki/Delete-A-Range-Of-Keys"
+    ],
+    "en": {
+      "title": "Why Deleted Records Still Occupy Space",
+      "focus": [
+        "Logical deletion and physical reclamation",
+        "Old-version reads and recovery boundaries"
+      ],
+      "scenarioConstraints": [
+        "Use an append-oriented storage engine",
+        "Discuss the lifecycle of one deleted record"
+      ]
+    }
+  },
+  {
+    "id": "business-coupon-redeem",
+    "category": "Business Scenarios",
+    "title": "优惠券并发核销",
+    "focus": ["状态转移的前置条件", "重复请求的既有结果"],
+    "scenarioConstraints": [
+      "同一张券只能成功使用一次",
+      "核销记录与券状态在同一数据库"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/transaction-iso.html"],
+    "en": {
+      "title": "Concurrent Coupon Redemption",
+      "focus": [
+        "Preconditions for state transitions",
+        "Existing results for duplicate requests"
+      ],
+      "scenarioConstraints": [
+        "A coupon may be redeemed successfully once",
+        "Redemption records and coupon state share one database"
+      ]
+    }
+  },
+  {
+    "id": "business-webhook-replay",
+    "category": "Business Scenarios",
+    "title": "回调签名通过之后",
+    "focus": ["真实性与时效性的区别", "事件身份和重放处理"],
+    "scenarioConstraints": [
+      "攻击者可能重发一条曾经合法的回调",
+      "仅讨论接收端一次事件的判定"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://docs.stripe.com/webhooks/signature"],
+    "en": {
+      "title": "After a Webhook Signature Passes",
+      "focus": [
+        "Authenticity versus freshness",
+        "Event identity and replay handling"
+      ],
+      "scenarioConstraints": [
+        "An attacker may replay a previously valid callback",
+        "Discuss the receiver decision for one event"
+      ]
+    }
+  },
+  {
+    "id": "business-inventory-reservation",
+    "category": "Business Scenarios",
+    "title": "库存预占的释放边界",
+    "focus": ["预占标识与状态条件", "过期任务和确认的并发"],
+    "scenarioConstraints": [
+      "库存已有独立预占记录",
+      "只讨论同一预占的确认和释放而非订单全流程"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/transaction-iso.html"],
+    "en": {
+      "title": "Inventory Reservation Release Boundaries",
+      "focus": [
+        "Reservation identity and state conditions",
+        "Races between expiry jobs and confirmation"
+      ],
+      "scenarioConstraints": [
+        "Inventory has separate reservation records",
+        "Discuss confirming and releasing one reservation rather than the entire order flow"
+      ]
+    }
+  },
+  {
+    "id": "business-pagination-cursor",
+    "category": "Business Scenarios",
+    "title": "动态列表的游标分页",
+    "focus": ["稳定排序与续页条件", "插入删除时的可见边界"],
+    "scenarioConstraints": [
+      "列表按创建时间倒序且时间可能相同",
+      "不要求跨页保持一个长期事务快照"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://www.postgresql.org/docs/18/transaction-iso.html"],
+    "en": {
+      "title": "Cursor Pagination for Changing Lists",
+      "focus": [
+        "Stable ordering and continuation conditions",
+        "Visibility boundaries during inserts and deletes"
+      ],
+      "scenarioConstraints": [
+        "A list is sorted by creation time descending and timestamps may tie",
+        "A long transaction snapshot across pages is not required"
+      ]
+    }
+  },
+  {
+    "id": "runtime-gc-reachability",
+    "category": "Runtime",
+    "title": "垃圾回收与资源释放",
+    "focus": ["对象可达性与循环引用", "外部资源的确定性生命周期"],
+    "scenarioConstraints": [
+      "以托管运行时为例",
+      "文件和套接字有独立于对象内存的资源成本"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": ["https://docs.python.org/3/library/gc.html"],
+    "en": {
+      "title": "Garbage Collection and Resource Release",
+      "focus": [
+        "Object reachability and reference cycles",
+        "Deterministic lifetimes of external resources"
+      ],
+      "scenarioConstraints": [
+        "Use a managed runtime",
+        "Files and sockets have resource costs separate from object memory"
+      ]
+    }
+  },
+  {
+    "id": "runtime-shallow-copy",
+    "category": "Runtime",
+    "title": "浅拷贝之后的嵌套修改",
+    "focus": ["容器复制与引用共享", "隔离修改的范围"],
+    "scenarioConstraints": [
+      "以 Python 的嵌套列表为例",
+      "问题需要代码时使用带语言标签的 Markdown 代码块"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://docs.python.org/3/library/copy.html"],
+    "en": {
+      "title": "Nested Mutation After a Shallow Copy",
+      "focus": [
+        "Container copies and shared references",
+        "Scope of mutation isolation"
+      ],
+      "scenarioConstraints": [
+        "Use nested Python lists",
+        "Use fenced Markdown with a language tag when code is necessary"
+      ]
+    }
+  },
+  {
+    "id": "runtime-generator",
+    "category": "Runtime",
+    "title": "生成器与列表的求值时机",
+    "focus": ["惰性迭代与中间存储", "一次性消费与副作用"],
+    "scenarioConstraints": [
+      "以 Python 生成器为例",
+      "不把惰性迭代等同于所有操作都只需常量内存"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "foundation",
+    "priority": "core",
+    "sources": [
+      "https://docs.python.org/3/reference/expressions.html#yield-expressions"
+    ],
+    "en": {
+      "title": "Generators and Lists: Evaluation Timing",
+      "focus": [
+        "Lazy iteration and intermediate storage",
+        "One-shot consumption and side effects"
+      ],
+      "scenarioConstraints": [
+        "Use Python generators",
+        "Do not equate lazy iteration with constant memory for every operation"
+      ]
+    }
+  },
+  {
+    "id": "runtime-async-blocking",
+    "category": "Runtime",
+    "title": "异步函数中的同步等待",
+    "focus": ["事件循环上的阻塞", "任务调度与异步 I/O 的区别"],
+    "scenarioConstraints": [
+      "以 Python asyncio 单事件循环为例",
+      "函数内部可能调用同步库"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://docs.python.org/3/library/asyncio-dev.html"],
+    "en": {
+      "title": "Synchronous Work Inside an Async Function",
+      "focus": [
+        "Blocking an event loop",
+        "Task scheduling versus asynchronous I/O"
+      ],
+      "scenarioConstraints": [
+        "Use a single Python asyncio event loop",
+        "The function may call a synchronous library"
+      ]
+    }
+  },
+  {
+    "id": "runtime-float-money",
+    "category": "Runtime",
+    "title": "金额计算中的浮点数",
+    "focus": ["二进制表示与十进制舍入", "单位和舍入时点"],
+    "scenarioConstraints": [
+      "计算一次商品折扣后的金额",
+      "明确币种精度且不要求实现完整账务系统"
+    ],
+    "level": "mid-to-senior",
+    "questionForm": "scenario",
+    "priority": "core",
+    "sources": ["https://docs.python.org/3/tutorial/floatingpoint.html"],
+    "en": {
+      "title": "Floating-Point Arithmetic for Money",
+      "focus": [
+        "Binary representation and decimal rounding",
+        "Units and rounding points"
+      ],
+      "scenarioConstraints": [
+        "Calculate a discounted item price",
+        "State currency precision without implementing a full accounting system"
       ]
     }
   }

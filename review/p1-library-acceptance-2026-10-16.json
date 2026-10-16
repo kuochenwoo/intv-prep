@@ -1,0 +1,535 @@
+{
+  "date": "2026-10-16",
+  "status": "content_and_regression_complete_with_documented_semantic_limits",
+  "policy": "separate-task-v12-opening-checkpoints",
+  "p1": {
+    "topics": 180,
+    "categories": {
+      "Caching": 2,
+      "Correctness": 1,
+      "Messaging": 13,
+      "Concurrency": 14,
+      "Consistency": 1,
+      "Availability": 1,
+      "Scalability": 1,
+      "Performance": 1,
+      "Database": 25,
+      "Networking": 20,
+      "Operating Systems": 15,
+      "Runtime": 9,
+      "Redis": 16,
+      "Security": 11,
+      "Distributed Systems": 12,
+      "Data Structures": 9,
+      "Engineering": 11,
+      "Business Scenarios": 11,
+      "Search and Storage": 7
+    },
+    "forms": {
+      "scenario": 98,
+      "foundation": 65,
+      "troubleshooting": 17
+    },
+    "priorities": {
+      "core": 146,
+      "advanced": 34
+    }
+  },
+  "p2": {
+    "scenarios": 26,
+    "newIds": [
+      "product-search",
+      "configuration-platform",
+      "log-search-platform",
+      "durable-workflow",
+      "distributed-kv",
+      "live-streaming"
+    ],
+    "liveAcceptance": false
+  },
+  "tests": {
+    "backendPassed": 95,
+    "frontendPassed": 11,
+    "keychainIntentionallyIgnored": 1,
+    "p1OfflineCacheRoundtrips": 360,
+    "p2OfflineCacheRoundtrips": 52,
+    "frontendBuild": true,
+    "nativeDebugBundle": true
+  },
+  "live": {
+    "httpAttempts": 129,
+    "httpCap": 180,
+    "initialTopics": 30,
+    "initialCategories": 19,
+    "initialLanguages": {
+      "zh": 15,
+      "en": 15
+    },
+    "initialForms": {
+      "foundation": 9,
+      "scenario": 18,
+      "troubleshooting": 3
+    },
+    "positiveGenerations": 44,
+    "standaloneReviewProbes": 7,
+    "usage": [
+      {
+        "provider": "claude",
+        "model": "claude-haiku-5-5",
+        "status": "content_error",
+        "attempts": 15
+      },
+      {
+        "provider": "claude",
+        "model": "claude-haiku-5-5",
+        "status": "success",
+        "attempts": 109
+      },
+      {
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "status": "success",
+        "attempts": 4
+      },
+      {
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "status": "transport_error",
+        "attempts": 1
+      }
+    ],
+    "voiceAttempts": 0,
+    "cost": "Unknown: no price snapshot configured; provider token counters are preserved, not converted using guessed rates."
+  },
+  "ui": {
+    "profile": "local.swe.interview-prep.library-qa",
+    "window": "1280x850",
+    "checks": [
+      "180 themes; 146 default core; clear all exposes 180",
+      "Search, folded filters, advanced topic selection and bilingual titles",
+      "26 P2 scenarios and expanded workflow requirements/scale assumptions",
+      "Two real generated code samples imported only into isolated QA cache",
+      "English shallow-copy Markdown and Chinese async Markdown",
+      "Offline start, draft preservation, topic ownership and history restoration"
+    ],
+    "liveUiRequests": 0,
+    "voiceActions": 0
+  },
+  "manualReview": [
+    {
+      "batch": "initial",
+      "topicId": "db-unique-race",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "rejected",
+      "note": "Visible incident claims equal committed emails despite an active UNIQUE constraint; contradictory premise."
+    },
+    {
+      "batch": "initial",
+      "topicId": "db-window-functions",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "db-long-transaction",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "rejected",
+      "note": "Visible diagnostic-tool menu and a predetermined old-snapshot hypothesis supply the investigation path."
+    },
+    {
+      "batch": "initial",
+      "topicId": "redis-replication-ack",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "redis-watch-transaction",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "network-flow-congestion",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "network-cdn-cache",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "superseded",
+      "note": "Conditional cache-key branch is ambiguous as a required criterion; replace with a clearer response-header opening rather than claiming every valid alternative is mandatory."
+    },
+    {
+      "batch": "initial",
+      "topicId": "os-zombie-process",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "os-fd-exhaustion",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "concurrency-bounded-buffer",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "rejected",
+      "note": "Consumer-only question requires producer shutdown in its mandatory checklist."
+    },
+    {
+      "batch": "initial",
+      "topicId": "mq-offset-commit",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "mq-exactly-once",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "distributed-clock",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "distributed-quorum-read",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "security-object-access",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "ds-amortized-growth",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "engineering-container-isolation",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "engineering-health-probes",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "engineering-git-recovery",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "storage-lsm-compaction",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "business-coupon-redeem",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "runtime-shallow-copy",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "runtime-async-blocking",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "cache-selection",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "idempotency-retries",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "database-concurrency",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "replication-failover",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "rejected",
+      "note": "Mandatory replication-position routing is not requested; one local read-path decision is sufficient."
+    },
+    {
+      "batch": "initial",
+      "topicId": "sharding-growth",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "initial",
+      "topicId": "rpc-tail-latency",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "rejected",
+      "note": "Visible constraints reveal a requested timeout/execution conclusion; mandatory cancellation propagation is an unasked fix."
+    },
+    {
+      "batch": "initial",
+      "topicId": "redis-cache-failures",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Manual check of visible question/background/constraints and mandatory scope found no blocking issue in this sample. This is not a universal output guarantee."
+    },
+    {
+      "batch": "premise",
+      "topicId": "db-unique-race",
+      "lang": "zh",
+      "negativeProbe": true,
+      "status": "rejected_by_reviewer",
+      "note": "Preserved flawed/scope-disputed proposal. The CDN conditional branch was accepted by the reviewer; do not claim all seven probes were rejected."
+    },
+    {
+      "batch": "premise",
+      "topicId": "db-long-transaction",
+      "lang": "zh",
+      "negativeProbe": true,
+      "status": "rejected_by_reviewer",
+      "note": "Preserved flawed/scope-disputed proposal. The CDN conditional branch was accepted by the reviewer; do not claim all seven probes were rejected."
+    },
+    {
+      "batch": "premise",
+      "topicId": "db-unique-race",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Unique-constraint premise corrected in both languages."
+    },
+    {
+      "batch": "premise",
+      "topicId": "db-unique-race",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Unique-constraint premise corrected in both languages."
+    },
+    {
+      "batch": "premise",
+      "topicId": "db-long-transaction",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "needs_scope_refinement",
+      "note": "No public evidence menu, but the mandatory rubric still favors an old-snapshot explanation or asks for remediation beyond next-evidence selection."
+    },
+    {
+      "batch": "premise",
+      "topicId": "db-long-transaction",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "needs_scope_refinement",
+      "note": "No public evidence menu, but the mandatory rubric still favors an old-snapshot explanation or asks for remediation beyond next-evidence selection."
+    },
+    {
+      "batch": "scope",
+      "topicId": "concurrency-bounded-buffer",
+      "lang": "en",
+      "negativeProbe": true,
+      "status": "rejected_by_reviewer",
+      "note": "Preserved flawed/scope-disputed proposal. The CDN conditional branch was accepted by the reviewer; do not claim all seven probes were rejected."
+    },
+    {
+      "batch": "scope",
+      "topicId": "replication-failover",
+      "lang": "zh",
+      "negativeProbe": true,
+      "status": "rejected_by_reviewer",
+      "note": "Preserved flawed/scope-disputed proposal. The CDN conditional branch was accepted by the reviewer; do not claim all seven probes were rejected."
+    },
+    {
+      "batch": "scope",
+      "topicId": "rpc-tail-latency",
+      "lang": "zh",
+      "negativeProbe": true,
+      "status": "rejected_by_reviewer",
+      "note": "Preserved flawed/scope-disputed proposal. The CDN conditional branch was accepted by the reviewer; do not claim all seven probes were rejected."
+    },
+    {
+      "batch": "scope",
+      "topicId": "network-cdn-cache",
+      "lang": "zh",
+      "negativeProbe": true,
+      "status": "accepted_by_reviewer",
+      "note": "Preserved flawed/scope-disputed proposal. The CDN conditional branch was accepted by the reviewer; do not claim all seven probes were rejected."
+    },
+    {
+      "batch": "scope",
+      "topicId": "db-long-transaction",
+      "lang": "zh",
+      "negativeProbe": true,
+      "status": "rejected_by_reviewer",
+      "note": "Preserved flawed/scope-disputed proposal. The CDN conditional branch was accepted by the reviewer; do not claim all seven probes were rejected."
+    },
+    {
+      "batch": "scope",
+      "topicId": "concurrency-bounded-buffer",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Opening and mandatory criteria now align in this sample."
+    },
+    {
+      "batch": "scope",
+      "topicId": "replication-failover",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "needs_scope_refinement",
+      "note": "Residual mandatory scope: replica cost/boundaries, retry remedies, or requiring an old-transaction explanation for a first-hypothesis investigation. Do not count self-review as human acceptance."
+    },
+    {
+      "batch": "scope",
+      "topicId": "rpc-tail-latency",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "needs_scope_refinement",
+      "note": "Residual mandatory scope: replica cost/boundaries, retry remedies, or requiring an old-transaction explanation for a first-hypothesis investigation. Do not count self-review as human acceptance."
+    },
+    {
+      "batch": "scope",
+      "topicId": "network-cdn-cache",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Opening and mandatory criteria now align in this sample."
+    },
+    {
+      "batch": "scope",
+      "topicId": "db-long-transaction",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "needs_scope_refinement",
+      "note": "Residual mandatory scope: replica cost/boundaries, retry remedies, or requiring an old-transaction explanation for a first-hypothesis investigation. Do not count self-review as human acceptance."
+    },
+    {
+      "batch": "scope",
+      "topicId": "db-long-transaction",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "needs_scope_refinement",
+      "note": "Residual mandatory scope: replica cost/boundaries, retry remedies, or requiring an old-transaction explanation for a first-hypothesis investigation. Do not count self-review as human acceptance."
+    },
+    {
+      "batch": "seed",
+      "topicId": "replication-failover",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Neutral seed assumptions and the explicit visible ask align with the mandatory criteria."
+    },
+    {
+      "batch": "seed",
+      "topicId": "replication-failover",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "needs_scope_refinement",
+      "note": "Residual mandatory trade-off or idempotency explanation is not explicitly requested in this particular opening; retain as a failed scope sample."
+    },
+    {
+      "batch": "seed",
+      "topicId": "rpc-tail-latency",
+      "lang": "zh",
+      "negativeProbe": false,
+      "status": "needs_scope_refinement",
+      "note": "Residual mandatory trade-off or idempotency explanation is not explicitly requested in this particular opening; retain as a failed scope sample."
+    },
+    {
+      "batch": "seed",
+      "topicId": "rpc-tail-latency",
+      "lang": "en",
+      "negativeProbe": false,
+      "status": "accepted",
+      "note": "Neutral seed assumptions and the explicit visible ask align with the mandatory criteria."
+    }
+  ],
+  "limits": [
+    "No claim that all generations or negative probes passed.",
+    "The broad 30-topic batch used v10; v11/v12 rechecks cover only listed topics.",
+    "P1 full multi-turn/feedback behavior relies on prior acceptance and current regression; this batch targets question generation.",
+    "Six new P2 scenarios passed content/offline/UI checks, not live five-stage acceptance.",
+    "Existing personal histories, cached questions, model settings and keys were not rewritten."
+  ]
+}

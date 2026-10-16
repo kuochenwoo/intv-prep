@@ -1,0 +1,1903 @@
+{
+  "cumulativeHttpAttempts": 87,
+  "httpCap": 180,
+  "initialHttpAttempts": 77,
+  "policy": "separate-task-v11-consistent-premises",
+  "samples": [
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "检查与写入之间存在时间窗口",
+                  "两个请求都读到不存在",
+                  "唯一约束在写入时检查并拒绝冲突",
+                  "把冲突当作正常业务分支处理"
+                ],
+                "background": "岗位偏后端，日常直接写用户注册这类数据库写入逻辑。环境是单个 PostgreSQL 18 数据库，email 列已有唯一约束，注册服务可能被多个请求同时调用。",
+                "constraints": [
+                  "只讨论单个数据库、单个表的写入路径，不涉及分库分表或缓存层",
+                  "先不引入分布式锁或消息队列，聚焦数据库这一层能给出的保证",
+                  "假设应用侧可能开多个并发请求处理同一邮箱的注册"
+                ],
+                "evaluationChecklist": [
+                  "能说明先 SELECT 再 INSERT 之间存在时间窗口，两个并发请求可能都读到“不存在”然后各自插入",
+                  "能指出唯一约束是最终防线：数据库在写入时检查，冲突的第二个写入会失败而不是静默产生第二条",
+                  "能给出关键改动：让应用不要依赖先查结果做决策，而是把唯一约束的冲突当作正常业务分支来处理（如捕获唯一冲突、返回已注册）",
+                  "能说明仅靠应用层先查无法消除竞态，因为检查与写入不是同一个原子操作"
+                ],
+                "followUpDirections": [
+                  "如果两个请求几乎同时到达，数据库在唯一约束下是如何判定其中一个失败的？解释约束检查发生在什么时刻",
+                  "把先查后插改成直接 INSERT 并捕获唯一冲突异常，业务上如何区分“邮箱已注册”和“其他写入错误”？",
+                  "除了唯一约束，还有没有别的数据库层手段能在写入时防止重复，它们各自对并发请求的反馈有什么差别？",
+                  "如果同一个邮箱本身允许软删除后重新注册，唯一约束该如何调整才不阻断正常流程？"
+                ],
+                "question": "在一个使用 PostgreSQL 18 的注册服务里，创建账号前会先执行 `SELECT ... FROM users WHERE email = $1` 判断邮箱是否已被占用，没有结果时才 `INSERT` 新用户。数据库表上对 email 列建了唯一约束。上线后发现，同一邮箱偶尔会出现两条用户记录。请说明：这两条记录是怎么产生的？要保证同一邮箱最终只存在一条记录，写入这条路径上最关键的改动是什么？"
+              },
+              "verdict": {
+                "accepted": false,
+                "issues": [
+                  "可见题设自相矛盾：题目说email列已有唯一约束，却又说同一邮箱会出现两条记录。对同一非空键的唯一约束生效时，并发已提交插入不应产生两条相同键，除非明确给出例外（如大小写或规范化差异、约束不作用于该列、部分索引等）。需要删除该矛盾，或明确补充相关例外条件。",
+                  "题干直接要求解释“这两条记录是怎么产生的”，预设了重复已发生。应改为中性地询问先查后插路径在并发下会发生什么，以及如何保证同一邮箱只保留一条记录。",
+                  "background中的“偶尔出现两条用户记录”与唯一约束的前提冲突，需一并修正。"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "lang": "zh",
+      "negativeProbe": true,
+      "result": {
+        "verdict": {
+          "accepted": false,
+          "issues": [
+            "可见题设自相矛盾：题目说email列已有唯一约束，却又说同一邮箱会出现两条记录。对同一非空键的唯一约束生效时，并发已提交插入不应产生两条相同键，除非明确给出例外（如大小写或规范化差异、约束不作用于该列、部分索引等）。需要删除该矛盾，或明确补充相关例外条件。",
+            "题干直接要求解释“这两条记录是怎么产生的”，预设了重复已发生。应改为中性地询问先查后插路径在并发下会发生什么，以及如何保证同一邮箱只保留一条记录。",
+            "background中的“偶尔出现两条用户记录”与唯一约束的前提冲突，需一并修正。"
+          ]
+        }
+      },
+      "topicId": "db-unique-race"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "所有活跃快照都不再需要才能清理",
+                  "最老事务/最老快照决定回收下界",
+                  "idle in transaction 仍可能持有旧快照",
+                  "回收被卡住而非未触发"
+                ],
+                "background": "候选人应聘后端/数据库方向中级到高级岗位，环境为 PostgreSQL 18 默认配置的单实例业务库，表以 UPDATE 为主。现场只给了观测到的现象和少量监控数据，尚无定论。",
+                "constraints": [
+                  "只围绕“如何验证是不是长期存活事务/旧快照在阻碍回收”这一条线回答，不需要给出完整表膨胀治理方案。",
+                  "默认引擎为 PostgreSQL 18，可以用 pg_stat_activity、pg_stat_activity 的 backend_xmin、pg_stat_all_tables、pg_stat_progress_vacuum、（如可用）pg_stat_activity 相关视图等常规手段，但请说明你要从结果中读什么。",
+                  "不需要给出最终修复动作，重点是取证和判断逻辑。"
+                ],
+                "evaluationChecklist": [
+                  "能指出要从 pg_stat_activity 中辨识真正持有旧快照/最老 xmin 的会话（如 backend_xmin、state、xact_start、query_start、state 的 idle in transaction 等），而不是只看“有没有活动会话”。",
+                  "能说明 autovacuum 回收被阻断与最老可见事务年龄/最老 xmin 之间的关系：回收只能清理所有活跃快照都不再需要的版本。",
+                  "能给出至少一条对比性证据（例如 n_dead_tup 高但回收不下降、vacuum 进度中的死元组保留量、最老 xmin 与 pg_stat_all_tables 中 dead tuple 数量）来判断是持续阻塞还是偶发滞后。",
+                  "能区分“清理任务在跑”和“清理任务实际回收了空间”这两件事，不把 autovacuum 有日志等同于回收成功。"
+                ],
+                "followUpDirections": [
+                  "如果查到存在长时间 idle in transaction 的会话，你会如何判断它是否真的还持有旧快照、以及它对回收的影响范围？",
+                  "如果不是长事务，而是短事务高频、间歇性出现，你会用哪类观测把“持续阻塞”和“间歇滞后”区分开？",
+                  "假设确认是某个报表或分析查询导致的问题，你会先考虑调查询本身还是调整回收节奏？依据是什么？",
+                  "如果 old_snapshot_threshold 被显式设置过，这会不会改变你对“旧快照影响回收”的判断？说明前提。"
+                ],
+                "question": "我们在维护一套 PostgreSQL 18（默认配置）业务库。运维观察到：一张持续被更新的核心表，磁盘占用和表实际行数增长不成比例，最近几周空间持续上涨，清理任务看上去也在正常跑。目前手上有两条线索：pg_stat_user_tables 里该表的 n_dead_tup 长期偏高，autovacuum 有被触发的记录，但每次回收效果不明显。现在还没有确认是什么在拖住空间回收。请问：为了判断“是否存在一个长期存活的事务/快照在拉住回收”，你会去看哪些可验证的证据？请说明每项证据能支持或排除什么判断。"
+              },
+              "verdict": {
+                "accepted": false,
+                "issues": [
+                  "constraints 可见部分逐条列出了 pg_stat_activity、backend_xmin、pg_stat_all_tables、pg_stat_progress_vacuum 等待检查的视图和列，已构成取证答案清单，应移入隐藏字段，可见部分只保留现象与环境。",
+                  "question 把待验证假设直接写成“是否存在一个长期存活的事务/快照在拉住回收”，预先给出了诊断方向，应改为中性询问如何判断回收受阻的原因。",
+                  "constraints 中“只围绕……这一条线回答”同样预设了唯一排查方向，应改为不限定根因的表述，并保持证据不足时原因未知。"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "lang": "zh",
+      "negativeProbe": true,
+      "result": {
+        "verdict": {
+          "accepted": false,
+          "issues": [
+            "constraints 可见部分逐条列出了 pg_stat_activity、backend_xmin、pg_stat_all_tables、pg_stat_progress_vacuum 等待检查的视图和列，已构成取证答案清单，应移入隐藏字段，可见部分只保留现象与环境。",
+            "question 把待验证假设直接写成“是否存在一个长期存活的事务/快照在拉住回收”，预先给出了诊断方向，应改为中性询问如何判断回收受阻的原因。",
+            "constraints 中“只围绕……这一条线回答”同样预设了唯一排查方向，应改为不限定根因的表述，并保持证据不足时原因未知。"
+          ]
+        }
+      },
+      "topicId": "db-long-transaction"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "两个事务的先查询都可能读到邮箱不存在",
+                  "插入时由唯一索引检查，后提交的插入失败并返回约束错误",
+                  "应把约束错误映射为已注册的业务结果，而不是 500"
+                ],
+                "background": "你在负责用户注册的后端服务，用户表使用 PostgreSQL，email 列为 NOT NULL 且已建立唯一约束。注册接口的现有流程是先按邮箱查询，查不到再插入新用户。",
+                "constraints": [
+                  "只讨论单个 PostgreSQL 数据库实例上的写入，不涉及分库或多副本",
+                  "假设使用默认的 READ COMMITTED 隔离级别，每个注册请求各自在独立事务中执行"
+                ],
+                "evaluationChecklist": [
+                  "能说明先查询再插入的流程中，两个请求的查询与插入之间没有互斥，因此都可能先看到邮箱不存在",
+                  "能解释唯一约束在插入时由数据库检查，后执行的插入会因违反约束而失败，从而保证表中不会出现两条相同邮箱",
+                  "能提出把唯一约束错误转换为业务层可理解结果的处理方式，并说明这样做的理由"
+                ],
+                "followUpDirections": [
+                  "如果两个请求几乎同时到达，请描述各自在数据库中可能经历的语句顺序，并说明最终表中有几条记录",
+                  "假设失败的请求只返回了通用服务器错误，请说明这会对用户和重试逻辑造成什么影响，并提出一种区分重复注册与其他错误的判断方式",
+                  "请比较只依赖应用层先查询与依赖数据库唯一约束两种做法在这个场景下各自能保证什么、不能保证什么",
+                  "如果业务要求注册成功后立即返回用户 ID，请说明插入语句的返回结果在冲突时应如何被使用"
+                ],
+                "question": "假设两个用户几乎同时用同一个邮箱提交注册，服务端按照先查询邮箱是否存在、不存在再插入用户的流程执行。请说明在这个单库 PostgreSQL 环境中，两个请求可能发生什么，最终数据库里会留下什么结果，以及注册接口应如何处理这种情况。"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "lang": "zh",
+      "negativeProbe": false,
+      "result": {
+        "question": {
+          "answerTerms": [
+            "两个事务的先查询都可能读到邮箱不存在",
+            "插入时由唯一索引检查，后提交的插入失败并返回约束错误",
+            "应把约束错误映射为已注册的业务结果，而不是 500"
+          ],
+          "background": "你在负责用户注册的后端服务，用户表使用 PostgreSQL，email 列为 NOT NULL 且已建立唯一约束。注册接口的现有流程是先按邮箱查询，查不到再插入新用户。",
+          "constraints": [
+            "只讨论单个 PostgreSQL 数据库实例上的写入，不涉及分库或多副本",
+            "假设使用默认的 READ COMMITTED 隔离级别，每个注册请求各自在独立事务中执行"
+          ],
+          "evaluationChecklist": [
+            "能说明先查询再插入的流程中，两个请求的查询与插入之间没有互斥，因此都可能先看到邮箱不存在",
+            "能解释唯一约束在插入时由数据库检查，后执行的插入会因违反约束而失败，从而保证表中不会出现两条相同邮箱",
+            "能提出把唯一约束错误转换为业务层可理解结果的处理方式，并说明这样做的理由"
+          ],
+          "followUpDirections": [
+            "如果两个请求几乎同时到达，请描述各自在数据库中可能经历的语句顺序，并说明最终表中有几条记录",
+            "假设失败的请求只返回了通用服务器错误，请说明这会对用户和重试逻辑造成什么影响，并提出一种区分重复注册与其他错误的判断方式",
+            "请比较只依赖应用层先查询与依赖数据库唯一约束两种做法在这个场景下各自能保证什么、不能保证什么",
+            "如果业务要求注册成功后立即返回用户 ID，请说明插入语句的返回结果在冲突时应如何被使用"
+          ],
+          "question": "假设两个用户几乎同时用同一个邮箱提交注册，服务端按照先查询邮箱是否存在、不存在再插入用户的流程执行。请说明在这个单库 PostgreSQL 环境中，两个请求可能发生什么，最终数据库里会留下什么结果，以及注册接口应如何处理这种情况。"
+        }
+      },
+      "topicId": "db-unique-race"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "The existence check and the insert are separate statements, so the check result does not lock the email for the insert",
+                  "The unique index makes the database accept only one of two conflicting inserts and reject the other at insert time",
+                  "The application must treat the rejected insert as a conflict outcome, typically by mapping it to an already-registered response or by re-reading the existing row, rather than assuming the earlier check protected it"
+                ],
+                "background": "A web service registers users in a single PostgreSQL primary database. The users table has an email column declared NOT NULL with a UNIQUE constraint. The registration handler first runs a SELECT to see whether the email already exists, and if no row is returned it runs an INSERT of the new user.",
+                "constraints": [
+                  "Assume PostgreSQL 18 with the default READ COMMITTED isolation level, and that each statement runs in autocommit mode unless you say otherwise.",
+                  "Assume the two requests reach the same primary and that no application-level locks or distributed coordination are involved.",
+                  "Focus on the registration path only; you do not need to design the full signup flow, email verification, or rate limiting."
+                ],
+                "evaluationChecklist": [
+                  "Explains what the candidate believes can happen when two requests for the same email run the existence check before either insert commits, and why the check alone cannot guarantee uniqueness.",
+                  "Explains how the UNIQUE constraint decides the outcome of the two inserts and what the losing request receives.",
+                  "Describes a reasonable application response to the losing request, such as reporting a conflict or re-reading the existing row, and justifies it."
+                ],
+                "followUpDirections": [
+                  "Clarification: Ask whether wrapping the SELECT and INSERT in one transaction at READ COMMITTED changes the outcome, and why or why not.",
+                  "Practical application: Ask how an insert-with-conflict-handling statement would compare with catching the constraint violation in application code, including which behavior each gives the caller.",
+                  "Local trade-off: Ask what the candidate would log or monitor to confirm that duplicate registration attempts are being rejected correctly in production, without needing capacity estimates.",
+                  "Uncertainty check: If the candidate asserts a specific error code or driver behavior, ask them to state which assumptions they are relying on and mark any uncertain part as uncertain."
+                ],
+                "question": "Two registration requests for the same email arrive at nearly the same time. Walk through what happens in the database and what the second request should receive."
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "lang": "en",
+      "negativeProbe": false,
+      "result": {
+        "question": {
+          "answerTerms": [
+            "The existence check and the insert are separate statements, so the check result does not lock the email for the insert",
+            "The unique index makes the database accept only one of two conflicting inserts and reject the other at insert time",
+            "The application must treat the rejected insert as a conflict outcome, typically by mapping it to an already-registered response or by re-reading the existing row, rather than assuming the earlier check protected it"
+          ],
+          "background": "A web service registers users in a single PostgreSQL primary database. The users table has an email column declared NOT NULL with a UNIQUE constraint. The registration handler first runs a SELECT to see whether the email already exists, and if no row is returned it runs an INSERT of the new user.",
+          "constraints": [
+            "Assume PostgreSQL 18 with the default READ COMMITTED isolation level, and that each statement runs in autocommit mode unless you say otherwise.",
+            "Assume the two requests reach the same primary and that no application-level locks or distributed coordination are involved.",
+            "Focus on the registration path only; you do not need to design the full signup flow, email verification, or rate limiting."
+          ],
+          "evaluationChecklist": [
+            "Explains what the candidate believes can happen when two requests for the same email run the existence check before either insert commits, and why the check alone cannot guarantee uniqueness.",
+            "Explains how the UNIQUE constraint decides the outcome of the two inserts and what the losing request receives.",
+            "Describes a reasonable application response to the losing request, such as reporting a conflict or re-reading the existing row, and justifies it."
+          ],
+          "followUpDirections": [
+            "Clarification: Ask whether wrapping the SELECT and INSERT in one transaction at READ COMMITTED changes the outcome, and why or why not.",
+            "Practical application: Ask how an insert-with-conflict-handling statement would compare with catching the constraint violation in application code, including which behavior each gives the caller.",
+            "Local trade-off: Ask what the candidate would log or monitor to confirm that duplicate registration attempts are being rejected correctly in production, without needing capacity estimates.",
+            "Uncertainty check: If the candidate asserts a specific error code or driver behavior, ask them to state which assumptions they are relying on and mark any uncertain part as uncertain."
+          ],
+          "question": "Two registration requests for the same email arrive at nearly the same time. Walk through what happens in the database and what the second request should receive."
+        }
+      },
+      "topicId": "db-unique-race"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "可回收边界由仍需要的最老快照决定",
+                  "未结束的事务或语句可能继续保留旧版本可见性",
+                  "autovacuum 运行过不代表所有死元组都能被回收",
+                  "需要先确认保留旧版本的来源，再决定处理方式"
+                ],
+                "background": "你在负责订单系统的数据库支持工作。线上一张订单状态表是 PostgreSQL 18 的普通堆表，业务持续对其做 UPDATE，近一周表及其索引的磁盘占用稳定上涨，监控里能看到 autovacuum 有运行记录。",
+                "constraints": [
+                  "只考虑 PostgreSQL 18 默认行为，且 autovacuum 保持开启，近期没有对该表执行 DDL 或 TRUNCATE",
+                  "目前只有上述现象，尚未确认是哪类后台进程或会话造成空间增长，回答时不要预设唯一根因"
+                ],
+                "evaluationChecklist": [
+                  "能说明 autovacuum 运行过并不等于所有已失效的旧版本都能被回收，并解释回收边界与仍需要的旧快照有关",
+                  "能提出下一步最有区分力的验证动作，并说明它能支持或排除哪种假设，而不是直接下结论",
+                  "在证据不足时能保持多种可能，并指出需要哪些观测来区分",
+                  "能说明确认到保留旧版本的来源后，处理手段应针对该来源，而不是只重复执行清理"
+                ],
+                "followUpDirections": [
+                  "如果候选人提出查看某类会话或事务的状态，追问如何判断它是否真的影响清理边界，以及判断依据是什么",
+                  "如果候选人认为空间增长来自表本身，追问如何区分表膨胀与索引膨胀，各自的验证方法是什么",
+                  "假设确认某个长时间运行的事务持有旧快照，追问应如何安全处理，以及处理前后应观察哪些指标",
+                  "追问 autovacuum 与事务年龄之间的关系，以及在什么信号下应优先关注冻结相关的风险"
+                ],
+                "question": "这张订单状态表持续被更新，空间增长已经一周了，但 autovacuum 仍在运行。你目前只看到这些现象。下一步你会先验证什么？为什么选它？"
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "lang": "zh",
+      "negativeProbe": false,
+      "result": {
+        "question": {
+          "answerTerms": [
+            "可回收边界由仍需要的最老快照决定",
+            "未结束的事务或语句可能继续保留旧版本可见性",
+            "autovacuum 运行过不代表所有死元组都能被回收",
+            "需要先确认保留旧版本的来源，再决定处理方式"
+          ],
+          "background": "你在负责订单系统的数据库支持工作。线上一张订单状态表是 PostgreSQL 18 的普通堆表，业务持续对其做 UPDATE，近一周表及其索引的磁盘占用稳定上涨，监控里能看到 autovacuum 有运行记录。",
+          "constraints": [
+            "只考虑 PostgreSQL 18 默认行为，且 autovacuum 保持开启，近期没有对该表执行 DDL 或 TRUNCATE",
+            "目前只有上述现象，尚未确认是哪类后台进程或会话造成空间增长，回答时不要预设唯一根因"
+          ],
+          "evaluationChecklist": [
+            "能说明 autovacuum 运行过并不等于所有已失效的旧版本都能被回收，并解释回收边界与仍需要的旧快照有关",
+            "能提出下一步最有区分力的验证动作，并说明它能支持或排除哪种假设，而不是直接下结论",
+            "在证据不足时能保持多种可能，并指出需要哪些观测来区分",
+            "能说明确认到保留旧版本的来源后，处理手段应针对该来源，而不是只重复执行清理"
+          ],
+          "followUpDirections": [
+            "如果候选人提出查看某类会话或事务的状态，追问如何判断它是否真的影响清理边界，以及判断依据是什么",
+            "如果候选人认为空间增长来自表本身，追问如何区分表膨胀与索引膨胀，各自的验证方法是什么",
+            "假设确认某个长时间运行的事务持有旧快照，追问应如何安全处理，以及处理前后应观察哪些指标",
+            "追问 autovacuum 与事务年龄之间的关系，以及在什么信号下应优先关注冻结相关的风险"
+          ],
+          "question": "这张订单状态表持续被更新，空间增长已经一周了，但 autovacuum 仍在运行。你目前只看到这些现象。下一步你会先验证什么？为什么选它？"
+        }
+      },
+      "topicId": "db-long-transaction"
+    },
+    {
+      "attempts": [
+        {
+          "error": null,
+          "model": "claude-haiku-5-5",
+          "provider": "claude",
+          "reviews": [
+            {
+              "proposal": {
+                "answerTerms": [
+                  "an old snapshot held by an open transaction limits which dead row versions can be reclaimed",
+                  "the oldest snapshot still in use sets the cleanup horizon, so cleanup can stall even when vacuum runs",
+                  "dead tuple counts alone do not identify the blocker; transaction age evidence is needed to confirm it"
+                ],
+                "background": "A production PostgreSQL 18 table that receives sustained UPDATE traffic has grown in on-disk size over several days. Autovacuum appears to run on the table, but the size does not level off, and the dead-row count stays elevated across several cleanup cycles.",
+                "constraints": [
+                  "Assume PostgreSQL 18 with default autovacuum settings and no known custom storage parameters for this table.",
+                  "The responsible session or background process is not yet identified; do not assume a specific cause.",
+                  "Focus on diagnosing why dead rows are not being reclaimed; do not design monitoring, capacity estimates, or a full remediation plan."
+                ],
+                "evaluationChecklist": [
+                  "Identifies at least one concrete piece of evidence that can distinguish a cleanup-blocking condition from ordinary autovacuum scheduling or throughput limits, and explains why it discriminates.",
+                  "Explains the relationship between an old transaction snapshot and which dead row versions remain reclaimable, at a conceptual level.",
+                  "Makes a reasoned choice about what to check first, acknowledging that the hypothesis is unverified and stating what result would weaken it."
+                ],
+                "followUpDirections": [
+                  "Clarification: Ask the candidate to define what they mean by a transaction being 'old' and which timing reference they would use to measure it.",
+                  "Diagnostic evidence: If the candidate proposes checking session state or transaction start time, supply a plausible observation (for example, one session with an open transaction that started several hours earlier) and ask what it does and does not prove.",
+                  "Local trade-offs: Ask what operational risks the candidate would consider before terminating or contacting the owner of a long-running session in a production environment.",
+                  "Practical application: Ask how the candidate would confirm that space was reclaimed after the blocking condition was removed, and why a table size check alone might be misleading."
+                ],
+                "question": "The table's size keeps growing even though autovacuum runs on it regularly. Which hypothesis would you test first about why dead rows are not being reclaimed, and what specific evidence would you collect to verify or reject it? Explain why that evidence discriminates between the possibilities."
+              },
+              "verdict": {
+                "accepted": true,
+                "issues": []
+              }
+            }
+          ]
+        }
+      ],
+      "lang": "en",
+      "negativeProbe": false,
+      "result": {
+        "question": {
+          "answerTerms": [
+            "an old snapshot held by an open transaction limits which dead row versions can be reclaimed",
+            "the oldest snapshot still in use sets the cleanup horizon, so cleanup can stall even when vacuum runs",
+            "dead tuple counts alone do not identify the blocker; transaction age evidence is needed to confirm it"
+          ],
+          "background": "A production PostgreSQL 18 table that receives sustained UPDATE traffic has grown in on-disk size over several days. Autovacuum appears to run on the table, but the size does not level off, and the dead-row count stays elevated across several cleanup cycles.",
+          "constraints": [
+            "Assume PostgreSQL 18 with default autovacuum settings and no known custom storage parameters for this table.",
+            "The responsible session or background process is not yet identified; do not assume a specific cause.",
+            "Focus on diagnosing why dead rows are not being reclaimed; do not design monitoring, capacity estimates, or a full remediation plan."
+          ],
+          "evaluationChecklist": [
+            "Identifies at least one concrete piece of evidence that can distinguish a cleanup-blocking condition from ordinary autovacuum scheduling or throughput limits, and explains why it discriminates.",
+            "Explains the relationship between an old transaction snapshot and which dead row versions remain reclaimable, at a conceptual level.",
+            "Makes a reasoned choice about what to check first, acknowledging that the hypothesis is unverified and stating what result would weaken it."
+          ],
+          "followUpDirections": [
+            "Clarification: Ask the candidate to define what they mean by a transaction being 'old' and which timing reference they would use to measure it.",
+            "Diagnostic evidence: If the candidate proposes checking session state or transaction start time, supply a plausible observation (for example, one session with an open transaction that started several hours earlier) and ask what it does and does not prove.",
+            "Local trade-offs: Ask what operational risks the candidate would consider before terminating or contacting the owner of a long-running session in a production environment.",
+            "Practical application: Ask how the candidate would confirm that space was reclaimed after the blocking condition was removed, and why a table size check alone might be misleading."
+          ],
+          "question": "The table's size keeps growing even though autovacuum runs on it regularly. Which hypothesis would you test first about why dead rows are not being reclaimed, and what specific evidence would you collect to verify or reject it? Explain why that evidence discriminates between the possibilities."
+        }
+      },
+      "topicId": "db-long-transaction"
+    }
+  ],
+  "scope": "Continuation within the same 180-attempt library batch: two preserved negative probes and four bilingual corrected openings; no voice or user history.",
+  "usage": {
+    "prices": [],
+    "records": [
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:18:03.055Z",
+        "estimatedUsd": null,
+        "id": 87,
+        "inputTokens": 2394,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 380,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:17:53.301Z",
+        "estimatedUsd": null,
+        "id": 86,
+        "inputTokens": 3166,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1711,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:17:50.074Z",
+        "estimatedUsd": null,
+        "id": 85,
+        "inputTokens": 2260,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 487,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:17:37.491Z",
+        "estimatedUsd": null,
+        "id": 84,
+        "inputTokens": 3376,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1999,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:17:33.968Z",
+        "estimatedUsd": null,
+        "id": 83,
+        "inputTokens": 2362,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 338,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:17:24.515Z",
+        "estimatedUsd": null,
+        "id": 82,
+        "inputTokens": 3159,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1569,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:17:22.059Z",
+        "estimatedUsd": null,
+        "id": 81,
+        "inputTokens": 2246,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 384,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:17:11.814Z",
+        "estimatedUsd": null,
+        "id": 80,
+        "inputTokens": 3371,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1653,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:17:04.972Z",
+        "estimatedUsd": null,
+        "id": 79,
+        "inputTokens": 2608,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1324,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:17:00.276Z",
+        "estimatedUsd": null,
+        "id": 78,
+        "inputTokens": 2327,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 723,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:26.538Z",
+        "estimatedUsd": null,
+        "id": 77,
+        "inputTokens": 2281,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 551,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:21.125Z",
+        "estimatedUsd": null,
+        "id": 76,
+        "inputTokens": 4252,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1210,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:16.775Z",
+        "estimatedUsd": null,
+        "id": 75,
+        "inputTokens": 2293,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 743,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:05.272Z",
+        "estimatedUsd": null,
+        "id": 74,
+        "inputTokens": 3202,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2090,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:04.390Z",
+        "estimatedUsd": null,
+        "id": 73,
+        "inputTokens": 2074,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 361,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:02.588Z",
+        "estimatedUsd": null,
+        "id": 72,
+        "inputTokens": 1965,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 365,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:15:02.454Z",
+        "estimatedUsd": null,
+        "id": 71,
+        "inputTokens": 1910,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 629,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:57.099Z",
+        "estimatedUsd": null,
+        "id": 70,
+        "inputTokens": 4130,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1231,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:54.073Z",
+        "estimatedUsd": null,
+        "id": 69,
+        "inputTokens": 3116,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1705,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:51.624Z",
+        "estimatedUsd": null,
+        "id": 68,
+        "inputTokens": 1902,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 843,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:50.236Z",
+        "estimatedUsd": null,
+        "id": 67,
+        "inputTokens": 3323,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2231,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:48.565Z",
+        "estimatedUsd": null,
+        "id": 66,
+        "inputTokens": 2075,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:44.866Z",
+        "estimatedUsd": null,
+        "id": 65,
+        "inputTokens": 3116,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1496,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:41.391Z",
+        "estimatedUsd": null,
+        "id": 64,
+        "inputTokens": 3289,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1674,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:41.281Z",
+        "estimatedUsd": null,
+        "id": 63,
+        "inputTokens": 2087,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 594,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:39.677Z",
+        "estimatedUsd": null,
+        "id": 62,
+        "inputTokens": 3111,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1516,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:38.852Z",
+        "estimatedUsd": null,
+        "id": 61,
+        "inputTokens": 1945,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:35.678Z",
+        "estimatedUsd": null,
+        "id": 60,
+        "inputTokens": 2079,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1067,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:33.494Z",
+        "estimatedUsd": null,
+        "id": 59,
+        "inputTokens": 3290,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 660,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:31.235Z",
+        "estimatedUsd": null,
+        "id": 58,
+        "inputTokens": 1954,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 314,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:29.279Z",
+        "estimatedUsd": null,
+        "id": 57,
+        "inputTokens": 3258,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2260,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:26.048Z",
+        "estimatedUsd": null,
+        "id": 56,
+        "inputTokens": 3103,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1543,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:25.220Z",
+        "estimatedUsd": null,
+        "id": 55,
+        "inputTokens": 1921,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:21.338Z",
+        "estimatedUsd": null,
+        "id": 54,
+        "inputTokens": 3258,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1273,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:21.115Z",
+        "estimatedUsd": null,
+        "id": 53,
+        "inputTokens": 3262,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1642,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:18.459Z",
+        "estimatedUsd": null,
+        "id": 52,
+        "inputTokens": 1969,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 501,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:14.039Z",
+        "estimatedUsd": null,
+        "id": 51,
+        "inputTokens": 3051,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1790,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:13.088Z",
+        "estimatedUsd": null,
+        "id": 50,
+        "inputTokens": 1853,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:12.858Z",
+        "estimatedUsd": null,
+        "id": 49,
+        "inputTokens": 3262,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1186,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:12.079Z",
+        "estimatedUsd": null,
+        "id": 48,
+        "inputTokens": 1859,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:09.683Z",
+        "estimatedUsd": null,
+        "id": 47,
+        "inputTokens": 3060,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1526,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:05.038Z",
+        "estimatedUsd": null,
+        "id": 46,
+        "inputTokens": 3264,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1464,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:03.607Z",
+        "estimatedUsd": null,
+        "id": 45,
+        "inputTokens": 3258,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1270,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:02.600Z",
+        "estimatedUsd": null,
+        "id": 44,
+        "inputTokens": 3060,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1153,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:14:00.138Z",
+        "estimatedUsd": null,
+        "id": 43,
+        "inputTokens": 2127,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 410,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:57.234Z",
+        "estimatedUsd": null,
+        "id": 42,
+        "inputTokens": 3264,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1268,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:54.365Z",
+        "estimatedUsd": null,
+        "id": 41,
+        "inputTokens": 3258,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1459,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:51.707Z",
+        "estimatedUsd": null,
+        "id": 40,
+        "inputTokens": 2169,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 350,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:49.380Z",
+        "estimatedUsd": null,
+        "id": 39,
+        "inputTokens": 3073,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1937,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:48.619Z",
+        "estimatedUsd": null,
+        "id": 38,
+        "inputTokens": 3264,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1446,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:48.561Z",
+        "estimatedUsd": null,
+        "id": 37,
+        "inputTokens": 1900,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:45.168Z",
+        "estimatedUsd": null,
+        "id": 36,
+        "inputTokens": 2025,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 601,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:42.488Z",
+        "estimatedUsd": null,
+        "id": 35,
+        "inputTokens": 3053,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1538,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:38.894Z",
+        "estimatedUsd": null,
+        "id": 34,
+        "inputTokens": 2029,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 625,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:36.348Z",
+        "estimatedUsd": null,
+        "id": 33,
+        "inputTokens": 3251,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2030,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:35.182Z",
+        "estimatedUsd": null,
+        "id": 32,
+        "inputTokens": 2176,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:34.636Z",
+        "estimatedUsd": null,
+        "id": 31,
+        "inputTokens": 3085,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1935,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:33.802Z",
+        "estimatedUsd": null,
+        "id": 30,
+        "inputTokens": 1907,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:33.590Z",
+        "estimatedUsd": null,
+        "id": 29,
+        "inputTokens": 3973,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1274,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:27.829Z",
+        "estimatedUsd": null,
+        "id": 28,
+        "inputTokens": 2044,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 955,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:25.613Z",
+        "estimatedUsd": null,
+        "id": 27,
+        "inputTokens": 3070,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1815,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:24.226Z",
+        "estimatedUsd": null,
+        "id": 26,
+        "inputTokens": 3276,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1527,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:21.270Z",
+        "estimatedUsd": null,
+        "id": 25,
+        "inputTokens": 2053,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 410,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:15.078Z",
+        "estimatedUsd": null,
+        "id": 24,
+        "inputTokens": 3059,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2184,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:12.321Z",
+        "estimatedUsd": null,
+        "id": 23,
+        "inputTokens": 3272,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1409,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:12.120Z",
+        "estimatedUsd": null,
+        "id": 22,
+        "inputTokens": 1871,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 382,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:11.888Z",
+        "estimatedUsd": null,
+        "id": 21,
+        "inputTokens": 3070,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2333,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:10.032Z",
+        "estimatedUsd": null,
+        "id": 20,
+        "inputTokens": 1890,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 339,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:08.158Z",
+        "estimatedUsd": null,
+        "id": 19,
+        "inputTokens": 2189,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 608,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:02.256Z",
+        "estimatedUsd": null,
+        "id": 18,
+        "inputTokens": 3262,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1568,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:13:01.353Z",
+        "estimatedUsd": null,
+        "id": 17,
+        "inputTokens": 3043,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1455,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:59.168Z",
+        "estimatedUsd": null,
+        "id": 16,
+        "inputTokens": 2037,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 437,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:58.047Z",
+        "estimatedUsd": null,
+        "id": 15,
+        "inputTokens": 2209,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 507,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:56.689Z",
+        "estimatedUsd": null,
+        "id": 14,
+        "inputTokens": 3280,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1783,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:55.806Z",
+        "estimatedUsd": null,
+        "id": 13,
+        "inputTokens": 1937,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 17,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:47.014Z",
+        "estimatedUsd": null,
+        "id": 12,
+        "inputTokens": 3060,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1579,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:46.205Z",
+        "estimatedUsd": null,
+        "id": 11,
+        "inputTokens": 3273,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2064,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:44.660Z",
+        "estimatedUsd": null,
+        "id": 10,
+        "inputTokens": 1985,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 292,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:41.930Z",
+        "estimatedUsd": null,
+        "id": 9,
+        "inputTokens": 3057,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 2600,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:35.899Z",
+        "estimatedUsd": null,
+        "id": 8,
+        "inputTokens": 3273,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1619,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": 256,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:35.173Z",
+        "estimatedUsd": null,
+        "id": 7,
+        "inputTokens": 1293,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:34.330Z",
+        "estimatedUsd": null,
+        "id": 6,
+        "inputTokens": 3085,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1754,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 256,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:33.643Z",
+        "estimatedUsd": null,
+        "id": 5,
+        "inputTokens": 1091,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 10,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": true,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:28.908Z",
+        "estimatedUsd": null,
+        "id": 4,
+        "inputTokens": 3057,
+        "model": "claude-haiku-5-5",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 1551,
+        "provider": "claude",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "content_error"
+      },
+      {
+        "cacheReadTokens": null,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:28.693Z",
+        "estimatedUsd": null,
+        "id": 3,
+        "inputTokens": null,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": null,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "transport_error"
+      },
+      {
+        "cacheReadTokens": 1408,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:28.690Z",
+        "estimatedUsd": null,
+        "id": 2,
+        "inputTokens": 1701,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 461,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      },
+      {
+        "cacheReadTokens": 1408,
+        "cacheWriteTokens": 0,
+        "createdAt": "2026-10-16T02:12:28.689Z",
+        "estimatedUsd": null,
+        "id": 1,
+        "inputTokens": 1703,
+        "model": "deepseek-flash",
+        "module": "p1",
+        "operation": "generation",
+        "outputTokens": 661,
+        "provider": "deepseek",
+        "ratesUsdPerMillionTokens": null,
+        "reviewer": false,
+        "sessionId": null,
+        "status": "success"
+      }
+    ]
+  }
+}
