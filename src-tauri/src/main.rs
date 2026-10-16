@@ -732,6 +732,8 @@ fn save_api_prices(
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
+            credentials::initialize_storage(&app.path().app_config_dir()?)
+                .map_err(std::io::Error::other)?;
             let path = app.path().app_data_dir()?.join("prep.sqlite3");
             let connection = db::open(&path).map_err(std::io::Error::other)?;
             app.manage(AppState {

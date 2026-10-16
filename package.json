@@ -1,6 +1,6 @@
 {
   "name": "swe-interview-prep",
-  "version": "0.1.0",
+  "version": "0.1.0-preview.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,11 @@
     "build": "tsc && vite build",
     "tauri": "tauri",
     "test:review-ui": "node --test tools/tests/review-ui.test.mjs",
-    "test": "cargo test --manifest-path src-tauri/Cargo.toml --no-default-features"
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml --no-default-features",
+    "check:release": "node tools/release/check.mjs",
+    "test:release-tools": "node --test tools/tests/release.test.mjs",
+    "build:macos": "tauri build --target aarch64-apple-darwin --bundles app,dmg",
+    "audit:release": "node tools/release/audit.mjs"
   },
   "dependencies": {
     "@astryxdesign/core": "0.7.0",
@@ -32,5 +36,6 @@
     "prettier": "^3.9.10",
     "typescript": "^5.9.0",
     "vite": "^7.0.0"
-  }
+  },
+  "license": "UNLICENSED"
 }

@@ -1,0 +1,56 @@
+name: Draft macOS preview
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Preview tag matching package.json, e.g. v0.1.0-preview.1"
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: preview-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+  build:
+    needs: verify
+    runs-on: macos-15
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          targets: aarch64-apple-darwin
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: src-tauri -> target
+      - run: npm ci
+      - run: node tools/release/check.mjs "$RELEASE_TAG"
+      - run: npm run audit:release
+      - run: npm run build:macos
+      - run: node tools/release/package.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: macos-arm64-preview
+          path: release-artifacts/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Create draft only; never publish or overwrite a public release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/release/draft.mjs

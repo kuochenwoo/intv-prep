@@ -1,12 +1,71 @@
 use rusqlite::{Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
-// Temporary test mode requested by the user. No automatic Keychain fallback/writes.
-pub fn env_path() -> std::path::PathBuf {
-    std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+use std::{
+    path::{Path, PathBuf},
+    sync::OnceLock,
+};
+
+static ENV_PATH: OnceLock<PathBuf> = OnceLock::new();
+
+#[cfg(debug_assertions)]
+fn development_env_path() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .expect("project root")
         .join(".env")
 }
+
+#[cfg(any(not(debug_assertions), test))]
+fn release_env_path(config_dir: &Path) -> Result<PathBuf, String> {
+    if !config_dir.is_absolute() {
+        return Err("密钥配置目录必须是绝对路径".into());
+    }
+    let mut builder = std::fs::DirBuilder::new();
+    builder.recursive(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        builder.mode(0o700);
+    }
+    builder
+        .create(config_dir)
+        .map_err(|_| "无法创建密钥配置目录")?;
+    Ok(config_dir.join(".env"))
+}
+
+/// Release storage comes from Tauri's runtime app-config directory, never the checkout.
+/// Development and explicit manual probes keep using the ignored project .env.
+pub fn initialize_storage(_config_dir: &Path) -> Result<(), String> {
+    #[cfg(debug_assertions)]
+    let path = development_env_path();
+    #[cfg(not(debug_assertions))]
+    let path = release_env_path(_config_dir)?;
+    if let Some(current) = ENV_PATH.get() {
+        return if current == &path {
+            Ok(())
+        } else {
+            Err("密钥存储已初始化，不能更换目录".into())
+        };
+    }
+    ENV_PATH
+        .set(path)
+        .map_err(|_| "密钥存储已初始化，不能更换目录".into())
+}
+
+pub fn env_path() -> Result<PathBuf, String> {
+    if let Some(path) = ENV_PATH.get() {
+        return Ok(path.clone());
+    }
+    #[cfg(debug_assertions)]
+    {
+        Ok(development_env_path())
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        Err("密钥存储尚未初始化".into())
+    }
+}
+
 fn variable(provider: &str) -> Result<&'static str, String> {
     match provider {
         "deepseek" => Ok("DEEPSEEK_API_KEY"),
@@ -29,7 +88,7 @@ fn validate_env_value(key: &str) -> Result<(), String> {
 pub fn read_env_key(path: &std::path::Path, provider: &str) -> Result<String, String> {
     let wanted = variable(provider)?;
     let values =
-        dotenvy::from_path_iter(path).map_err(|_| "无法读取项目 .env，请先配置 API Key")?;
+        dotenvy::from_path_iter(path).map_err(|_| "无法读取密钥 .env，请先配置 API Key")?;
     for item in values {
         let (name, value) = item.map_err(|_| ".env 格式错误，请检查配置（未输出文件内容）")?;
         if name == wanted {
@@ -85,13 +144,13 @@ pub fn save_key(provider: &str, key: &str) -> Result<(), String> {
     if key.trim().is_empty() {
         return Err("Key 不可为空".into());
     }
-    write_env_key(&env_path(), provider, key)
+    write_env_key(&env_path()?, provider, key)
 }
 pub fn read_key(provider: &str) -> Result<String, String> {
-    read_env_key(&env_path(), provider)
+    read_env_key(&env_path()?, provider)
 }
 pub fn delete_key(provider: &str) -> Result<(), String> {
-    write_env_key(&env_path(), provider, "")
+    write_env_key(&env_path()?, provider, "")
 }
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -131,6 +190,7 @@ impl LlmSettings {
 #[serde(rename_all = "camelCase")]
 pub struct SettingsView {
     pub credential_source: String,
+    pub credential_path: String,
     pub config: LlmSettings,
     pub key_status: String,
 }
@@ -150,16 +210,19 @@ pub fn settings(c: &Connection) -> Result<LlmSettings, String> {
     config.validate()?;
     Ok(config)
 }
-pub fn view(c: &Connection) -> Result<SettingsView, String> {
-    let config = settings(c)?;
-    let key_status = match read_key(&config.provider) {
+pub fn key_status(provider: &str) -> &'static str {
+    match read_key(provider) {
         Ok(_) => "saved",
-        Err(e) if !env_path().exists() || e.contains("尚未配置") => "missing",
+        Err(e) if env_path().is_ok_and(|p| !p.exists()) || e.contains("尚未配置") => "missing",
         Err(_) => "unavailable",
     }
-    .into();
+}
+pub fn view(c: &Connection) -> Result<SettingsView, String> {
+    let config = settings(c)?;
+    let key_status = key_status(&config.provider).into();
     Ok(SettingsView {
         credential_source: "env".into(),
+        credential_path: env_path()?.to_string_lossy().into_owned(),
         config,
         key_status,
     })
@@ -169,4 +232,43 @@ pub fn save_settings(c: &Connection, config: &LlmSettings) -> Result<(), String>
     let json = serde_json::to_string(config).map_err(|e| e.to_string())?;
     c.execute("INSERT INTO settings VALUES('llm_config',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",[json]).map_err(|e|e.to_string())?;
     Ok(())
+}
+
+#[cfg(test)]
+mod storage_tests {
+    use super::*;
+    #[test]
+    fn release_storage_is_private_runtime_based_and_does_not_copy_project_keys() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = dir.path().join("fresh-app-config");
+        let path = release_env_path(&config).unwrap();
+        assert_eq!(path, config.join(".env"));
+        assert!(!path.exists());
+        write_env_key(&path, "claude", "fixture-release-claude-key").unwrap();
+        write_env_key(&path, "deepseek", "fixture-release-deepseek-key").unwrap();
+        assert_eq!(
+            read_env_key(&path, "claude").unwrap(),
+            "fixture-release-claude-key"
+        );
+        assert_eq!(
+            read_env_key(&path, "deepseek").unwrap(),
+            "fixture-release-deepseek-key"
+        );
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(
+                std::fs::metadata(config).unwrap().permissions().mode() & 0o777,
+                0o700
+            );
+            assert_eq!(
+                std::fs::metadata(path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+    }
+    #[test]
+    fn relative_release_storage_is_rejected() {
+        assert!(release_env_path(Path::new("relative-config")).is_err());
+    }
 }

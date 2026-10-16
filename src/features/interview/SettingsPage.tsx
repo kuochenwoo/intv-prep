@@ -14,7 +14,7 @@ import { VoiceSettings } from "../voice/VoiceSettings";
 type Config = { provider: string; model: string; timeoutSeconds: number };
 type Summary = { id: string; title: string; provider?: string; model?: string };
 type Overview = {
-  settings: { config: Config; keyStatus: string };
+  settings: { config: Config; keyStatus: string; credentialPath: string };
   sessions: Summary[];
 };
 export default function SettingsPage({
@@ -171,6 +171,11 @@ export default function SettingsPage({
             />
           </div>
           <p className="muted">{t("settingsNote")}</p>
+          {data && (
+            <p className="muted">
+              {t("credentialPath", { path: data.settings.credentialPath })}
+            </p>
+          )}
         </Collapsible>
       </div>
 

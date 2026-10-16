@@ -13,11 +13,7 @@ pub const MODEL: &str = "gpt-4o-mini-transcribe";
 const MAX_AUDIO_BYTES: usize = 20 * 1024 * 1024;
 
 pub fn settings() -> Value {
-    let status = match credentials::read_key("openai") {
-        Ok(_) => "saved",
-        Err(e) if !credentials::env_path().exists() || e.contains("尚未配置") => "missing",
-        Err(_) => "unavailable",
-    };
+    let status = credentials::key_status("openai");
     json!({"model": MODEL, "keyStatus": status})
 }
 
