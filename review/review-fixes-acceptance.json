@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-16",
+  "scope": "Fix four Review/weak-point/spaced-review acceptance defects",
+  "status": "accepted",
+  "tests": {
+    "rustPassed": 90,
+    "rustIgnored": 1,
+    "frontendPassed": 4,
+    "reviewSpecificRustPassed": 11
+  },
+  "uiChecks": [
+    "P1 first-mount Open session selects the requested older finished history despite a newer active history",
+    "P2 first-mount Open session selects the requested older finished history despite a newer active history",
+    "P1 weak card retains the actual earlier feedback evidence",
+    "Unknown-only cost is not shown as zero",
+    "Mixed known and unknown cost shows a partial subtotal and count",
+    "Chinese and English cost labels",
+    "Unrelated QA draft preserved"
+  ],
+  "providerCalls": 0,
+  "fixtureNote": "Native checks use authored histories and cost rows in a separate QA profile; no claim of successful model calls",
+  "sources": {
+    "src-tauri/src/review.rs": "a5a99a2452311d342f2df25fcd1475c9edc76639f663683e8ef4cb3d9e91139b",
+    "src/features/interview/navigation.ts": "a2070c3b0c827d7d924326483dde22ef4fba2d192d9d453c1e6f9479cf8ed00f",
+    "src/features/interview/InterviewApp.tsx": "b0158f01fc7836a25cfeb5635902d74d52d17ea7c2c4f6eebb2487710214981a",
+    "src/features/system-design/SystemDesignApp.tsx": "05a1c750078196e49991379ff1cb824c456b15abaa0cef3ef21a78608867594d",
+    "src/features/review/costs.ts": "288c39cb2de81caff5693f3c7b3d6214589c030b0552fff6465c6c011b511e7c",
+    "src/features/review/ReviewPage.tsx": "36cd26e18b47fdf55862927b97493bf1ff931b170ba4828ffc032789c9021d58",
+    "src/i18n.tsx": "0bc23d46311c9a11bc5bf586ad948a9d3d3ab0e39811c79c600f1afc6882dc3c"
+  },
+  "builds": {
+    "frontend": "passed",
+    "desktop": "passed"
+  },
+  "appBundle": "src-tauri/target/review-fixed/SWE Interview Prep.app"
+}

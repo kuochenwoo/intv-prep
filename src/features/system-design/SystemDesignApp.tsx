@@ -3,6 +3,7 @@ import { invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { Button } from "@astryxdesign/core/Button";
 import { TextArea } from "@astryxdesign/core/TextArea";
+import { loadCurrent } from "../interview/navigation";
 import { HistoryDrawer } from "../interview/HistoryDrawer";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { Selector } from "@astryxdesign/core/Selector";
@@ -121,9 +122,11 @@ const emptyWorkspace = (): Workspace => ({
 export default function SystemDesignApp({
   dark,
   settingsVersion = 0,
+  focus,
 }: {
   dark: boolean;
   settingsVersion?: number;
+  focus?: { id: string; session: boolean; n: number };
 }) {
   const { t, lang } = useI18n();
   const [data, setData] = useState<Overview | null>(null),
@@ -166,10 +169,40 @@ export default function SystemDesignApp({
     running = useRef(false),
     activeId = useRef("");
   const [historyOpen, setHistoryOpen] = useState(false);
+  const navigationVersion = useRef(0);
   useEffect(() => {
     if (isTauri()) void overview().catch((e) => setError(String(e)));
   }, [settingsVersion]);
+  // Explicit review navigation wins over initial restoration and older requests.
+  useEffect(() => {
+    if (!focus || !isTauri()) return;
+    const version = ++navigationVersion.current;
+    let disposed = false;
+    const current = () => !disposed && navigationVersion.current === version;
+    void (async () => {
+      await queue.current;
+      if (!current()) return;
+      if (saveError.current) throw new Error(saveError.current);
+      if (focus.session) {
+        await loadCurrent(
+          () => invoke<Session>("sd_session", { sessionId: focus.id }),
+          show,
+          current,
+        );
+      } else {
+        setScenarioSearch("");
+        setScenarioId(focus.id);
+        setQuestionId("");
+      }
+    })().catch((e) => {
+      if (current()) setError(String(e));
+    });
+    return () => {
+      disposed = true;
+    };
+  }, [focus?.n]);
   function show(s: Session) {
+    navigationVersion.current += 1;
     setHistoryOpen(false);
     activeId.current = s.id;
     setScenarioId(s.question.seedId);
@@ -189,17 +222,20 @@ export default function SystemDesignApp({
   useEffect(() => {
     if (!isTauri()) return;
     let disposed = false;
+    const version = navigationVersion.current;
+    const current = () =>
+      !disposed && !focus && navigationVersion.current === version;
     const stop = listen<string>("sd-stream", (e) => setLive(e.payload));
     overview()
       .then(async (d) => {
         const previous =
           d.sessions.find((s) => s.status !== "finished") ?? d.sessions[0];
-        if (previous) {
-          const s = await invoke<Session>("sd_session", {
-            sessionId: previous.id,
-          });
-          if (!disposed) show(s);
-        }
+        if (previous)
+          await loadCurrent(
+            () => invoke<Session>("sd_session", { sessionId: previous.id }),
+            show,
+            current,
+          );
       })
       .catch((e) => setError(String(e)));
     const update = () => setOnline(navigator.onLine);
@@ -920,6 +956,9 @@ export default function SystemDesignApp({
               {session.feedback && (
                 <section className="feedback">
                   <h2>{t("sdStage_feedback")}</h2>
+                  <p role="status" className="muted">
+                    {t("reviewAdded")}
+                  </p>
                   <Markdown text={session.feedback.summary} />
                   <div className="feedback-grid">
                     {orderedAssessment.map(([name, d]) => (

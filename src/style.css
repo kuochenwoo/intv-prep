@@ -510,3 +510,6 @@ button.tint-btn.stage-chip.current:hover:not(:disabled) { background: var(--tint
 .empty-state .empty-icon { font-size: 28px; line-height: 1; }
 .empty-state.compact { margin: 12px 0; padding: 14px 16px; max-width: none; flex-direction: row; text-align: start; }
 .empty-state.compact .empty-icon { font-size: 20px; }
+.list-head { gap: 8px; }
+.list-head h2 { flex: 1; }
+.actions .actions-end { margin-left: auto; }

@@ -1,0 +1,218 @@
+.review-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 18px;
+  padding: 20px 24px 0;
+}
+.review-streak,
+.review-weak {
+  grid-column: 1 / -1;
+}
+@media (max-width: 1000px) {
+  .review-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.review-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.review-card-head h2 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+.review-card-head .muted {
+  font-size: var(--font-size-sm);
+}
+.review-stats {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+.review-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.review-rows li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-top: 1px solid var(--color-border);
+}
+.review-rows li:first-child {
+  border-top: 0;
+}
+.review-row-title {
+  flex: 1;
+  min-width: 0;
+}
+.review-row-title .muted {
+  font-size: var(--font-size-sm);
+}
+.review-tomorrow {
+  margin: 10px 0 0;
+  font-size: var(--font-size-sm);
+}
+.review-heat-wrap {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.review-heat {
+  display: grid;
+  grid-template-rows: repeat(7, 13px);
+  grid-auto-flow: column;
+  grid-auto-columns: 13px;
+  gap: 3px;
+}
+.review-heat button {
+  all: unset;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  cursor: pointer;
+  background: var(--color-background-gray);
+}
+.review-heat button:disabled {
+  visibility: hidden;
+}
+.review-heat button.heat-1 {
+  background: color-mix(
+    in srgb,
+    var(--color-text-purple) 30%,
+    var(--color-background-gray)
+  );
+}
+.review-heat button.heat-2 {
+  background: color-mix(
+    in srgb,
+    var(--color-text-purple) 55%,
+    var(--color-background-gray)
+  );
+}
+.review-heat button.heat-3 {
+  background: color-mix(
+    in srgb,
+    var(--color-text-purple) 78%,
+    var(--color-background-gray)
+  );
+}
+.review-heat button.heat-4 {
+  background: var(--color-text-purple);
+}
+.review-heat button.picked {
+  outline: 2px solid var(--color-text-orange);
+  outline-offset: 1px;
+}
+.review-heat button:focus-visible {
+  outline: 2px solid var(--color-border-focus, var(--color-text-blue));
+}
+.review-week {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 240px;
+}
+.review-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+.review-filter-gap {
+  width: 1px;
+  height: 20px;
+  background: var(--color-border);
+  margin-inline: 4px;
+}
+.review-chip {
+  all: unset;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 3px 11px;
+  font-size: var(--font-size-sm);
+}
+.review-chip.on {
+  background: var(--color-background-purple);
+  color: var(--color-text-purple);
+  border-color: var(--color-border-purple);
+  font-weight: var(--font-weight-semibold);
+}
+.review-chip:focus-visible {
+  outline: 2px solid var(--color-text-blue);
+}
+.review-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.review-wp {
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--tint-fg);
+  border-radius: var(--radius-element);
+  padding: 12px 14px;
+}
+.review-wp.open {
+  grid-column: 1 / -1;
+}
+.review-wp p {
+  margin: 4px 0 0;
+  font-size: var(--font-size-sm);
+}
+.review-wp-head {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.review-wp-head:focus-visible {
+  outline: 2px solid var(--color-text-blue);
+}
+.review-evidence {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+.review-quote {
+  background: var(--color-background-muted, var(--color-background-gray));
+  border-radius: var(--radius-element);
+  padding: 8px 12px;
+}
+.review-quote-who {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+.review-quote p {
+  font-size: var(--font-size-sm);
+  white-space: pre-wrap;
+}
+.review-wp-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.review-next {
+  margin-left: auto;
+  font-size: var(--font-size-sm);
+}
+.review-footnote {
+  font-size: 12px;
+  margin: 14px 0 0;
+}

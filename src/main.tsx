@@ -22,11 +22,16 @@ import { TextInput } from "@astryxdesign/core/TextInput";
 import { Selector } from "@astryxdesign/core/Selector";
 import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
+import { AlertDialog } from "@astryxdesign/core/AlertDialog";
 import "./style.css";
 import logo from "./assets/logo.png";
 import SettingsPage from "./features/interview/SettingsPage";
 import InterviewApp from "./features/interview/InterviewApp";
 import SystemDesignApp from "./features/system-design/SystemDesignApp";
+import { ReviewPage, type ReviewTarget } from "./features/review/ReviewPage";
+
+/** A request from the Review tab to open something; `n` makes each request new. */
+export type Focus = { id: string; session: boolean; n: number };
 import { LangProvider, lookup, useI18n } from "./i18n";
 import { Timer } from "./Timer";
 import { EmptyState } from "./EmptyState";
@@ -123,7 +128,7 @@ const difficultyBadge = {
   medium: "orange",
   hard: "red",
 } as const;
-function CodingApp({ scheme }: { scheme: Scheme }) {
+function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
   const { t, lang } = useI18n();
   const [allProblems, setProblems] = useState<Problem[]>([]),
     [selected, setSelected] = useState("lc-1"),
@@ -137,6 +142,13 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
     () => allProblems.map((p) => localProblem(p, lang)),
     [allProblems, lang],
   );
+  useEffect(() => {
+    if (!focus) return;
+    setQuery("");
+    setDifficulty("all");
+    setTag("all");
+    setSelected(focus.id);
+  }, [focus?.n]);
   // Tag names differ per language, so a tag filter does not carry over.
   useEffect(() => setTag("all"), [lang]);
   const [error, setError] = useState(""),
@@ -239,6 +251,41 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
       setBusy(false);
     }
   }
+  const [clearing, setClearing] = useState<"one" | "all" | null>(null);
+  const savedProblems = new Set(
+    Object.values(progress).map((r) => r.problemId),
+  );
+  async function clearSaved(scope: "one" | "all") {
+    setBusy(true);
+    setError("");
+    try {
+      // Let queued draft saves land first so none recreates the cleared code.
+      await saveQueue.current;
+      version.current += 1;
+      setSaving(false);
+      await invoke("clear_solutions", {
+        problemId: scope === "one" ? selected : null,
+      });
+      const keep = (id: string) => scope === "one" && id !== selected;
+      setProgress((prev) =>
+        Object.fromEntries(
+          Object.entries(prev).filter(([, r]) => keep(r.problemId)),
+        ),
+      );
+      setResults((prev) =>
+        Object.fromEntries(
+          Object.entries(prev).filter(([k]) =>
+            keep(k.slice(0, k.lastIndexOf(":"))),
+          ),
+        ),
+      );
+      setClearing(null);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
   const result = results[key];
   const status = (s: string) => lookup(t, "status_", s);
   const visible = problems.filter(
@@ -270,6 +317,14 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
           <div className="list-head">
             <h2>{t("problems")}</h2>
             <Badge label={t("problemCount", { n: visible.length })} />
+            <Button
+              label={t("clearAllSolutions")}
+              tooltip={t("clearAllSolutionsTip")}
+              size="sm"
+              variant="destructive"
+              isDisabled={busy || !ready || savedProblems.size === 0}
+              onClick={() => setClearing("all")}
+            />
           </div>
           <TextInput
             label={t("searchProblems")}
@@ -436,7 +491,7 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
             </small>
             <Badge variant="purple" label={t("offlineJudge")} />
             <div className="coding-timer-right">
-              <Timer key={selected} />
+              <Timer key={selected} problemId={selected} />
             </div>
           </div>
           <div className="editor-frame">
@@ -471,7 +526,40 @@ function CodingApp({ scheme }: { scheme: Scheme }) {
               isLoading={busy}
               onClick={() => run(false)}
             />
+            <Button
+              label={t("clearSolution")}
+              tooltip={t("clearSolutionTip")}
+              variant="destructive"
+              className="actions-end"
+              isDisabled={busy || !ready || !savedProblems.has(selected)}
+              onClick={() => setClearing("one")}
+            />
           </div>
+          <AlertDialog
+            isOpen={clearing !== null}
+            onOpenChange={(open) => {
+              if (!open && !busy) setClearing(null);
+            }}
+            title={
+              clearing === "all"
+                ? t("clearAllSolutionsTitle")
+                : t("clearSolutionTitle")
+            }
+            description={
+              clearing === "all"
+                ? t("clearAllSolutionsDescription", {
+                    n: savedProblems.size,
+                  })
+                : t("clearSolutionDescription", {
+                    title: problem?.title ?? selected,
+                  })
+            }
+            actionLabel={t("clearConfirm")}
+            actionVariant="destructive"
+            cancelLabel={t("cancel")}
+            isActionLoading={busy}
+            onAction={() => clearing && clearSaved(clearing)}
+          />
           <section className="results" aria-live="polite">
             {!result ? (
               <EmptyState icon="▶" text={t("resultsPlaceholder")} />
@@ -547,8 +635,25 @@ function storedScheme(): Scheme {
 function App() {
   const { lang, setLang, t } = useI18n();
   const [view, setView] = useState<
-    "lc" | "deep_dive" | "system_design" | "settings"
+    "lc" | "deep_dive" | "system_design" | "review" | "settings"
   >("lc");
+  const [focus, setFocus] = useState<(Focus & { module: string }) | null>(null);
+  const [due, setDue] = useState(0);
+  const openFromReview = (target: ReviewTarget) => {
+    setFocus({ ...target, n: Date.now() });
+    if (target.module === "p1") setVisited(true);
+    if (target.module === "p2") setDesignVisited(true);
+    setView(
+      target.module === "lc"
+        ? "lc"
+        : target.module === "p1"
+          ? "deep_dive"
+          : "system_design",
+    );
+    window.scrollTo(0, 0);
+  };
+  const focusFor = (module: string) =>
+    focus?.module === module ? focus : undefined;
   const [settingsVersion, setSettingsVersion] = useState(0);
   const [settingsVisited, setSettingsVisited] = useState(false);
   const [visited, setVisited] = useState(false);
@@ -589,7 +694,12 @@ function App() {
                   if (v === "system_design") setDesignVisited(true);
                   if (v === "settings") setSettingsVisited(true);
                   setView(
-                    v as "lc" | "deep_dive" | "system_design" | "settings",
+                    v as
+                      | "lc"
+                      | "deep_dive"
+                      | "system_design"
+                      | "review"
+                      | "settings",
                   );
                 }}
               >
@@ -601,6 +711,14 @@ function App() {
                 <SegmentedControlItem
                   value="system_design"
                   label={t("moduleSystemDesign")}
+                />
+                <SegmentedControlItem
+                  value="review"
+                  label={
+                    due > 0
+                      ? `${t("moduleReview")} · ${due}`
+                      : t("moduleReview")
+                  }
                 />
                 <SegmentedControlItem
                   value="settings"
@@ -629,7 +747,14 @@ function App() {
             }
           />
           <div hidden={view !== "lc"}>
-            <CodingApp scheme={scheme} />
+            <CodingApp scheme={scheme} focus={focusFor("lc")} />
+          </div>
+          <div hidden={view !== "review"}>
+            <ReviewPage
+              active={view === "review"}
+              onNavigate={openFromReview}
+              onDue={setDue}
+            />
           </div>
           {settingsVisited && (
             <div hidden={view !== "settings"}>
@@ -644,12 +769,16 @@ function App() {
               <SystemDesignApp
                 dark={scheme === "dark"}
                 settingsVersion={settingsVersion}
+                focus={focusFor("p2")}
               />
             </div>
           )}
           {visited && (
             <div hidden={view !== "deep_dive"}>
-              <InterviewApp settingsVersion={settingsVersion} />
+              <InterviewApp
+                settingsVersion={settingsVersion}
+                focus={focusFor("p1")}
+              />
             </div>
           )}
         </div>

@@ -1,0 +1,55 @@
+{
+  "status": "accepted",
+  "date": "2026-10-16",
+  "scope": [
+    "Bilingual saved-feedback confirmation in P1/P2",
+    "Persistent per-problem LC countdowns and Review elapsed-time statistics"
+  ],
+  "automated": {
+    "coding_timer": 3,
+    "review": 11,
+    "session_tools": 5,
+    "review_ui": 4,
+    "total_passed": 23
+  },
+  "builds": {
+    "frontend": "passed; existing chunk-size advisory",
+    "native_debug_app": "passed"
+  },
+  "computer_use": {
+    "profile": "local.swe.interview-prep.review-qa",
+    "data": "Authored histories and manual timer activity only",
+    "verified": [
+      "Off by default; selecting 10 minutes waits for Start",
+      "Different problems have isolated countdowns",
+      "Returning to a problem restores its running deadline",
+      "Paused countdown survives full application relaunch",
+      "Reset returns to unstarted countdown and retains elapsed time",
+      "Review shows archived LC time as 1 minute, including after another relaunch",
+      "Bilingual timer-only Review copy",
+      "English P1 and Chinese P2 saved-feedback confirmation"
+    ]
+  },
+  "provider_calls": 0,
+  "personal_history_modified": false,
+  "keys_or_model_settings_changed": false,
+  "bundle": "src-tauri/target/review-followups/SWE Interview Prep.app",
+  "limitations": [
+    "Previous unsaved LC timer time is not backfilled",
+    "Running countdowns include navigation, app closure and sleep until expiry; pause to exclude idle time",
+    "Review attributes each attempt to its start day, matching P1/P2 timers"
+  ],
+  "source_sha256": {
+    "src/Timer.tsx": "6ca2d3658df2c9a481aa64b51b6993d55da11480881e1b3a624734756a5e71df",
+    "src/main.tsx": "29c9b8211a62296e75a880c68f3d3bac85d867df989a5b80790b25b564261531",
+    "src/i18n.tsx": "03e0cd74c197d6f83521046353492f5547f80da7fb9bd6c73c2ea29354fbb8d2",
+    "src/features/review/ReviewPage.tsx": "daa33a6a78df90d43db1d17e71925bc72be536a44f4f2b4c065d3ec4def44d81",
+    "src/features/interview/InterviewApp.tsx": "e98a0e819dae7e152fc053bb33a8520ab74ba9300673f9cdfe34f9547577b392",
+    "src/features/system-design/SystemDesignApp.tsx": "32b7f39032cb48d1a68dca7a7b57ee1864645fd569a69a5d3bbe3b4e33d6a37c",
+    "src-tauri/src/coding_timer.rs": "036ed703edd7b9d19f0dd4cb7e11baf79c741bed4f483262181d907b09ca418f",
+    "src-tauri/src/review.rs": "ef0693d9970baca7ffbc17eb9f488149c69aeb3eca35d76bd8a4c81351001ff9",
+    "src-tauri/src/db.rs": "db4c3f00fab0ff1626ff62231149ffc6a38b9b4901fe815c031223cff151c21d",
+    "src-tauri/src/main.rs": "bdcc5c8c613cd1df37ebb6545c8e2dba8de23c623c0a65f7fdbca82f5eb378fb",
+    "src-tauri/src/lib.rs": "ecab45edd92300eb92861accc1aaa9de5106756bbe3d182172cb5b82ec52e7b1"
+  }
+}

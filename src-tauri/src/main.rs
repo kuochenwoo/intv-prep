@@ -64,6 +64,12 @@ fn save_draft(
     db::save(&state.db(), &problem_id, &mode, &code)
 }
 #[tauri::command]
+fn clear_solutions(state: State<AppState>, problem_id: Option<String>) -> Result<(), String> {
+    // Never clear while a judge run is about to record its result.
+    let _guard = state.judge.try_lock().map_err(|_| "已有判题任务正在运行")?;
+    db::clear(&state.db(), problem_id.as_deref())
+}
+#[tauri::command]
 fn get_compiler(state: State<AppState>) -> Result<String, String> {
     db::compiler(&state.db())
 }
@@ -96,6 +102,16 @@ fn run_judge(
         &compiler,
     )?;
     if !samples {
+        let c = state.db();
+        swe_interview_prep::review::log_run(
+            &c,
+            &problem_id,
+            &mode,
+            &result.status,
+            result.passed,
+            result.total,
+        )?;
+        drop(c);
         db::record(
             &state.db(),
             &problem_id,
@@ -615,6 +631,22 @@ async fn sd_reference(
 }
 
 #[tauri::command]
+fn coding_timing(
+    state: State<AppState>,
+    problem_id: String,
+    action: String,
+    minutes: Option<i64>,
+) -> Result<Option<swe_interview_prep::session_tools::MockClock>, String> {
+    swe_interview_prep::coding_timer::timing(
+        &state.db(),
+        &problem_id,
+        &action,
+        minutes,
+        swe_interview_prep::session_tools::now_ms(),
+    )
+}
+
+#[tauri::command]
 fn session_timing(
     state: State<AppState>,
     module: String,
@@ -643,6 +675,15 @@ fn api_usage(
     swe_interview_prep::usage::overview(&state.db(), module.as_deref(), session_id.as_deref())
 }
 #[tauri::command]
+fn review_overview(state: State<AppState>) -> Result<swe_interview_prep::review::Overview, String> {
+    let now = swe_interview_prep::session_tools::now_ms();
+    swe_interview_prep::review::overview(&state.db(), now)
+}
+#[tauri::command]
+fn review_dismiss(state: State<AppState>, concept: String) -> Result<(), String> {
+    swe_interview_prep::review::dismiss(&state.db(), &concept)
+}
+#[tauri::command]
 fn save_api_prices(
     state: State<AppState>,
     provider: String,
@@ -666,7 +707,10 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            review_overview,
+            review_dismiss,
             session_timing,
+            coding_timing,
             export_interview,
             api_usage,
             save_api_prices,
@@ -698,6 +742,7 @@ fn main() {
             open_problem_source,
             load_progress,
             save_draft,
+            clear_solutions,
             get_compiler,
             set_compiler,
             run_judge

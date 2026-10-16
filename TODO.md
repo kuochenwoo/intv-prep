@@ -51,15 +51,17 @@ Existing evidence and defects:
 - [ ] Show an editable transcript and let the user correct recognition mistakes before submission.
 - [ ] Submit only after explicit user action, through the existing answer/follow-up workflow.
 
-### 2. Review and weak-point tracking
+### 2. Review and weak-point tracking — completed
 
-- [ ] Summarize recurring mistakes, concepts to revisit and related exercises across interview history.
-- [ ] Link each finding to the actual answer/feedback evidence and keep independent answers distinct from AI assistance.
+- [x] Summarize recurring mistakes, concepts to revisit and related exercises across interview history.
+- [x] Link each finding to the actual answer/feedback evidence and keep independent answers distinct from AI assistance.
 
-### 3. Study plans and spaced review
+### 3. Study plans and spaced review — completed
 
-- [ ] Turn weak points and past practice into a manageable review queue.
-- [ ] Schedule spaced revisits and track whether previously weak concepts have improved.
+- [x] Turn weak points and past practice into a manageable review queue.
+- [x] Schedule spaced revisits and track whether previously weak concepts have improved.
+
+Review acceptance now includes unassessed/AI-only evidence filtering, exact feedback provenance, guarded P1/P2 navigation and unknown-cost regression checks. See [Review tab](docs/REVIEW.md). Completed follow-ups: P1/P2 feedback shows an "Added to Review" note; LeetCode countdowns persist per problem and contribute elapsed time to Review, including archived attempts after reset.
 
 ### 4. Timed mock interviews — completed
 

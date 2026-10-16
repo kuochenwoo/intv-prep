@@ -32,6 +32,8 @@ pub fn open(path: &Path) -> Result<Connection, String> {
     crate::system_design_store::migrate(&c)?;
     crate::usage::migrate(&c)?;
     crate::session_tools::migrate(&c)?;
+    crate::review::migrate(&c)?;
+    crate::coding_timer::migrate(&c)?;
     Ok(c)
 }
 pub fn load(c: &Connection) -> Result<Vec<Progress>, String> {
@@ -70,6 +72,19 @@ pub fn record(
     c.execute("UPDATE coding_progress SET last_result=?3,status=CASE WHEN ?4 THEN 'completed' ELSE status END,updated_at=CURRENT_TIMESTAMP WHERE problem_id=?1 AND mode=?2",params![id,mode,result,accepted]).map_err(|e|e.to_string())?;
     Ok(())
 }
+/// Delete saved code and results for one problem (both modes), or for every problem.
+/// The judge-run log behind the Review tab is kept.
+pub fn clear(c: &Connection, problem_id: Option<&str>) -> Result<(), String> {
+    match problem_id {
+        Some(id) => {
+            crate::content::find(id)?;
+            c.execute("DELETE FROM coding_progress WHERE problem_id=?1", [id])
+        }
+        None => c.execute("DELETE FROM coding_progress", []),
+    }
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
 pub fn compiler(c: &Connection) -> Result<String, String> {
     c.query_row("SELECT value FROM settings WHERE key='compiler'", [], |r| {
         r.get(0)
@@ -81,4 +96,32 @@ pub fn compiler(c: &Connection) -> Result<String, String> {
 pub fn set_compiler(c: &Connection, value: &str) -> Result<(), String> {
     c.execute("INSERT INTO settings VALUES('compiler',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",[value]).map_err(|e|e.to_string())?;
     Ok(())
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn clear_removes_one_problem_or_all() {
+        let dir = tempfile::tempdir().unwrap();
+        let c = open(&dir.path().join("t.sqlite3")).unwrap();
+        let ids: Vec<_> = crate::content::problems()[..2]
+            .iter()
+            .map(|p| p.id.clone())
+            .collect();
+        for id in &ids {
+            save(&c, id, "function", "a").unwrap();
+            save(&c, id, "acm", "b").unwrap();
+        }
+        crate::review::log_run(&c, &ids[0], "function", "accepted", 1, 1).unwrap();
+        clear(&c, Some(&ids[0])).unwrap();
+        assert!(load(&c).unwrap().iter().all(|p| p.problem_id == ids[1]));
+        assert_eq!(load(&c).unwrap().len(), 2);
+        assert!(clear(&c, Some("no-such-problem")).is_err());
+        clear(&c, None).unwrap();
+        assert!(load(&c).unwrap().is_empty());
+        let runs: i64 = c
+            .query_row("SELECT COUNT(*) FROM judge_runs", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(runs, 1);
+    }
 }
