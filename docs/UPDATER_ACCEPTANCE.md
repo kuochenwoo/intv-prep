@@ -22,6 +22,20 @@ Candidate: `0.1.0-preview.2`, macOS 13+ arm64. Local validation on macOS 27.0.1.
   manual updater control. An actual GitHub feed check reported unavailable, not
   current. Automatic-check opt-out survived process restart. English labels were
   also checked. Screenshot: ignored `release-artifacts/updater-ui/settings-check.png`.
+- Hosted PR CI and signed draft-release CI passed. Downloaded all eleven draft
+  attachments and rechecked every checksum, the actual updater signature and
+  version binding. The manifest identifies clean commit
+  `8229655620cc9acc5c189a27591b372039433241`.
+- A second isolated Release profile performed a real installed-app upgrade from
+  `9.0.0-updater-test.1` to `.2` with a disposable signing identity and localhost
+  fixture feed. Changed archive bytes were rejected while the older version
+  remained installed. Restoring the genuine signed archive allowed replacement
+  and process restart; both the new on-disk executable and native Settings version
+  were verified. The automatic-check opt-out survived, and a subsequent check
+  correctly reported current. Screenshot: ignored
+  `release-artifacts/updater-ui/installed-update.png`. HTTP was enabled only in
+  temporary QA configuration outside the repository; production remains HTTPS.
+  This verifies real local installation, not public-channel publication.
 - Repository audit passed. No paid model/transcription calls or personal profile
   changes were made. The updater-only GitHub signing secret was uploaded with
   explicit user approval; no secret value was displayed.
