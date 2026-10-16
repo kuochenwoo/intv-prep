@@ -43,7 +43,7 @@ npm run test:release-tools            # release guard regressions
 TAURI_SIGNING_PRIVATE_KEY="$PWD/.release-keys/updater.key" npm run build:macos # signed update bundle plus app/DMG
 ```
 
-The app and DMG are written to `src-tauri/target/aarch64-apple-darwin/release/bundle/`. The preview targets macOS 13+ on Apple Silicon and still needs a local C++20 compiler for LC judging. See [release preparation and CI](docs/RELEASING.md) and [preview notes](docs/releases/v0.1.0-preview.2.md). GitHub Actions creates draft releases only.
+The app and DMG are written to `src-tauri/target/aarch64-apple-darwin/release/bundle/`. The preview targets macOS 13+ on Apple Silicon and still needs a local C++20 compiler for LC judging. See [release preparation and CI](docs/RELEASING.md) and [preview notes](docs/releases/v0.1.0-preview.3.md). GitHub Actions creates draft releases only.
 
 ## AI settings
 
