@@ -311,6 +311,7 @@ impl Validated for Feedback {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QuestionView {
+    pub lang: Lang,
     pub id: String,
     pub seed_id: String,
     pub provider: String,

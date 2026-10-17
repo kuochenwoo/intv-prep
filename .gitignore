@@ -15,3 +15,14 @@ release-artifacts/
 
 # Updater signing identity (public key is embedded in tauri.conf.json)
 .release-keys/
+
+# Unreferenced raw calibration transcripts stay local; curated acceptance evidence stays tracked.
+/review/*.log
+!/review/calibration-closeout-initial-failure.log
+/review/calibration-closeout-epoll-partial.txt
+/review/bug-review-*.md
+
+# Local compiler/interpreter caches
+__pycache__/
+*.py[cod]
+*.tsbuildinfo

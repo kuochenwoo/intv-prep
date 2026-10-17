@@ -88,6 +88,7 @@ export function SessionTools({
     [minutes, setMinutes] = useState("off"),
     [now, setNow] = useState(Date.now()),
     [loaded, setLoaded] = useState(false),
+    [reload, setReload] = useState(0),
     [working, setWorking] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
@@ -97,6 +98,9 @@ export function SessionTools({
     let active = true;
     if (!isTauri()) return;
     setLoaded(false);
+    setClock(null);
+    setMinutes("off");
+    setError("");
     invoke<Clock | null>("session_timing", { ...args, action: "get" })
       .then((c) => {
         if (active) {
@@ -111,7 +115,7 @@ export function SessionTools({
     return () => {
       active = false;
     };
-  }, [module, sessionId, status]);
+  }, [module, sessionId, status, reload]);
   useEffect(() => {
     if (!clock?.deadlineMs) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -264,6 +268,15 @@ export function SessionTools({
         />
       )}
       <small className="muted">{t("exportScope")}</small>
+      {error && !loaded && (
+        <Button
+          size="sm"
+          variant="secondary"
+          label={t("retryLoadTimer")}
+          isDisabled={working}
+          onClick={() => setReload((n) => n + 1)}
+        />
+      )}
       {error && <Banner status="error" title={localizeError(error, lang)} />}
       {notice && <p role="status">{notice}</p>}
       <AlertDialog

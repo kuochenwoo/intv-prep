@@ -103,6 +103,24 @@ pub fn save(c: &Connection, id: &str, mode: &str, code: &str) -> Result<(), Stri
     c.execute("INSERT INTO coding_progress(problem_id,mode,code) VALUES(?1,?2,?3) ON CONFLICT(problem_id,mode) DO UPDATE SET code=excluded.code,updated_at=CURRENT_TIMESTAMP",params![id,mode,code]).map_err(|e|e.to_string())?;
     Ok(())
 }
+/// Persist the Review outcome and editor result atomically.
+pub fn record_submission(
+    c: &Connection,
+    id: &str,
+    mode: &str,
+    result: &crate::code_runner::JudgeResult,
+) -> Result<(), String> {
+    let tx = c.unchecked_transaction().map_err(|e| e.to_string())?;
+    crate::review::log_run(&tx, id, mode, &result.status, result.passed, result.total)?;
+    record(
+        &tx,
+        id,
+        mode,
+        &serde_json::to_string(result).map_err(|e| e.to_string())?,
+        result.status == "accepted",
+    )?;
+    tx.commit().map_err(|e| e.to_string())
+}
 pub fn record(
     c: &Connection,
     id: &str,
@@ -184,7 +202,10 @@ mod tests {
         let v: serde_json::Value = serde_json::from_str(&row).unwrap();
         assert_eq!(v["cases"][0]["input"], "");
         assert!(v["cases"][0]["expected"].is_null());
-        assert!(v["cases"][1]["input"].as_str().unwrap().contains("bytes total"));
+        assert!(v["cases"][1]["input"]
+            .as_str()
+            .unwrap()
+            .contains("bytes total"));
         assert_eq!(v["cases"][1]["actual"], "3");
     }
 }

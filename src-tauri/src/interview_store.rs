@@ -42,6 +42,17 @@ pub fn migrate(c: &Connection) -> Result<(), String> {
         )
         .map_err(err)?;
     }
+    let columns: Vec<String> = c
+        .prepare("PRAGMA table_info(generated_questions)")
+        .map_err(err)?
+        .query_map([], |r| r.get(1))
+        .map_err(err)?
+        .collect::<Result<_, _>>()
+        .map_err(err)?;
+    if !columns.iter().any(|name| name == "lang") {
+        c.execute("ALTER TABLE generated_questions ADD COLUMN lang TEXT", [])
+            .map_err(err)?;
+    }
     Ok(())
 }
 fn new_id(c: &Connection) -> Result<String, String> {
@@ -54,11 +65,20 @@ pub fn cache_question(
     config: &LlmSettings,
     q: &GeneratedQuestion,
 ) -> Result<QuestionView, String> {
+    cache_question_lang(c, seed_id, config, q, Lang::Zh)
+}
+pub fn cache_question_lang(
+    c: &Connection,
+    seed_id: &str,
+    config: &LlmSettings,
+    q: &GeneratedQuestion,
+    lang: Lang,
+) -> Result<QuestionView, String> {
     topic(seed_id)?;
     config.validate()?;
     q.validate()?;
     let id = new_id(c)?;
-    c.execute("INSERT INTO generated_questions(id,seed_id,provider,model,prompt_version,content_json) VALUES(?1,?2,?3,?4,?5,?6)",params![id,seed_id,config.provider,config.model,crate::quality::POLICY_VERSION,serde_json::to_string(q).map_err(err)?]).map_err(err)?;
+    c.execute("INSERT INTO generated_questions(id,seed_id,provider,model,prompt_version,content_json,lang) VALUES(?1,?2,?3,?4,?5,?6,?7)",params![id,seed_id,config.provider,config.model,crate::quality::POLICY_VERSION,serde_json::to_string(q).map_err(err)?, if lang == Lang::En { "en" } else { "zh" }]).map_err(err)?;
     question(c, &id).map(|r| r.0)
 }
 pub fn question(c: &Connection, id: &str) -> Result<(QuestionView, GeneratedQuestion), String> {
@@ -67,6 +87,25 @@ pub fn question(c: &Connection, id: &str) -> Result<(QuestionView, GeneratedQues
     q.validate()?;
     Ok((
         QuestionView {
+            // Legacy cache rows predate language metadata. Infer from their public opening.
+            lang: c
+                .query_row(
+                    "SELECT lang FROM generated_questions WHERE id=?1",
+                    [id],
+                    |r| r.get::<_, Option<String>>(0),
+                )
+                .map_err(err)?
+                .map(|lang| if lang == "en" { Lang::En } else { Lang::Zh })
+                .unwrap_or_else(|| {
+                    if q.question
+                        .chars()
+                        .any(|ch| ('\u{4e00}'..='\u{9fff}').contains(&ch))
+                    {
+                        Lang::Zh
+                    } else {
+                        Lang::En
+                    }
+                }),
             id: id.into(),
             seed_id,
             provider,
@@ -102,7 +141,7 @@ pub fn start(
     session(c, &id)
 }
 pub fn session(c: &Connection, id: &str) -> Result<SessionView, String> {
-    let mut s=c.query_row("SELECT question_id,provider,model,status,draft,last_error,should_end,created_at FROM interview_sessions WHERE id=?1",[id],|r|Ok(SessionView{id:id.into(),question:QuestionView{id:r.get(0)?,seed_id:String::new(),provider:String::new(),model:String::new(),question:String::new(),background:String::new(),constraints:vec![],created_at:String::new()},provider:r.get(1)?,model:r.get(2)?,status:r.get(3)?,draft:r.get(4)?,last_error:r.get(5)?,should_end:r.get(6)?,turns:vec![],feedback:None,references:vec![],created_at:r.get(7)?})).optional().map_err(err)?.ok_or("面试会话不存在")?;
+    let mut s=c.query_row("SELECT question_id,provider,model,status,draft,last_error,should_end,created_at FROM interview_sessions WHERE id=?1",[id],|r|Ok(SessionView{id:id.into(),question:QuestionView{lang:Lang::Zh,id:r.get(0)?,seed_id:String::new(),provider:String::new(),model:String::new(),question:String::new(),background:String::new(),constraints:vec![],created_at:String::new()},provider:r.get(1)?,model:r.get(2)?,status:r.get(3)?,draft:r.get(4)?,last_error:r.get(5)?,should_end:r.get(6)?,turns:vec![],feedback:None,references:vec![],created_at:r.get(7)?})).optional().map_err(err)?.ok_or("面试会话不存在")?;
     s.question = question(c, &s.question.id)?.0;
     let mut refs = c.prepare("SELECT turn_index,content_json FROM interview_references WHERE session_id=?1 ORDER BY turn_index").map_err(err)?;
     let rows = refs

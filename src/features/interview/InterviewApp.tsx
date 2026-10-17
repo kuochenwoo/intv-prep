@@ -1,3 +1,4 @@
+import { notifyReviewChanged } from "../review/events";
 import { registerUpdateGuard } from "../updates/guards";
 import { ApiKeyBadge, ApiKeyWarning } from "../../ApiKeyStatus";
 import { useEffect, useRef, useState } from "react";
@@ -39,6 +40,7 @@ const hasChinese = (text: string) => /[\u4e00-\u9fff]/.test(text);
 const localTopic = (x: Topic, lang: string): Topic =>
   lang === "en" && x.en ? { ...x, ...x.en } : x;
 type Question = {
+  lang: "zh" | "en";
   id: string;
   seedId: string;
   provider: string;
@@ -154,11 +156,15 @@ export default function InterviewApp({
   const queue = useRef(Promise.resolve()),
     saveError = useRef(""),
     revision = useRef(0);
-  useEffect(() => registerUpdateGuard(async () => {
-    if (busy) throw new Error("updatePracticeBusy");
-    await queue.current;
-    if (saveError.current) throw new Error("updateDraftFailed");
-  }), [busy]);
+  useEffect(
+    () =>
+      registerUpdateGuard(async () => {
+        if (busy) throw new Error("updatePracticeBusy");
+        await queue.current;
+        if (saveError.current) throw new Error("updateDraftFailed");
+      }),
+    [busy],
+  );
   const locale = lang === "zh" ? "zh-CN" : "en";
   const categoryLabel = (category: string) =>
     lookup(t, "topicCategory_", category);
@@ -198,6 +204,10 @@ export default function InterviewApp({
         formOrder[a.questionForm ?? "scenario"] -
           formOrder[b.questionForm ?? "scenario"],
     );
+  const visibleTopicIds = useRef<Set<string> | null>(null);
+  visibleTopicIds.current = data
+    ? new Set(visibleTopics.map((topic) => topic.id))
+    : null;
   const [historyOpen, setHistoryOpen] = useState(false);
   const navigationVersion = useRef(0);
   const requestOwner = useRef<number | null>(null);
@@ -246,7 +256,10 @@ export default function InterviewApp({
     setDraft(s.draft);
     setTopicId(s.question.seedId);
     setQuestionId(s.question.id);
-    if (!visibleTopics.some((topic) => topic.id === s.question.seedId)) {
+    if (
+      visibleTopicIds.current &&
+      !visibleTopicIds.current.has(s.question.seedId)
+    ) {
       setTopicSearch("");
       setTopicCategory("");
       setTopicForm("");
@@ -255,6 +268,7 @@ export default function InterviewApp({
   }
   async function overview() {
     const result = await invoke<Overview>("interview_overview");
+    notifyReviewChanged();
     setData(result);
     setConfig(result.settings.config);
     return result;
@@ -330,6 +344,7 @@ export default function InterviewApp({
   async function perform(
     task: (current: () => boolean) => Promise<void>,
     network = false,
+    networkProvider = session?.provider ?? config.provider,
   ) {
     if (voiceBusy || requestOwner.current !== null) return;
     // Every explicit action supersedes a still-loading default restoration.
@@ -342,7 +357,7 @@ export default function InterviewApp({
     if (network)
       setConnection({
         kind: "requesting",
-        provider: session?.provider ?? config.provider,
+        provider: networkProvider,
       });
     try {
       await flush();
@@ -351,9 +366,9 @@ export default function InterviewApp({
       await overview();
       if (network) setConnection({ kind: "ok" });
     } catch (e) {
+      if (network) setConnection({ kind: "failed" });
       if (!current()) return;
       setError(String(e));
-      if (network) setConnection({ kind: "failed" });
       if (session && !saveError.current) {
         try {
           await loadCurrent(
@@ -369,6 +384,10 @@ export default function InterviewApp({
         }
       }
     } finally {
+      if (network)
+        setConnection((value) =>
+          value.kind === "requesting" ? { kind: "unverified" } : value,
+        );
       requestOwner.current = null;
       setBusy(false);
       setLive("");
@@ -439,7 +458,7 @@ export default function InterviewApp({
                               {
                                 sessionId: session.id,
                                 turnIndex: k,
-                                lang,
+                                lang: session.question.lang,
                               },
                             ),
                           show,
@@ -757,22 +776,26 @@ export default function InterviewApp({
                     isDisabled={busy || !data}
                     isLoading={requestBusy}
                     onClick={() =>
-                      perform(async (current) => {
-                        const q = await invoke<Question>(
-                          "generate_interview_question",
-                          { topicId, lang },
-                        );
-                        if (!current()) return;
-                        setQuestionId(q.id);
-                        await loadCurrent(
-                          async () =>
-                            await invoke<Session>("start_interview", {
-                              questionId: q.id,
-                            }),
-                          show,
-                          current,
-                        );
-                      }, true)
+                      perform(
+                        async (current) => {
+                          const q = await invoke<Question>(
+                            "generate_interview_question",
+                            { topicId, lang },
+                          );
+                          if (!current()) return;
+                          setQuestionId(q.id);
+                          await loadCurrent(
+                            async () =>
+                              await invoke<Session>("start_interview", {
+                                questionId: q.id,
+                              }),
+                            show,
+                            current,
+                          );
+                        },
+                        true,
+                        config.provider,
+                      )
                     }
                   />
                 </div>
@@ -941,7 +964,7 @@ export default function InterviewApp({
                               async () =>
                                 await invoke<Session>("retry_interview", {
                                   sessionId: session.id,
-                                  lang,
+                                  lang: session.question.lang,
                                 }),
                               show,
                               current,
@@ -1006,7 +1029,7 @@ export default function InterviewApp({
                                     {
                                       sessionId: session.id,
                                       answer: draft,
-                                      lang,
+                                      lang: session.question.lang,
                                     },
                                   ),
                                 show,
@@ -1033,7 +1056,7 @@ export default function InterviewApp({
                                     {
                                       sessionId: session.id,
                                       turnIndex: session.turns.length,
-                                      lang,
+                                      lang: session.question.lang,
                                     },
                                   ),
                                 show,
@@ -1055,7 +1078,7 @@ export default function InterviewApp({
                                 async () =>
                                   await invoke<Session>("finish_interview", {
                                     sessionId: session.id,
-                                    lang,
+                                    lang: session.question.lang,
                                   }),
                                 show,
                                 current,

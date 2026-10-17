@@ -1,3 +1,4 @@
+import { notifyReviewChanged } from "../review/events";
 import { registerUpdateGuard } from "../updates/guards";
 import { ApiKeyBadge, ApiKeyWarning } from "../../ApiKeyStatus";
 import { useEffect, useRef, useState } from "react";
@@ -176,11 +177,15 @@ export default function SystemDesignApp({
     revision = useRef(0),
     running = useRef(false),
     activeId = useRef("");
-  useEffect(() => registerUpdateGuard(async () => {
-    if (busy) throw new Error("updatePracticeBusy");
-    await queue.current;
-    if (saveError.current) throw new Error("updateDraftFailed");
-  }), [busy]);
+  useEffect(
+    () =>
+      registerUpdateGuard(async () => {
+        if (busy) throw new Error("updatePracticeBusy");
+        await queue.current;
+        if (saveError.current) throw new Error("updateDraftFailed");
+      }),
+    [busy],
+  );
   const [historyOpen, setHistoryOpen] = useState(false);
   const navigationVersion = useRef(0);
   useEffect(() => {
@@ -191,7 +196,8 @@ export default function SystemDesignApp({
   // stream into the newly opened session.
   const appliedFocus = useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (!focus || !isTauri() || busy || appliedFocus.current === focus.n) return;
+    if (!focus || !isTauri() || busy || appliedFocus.current === focus.n)
+      return;
     appliedFocus.current = focus.n;
     const version = ++navigationVersion.current;
     let disposed = false;
@@ -232,6 +238,7 @@ export default function SystemDesignApp({
     setSaveFailed(false);
   }
   async function overview() {
+    notifyReviewChanged();
     const d = await invoke<Overview>("sd_overview");
     setData(d);
     setConfig(d.settings.config);
@@ -290,7 +297,11 @@ export default function SystemDesignApp({
         if (version === revision.current) setSaving(false);
       });
   }
-  async function perform(task: () => Promise<void>, network = false) {
+  async function perform(
+    task: () => Promise<void>,
+    network = false,
+    networkProvider = session?.provider ?? config.provider,
+  ) {
     if (running.current || voiceBusy) return;
     running.current = true;
     // A user action supersedes a launch restore that has not finished yet.
@@ -301,7 +312,7 @@ export default function SystemDesignApp({
     if (network)
       setConnection({
         kind: "requesting",
-        provider: session?.provider ?? config.provider,
+        provider: networkProvider,
       });
     try {
       await queue.current;
@@ -701,16 +712,22 @@ export default function SystemDesignApp({
                   variant="primary"
                   isDisabled={busy || !online || !data}
                   onClick={() =>
-                    perform(async () => {
-                      const q = await invoke<Question>("sd_generate", {
-                        scenarioId,
-                        lang,
-                      });
-                      setQuestionId(q.id);
-                      show(
-                        await invoke<Session>("sd_start", { questionId: q.id }),
-                      );
-                    }, true)
+                    perform(
+                      async () => {
+                        const q = await invoke<Question>("sd_generate", {
+                          scenarioId,
+                          lang,
+                        });
+                        setQuestionId(q.id);
+                        show(
+                          await invoke<Session>("sd_start", {
+                            questionId: q.id,
+                          }),
+                        );
+                      },
+                      true,
+                      config.provider,
+                    )
                   }
                 />
               </div>
@@ -1002,6 +1019,9 @@ export default function SystemDesignApp({
                       isDisabled={
                         busy ||
                         !online ||
+                        !session.turns.some(
+                          (turn) => turn.role === "candidate",
+                        ) ||
                         unfinishedDrafts.length > 0 ||
                         saveFailed
                       }

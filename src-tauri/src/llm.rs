@@ -189,10 +189,11 @@ fn client(timeout: u64, https_only: bool) -> Result<Client, String> {
         .map_err(|_| "无法初始化 HTTPS 客户端".into())
 }
 /// Why a request failed: transport/HTTP problems, or a complete response whose
-/// content was empty, truncated, or failed the schema (worth an automatic retry).
+/// content failed the schema (retryable). Refusals and truncation require manual action.
 enum Failure {
     Transport(String),
     Content(String),
+    Terminal(String),
 }
 impl From<String> for Failure {
     fn from(e: String) -> Self {
@@ -207,7 +208,7 @@ impl From<&str> for Failure {
 impl Failure {
     fn message(self) -> String {
         match self {
-            Failure::Transport(e) | Failure::Content(e) => e,
+            Failure::Transport(e) | Failure::Content(e) | Failure::Terminal(e) => e,
         }
     }
 }
@@ -267,12 +268,7 @@ async fn post_observed<T: DeserializeOwned + Validated>(
     if streamed {
         let envelope = read_stream(&mut response, claude, on_text, observe).await?;
         let bytes = envelope.to_string().into_bytes();
-        return if claude {
-            decode_claude(&bytes)
-        } else {
-            decode(&bytes)
-        }
-        .map_err(Failure::Content);
+        return decode_checked(&bytes, claude);
     }
     let mut bytes = Vec::new();
     while let Some(chunk) = response.chunk().await.map_err(|e| {
@@ -290,12 +286,44 @@ async fn post_observed<T: DeserializeOwned + Validated>(
     if let Ok(envelope) = serde_json::from_slice::<Value>(&bytes) {
         observe(&envelope["usage"], true);
     }
-    if claude {
-        decode_claude(&bytes)
+    decode_checked(&bytes, claude)
+}
+fn decode_checked<T: DeserializeOwned + Validated>(
+    bytes: &[u8],
+    claude: bool,
+) -> Result<T, Failure> {
+    let value = serde_json::from_slice::<Value>(bytes).ok();
+    let terminal = value.as_ref().is_some_and(|v| {
+        if claude {
+            v["stop_reason"] != "end_turn"
+        } else {
+            v["choices"][0]["finish_reason"] != "stop"
+                || v["choices"][0]["message"]["refusal"]
+                    .as_str()
+                    .is_some_and(|s| !s.is_empty())
+        }
+    });
+    let decoded = if claude {
+        decode_claude(bytes)
     } else {
-        decode(&bytes)
+        decode(bytes)
+    };
+    decoded.map_err(|e| {
+        if terminal {
+            Failure::Terminal(e)
+        } else {
+            Failure::Content(e)
+        }
+    })
+}
+/// Custom repair/review prompts must describe the same schema the provider enforces.
+fn override_system(body: &mut Value, system: String, original_schema: &Value, claude: bool) {
+    if claude {
+        let adapted = &body["output_config"]["format"]["schema"];
+        body["system"] = json!(system.replace(&original_schema.to_string(), &adapted.to_string()));
+    } else {
+        body["messages"][0]["content"] = json!(system);
     }
-    .map_err(Failure::Content)
 }
 fn read_error(e: reqwest::Error) -> Failure {
     if e.is_timeout() {
@@ -320,12 +348,21 @@ async fn read_stream(
     let mut refusal = String::new();
     let mut usage = json!({});
     let mut usage_complete = false;
-    while let Some(chunk) = response.chunk().await.map_err(read_error)? {
-        total += chunk.len() as u64;
+    loop {
+        let chunk = response.chunk().await.map_err(read_error)?;
+        let eof = chunk.is_none();
+        if let Some(chunk) = chunk {
+            total += chunk.len() as u64;
+            pending.extend_from_slice(&chunk);
+        } else if pending.is_empty() {
+            break;
+        } else {
+            // SSE producers sometimes omit the final newline. Flush the last data line.
+            pending.push(b'\n');
+        }
         if total > MAX_STREAM_BYTES {
             return Err("API 响应超过大小限制，请重试".into());
         }
-        pending.extend_from_slice(&chunk);
         let mut changed = false;
         while let Some(end) = pending.iter().position(|&b| b == b'\n') {
             let line: Vec<u8> = pending.drain(..=end).collect();
@@ -392,6 +429,9 @@ async fn read_stream(
         }
         if changed {
             on_text(&text);
+        }
+        if eof {
+            break;
         }
     }
     // A stream cut off before its stop reason decodes as a truncated response.
@@ -588,6 +628,7 @@ impl InterviewProvider {
     ) -> Result<T, String> {
         let task = if lang == Lang::En { en } else { zh };
         let usage_operation = crate::usage::purpose(&schema, &context, silent);
+        let original_schema = schema.clone();
         let (url, mut body) = if self.provider == "claude" {
             (
                 CLAUDE_ENDPOINT,
@@ -600,11 +641,12 @@ impl InterviewProvider {
             )
         };
         if let Some(system) = system {
-            if self.provider == "claude" {
-                body["system"] = json!(system);
-            } else {
-                body["messages"][0]["content"] = json!(system);
-            }
+            override_system(
+                &mut body,
+                system,
+                &original_schema,
+                self.provider == "claude",
+            );
         }
         // Models occasionally return empty or schema-violating JSON (e.g. an empty
         // list). Such responses are retried automatically; HTTP and network errors
@@ -654,7 +696,7 @@ impl InterviewProvider {
                 let (v, complete) = observed.into_inner().unwrap_or_else(|e| e.into_inner());
                 let status = match &result {
                     Ok(_) => "success",
-                    Err(Failure::Content(_)) => "content_error",
+                    Err(Failure::Content(_) | Failure::Terminal(_)) => "content_error",
                     Err(_) => "transport_error",
                 };
                 // Never discard a paid response because local accounting failed: a busy
@@ -1493,6 +1535,90 @@ mod tests {
         assert!(complete);
         assert_eq!(usage["completion_tokens"], 5);
     }
+    #[test]
+    fn custom_claude_feedback_prompt_matches_enforced_schema_including_repairs() {
+        for lang in [Lang::Zh, Lang::En] {
+            let schema = feedback_schema();
+            let custom = format!(
+                "{}\nRepair only the rejected evidence.",
+                system_prompt(lang, "feedback", &schema)
+            );
+            let mut body =
+                claude_request_body("fixture-model", lang, "feedback", json!({}), schema.clone());
+            override_system(&mut body, custom, &schema, true);
+            let prompt = body["system"].as_str().unwrap();
+            assert!(prompt.contains(&body["output_config"]["format"]["schema"].to_string()));
+            assert!(!prompt.contains(&schema.to_string()));
+            assert!(prompt.ends_with("Repair only the rejected evidence."));
+        }
+    }
+    #[test]
+    fn refusals_and_output_limits_are_terminal_but_invalid_json_is_retryable() {
+        for (claude, envelope) in [
+            (true, json!({"stop_reason":"refusal","content":[]})),
+            (true, json!({"stop_reason":"max_tokens","content":[]})),
+            (
+                false,
+                json!({"choices":[{"finish_reason":"length","message":{"content":"{}"}}]}),
+            ),
+            (
+                false,
+                json!({"choices":[{"finish_reason":"stop","message":{"content":"{}","refusal":"declined"}}]}),
+            ),
+        ] {
+            let (url, worker) = fixture("200 OK", envelope.to_string(), 0);
+            let result: Result<GeneratedQuestion, _> = runtime().unwrap().block_on(post_observed(
+                &client(3, false).unwrap(),
+                &url,
+                "fixture-only-key",
+                if claude {
+                    json!({"system":"fixture"})
+                } else {
+                    json!({})
+                },
+                &|_| {},
+                &|_, _| {},
+            ));
+            worker.join().unwrap();
+            assert!(matches!(result, Err(Failure::Terminal(_))));
+        }
+        assert!(matches!(
+            decode_checked::<GeneratedQuestion>(
+                br#"{"choices":[{"finish_reason":"stop","message":{"content":"bad json"}}]}"#,
+                false
+            ),
+            Err(Failure::Content(_))
+        ));
+    }
+    #[test]
+    fn final_sse_data_line_without_newline_is_not_lost() {
+        let text = question_value().to_string();
+        for claude in [false, true] {
+            let events = if claude {
+                vec![
+                    json!({"type":"content_block_delta","delta":{"type":"text_delta","text":text}}),
+                    json!({"type":"message_delta","delta":{"stop_reason":"end_turn"}}),
+                ]
+            } else {
+                vec![
+                    json!({"choices":[{"delta":{"content":text},"finish_reason":null}]}),
+                    json!({"choices":[{"delta":{},"finish_reason":"stop"}]}),
+                ]
+            };
+            let body = sse(&events).trim_end().to_string();
+            let (result, seen) = stream_post::<GeneratedQuestion>(
+                body,
+                if claude {
+                    json!({"system":"fixture","stream":true})
+                } else {
+                    json!({"stream":true})
+                },
+            );
+            assert_eq!(result.unwrap().question, "测试场景问题");
+            assert_eq!(seen.last().unwrap(), &text);
+        }
+    }
+
     #[test]
     fn production_client_rejects_plain_http() {
         assert!(post::<GeneratedQuestion>(

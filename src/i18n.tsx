@@ -5,6 +5,8 @@ export type Lang = "zh" | "en";
 // UI strings. Problem and topic text has its own `en` blocks in the content files,
 // and backend errors are translated in errors.ts.
 const strings = {
+  draftUnsaved: ["草稿未保存", "Draft not saved"],
+  retryLoadTimer: ["重试加载计时器", "Retry loading timer"],
   updatePracticeBusy: ["请先等待当前练习操作完成后再更新。", "Wait for the current practice operation to finish before updating."],
   updateDraftFailed: ["草稿尚未成功保存，请先处理保存错误后再更新。", "A draft has not been saved successfully. Resolve its save error before updating."],
   updateVoicePending: ["请先结束语音输入，将需要的转写加入草稿并清除临时录音后再更新。", "Finish voice input, add any needed transcript to your draft, and clear temporary audio before updating."],

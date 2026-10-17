@@ -190,3 +190,26 @@ fn bundled_library_is_sorted_cached_and_hides_tests_from_the_ui() {
     assert!(listed[0].get("tests").is_none());
     assert_eq!(listed[0]["io"]["method"], "twoSum");
 }
+
+#[test]
+fn string_after_empty_flat_array_preserves_the_following_line() {
+    let p = problem(
+        json!({"method":"join", "params":[{"name":"nums","type":"int[]"},{"name":"label","type":"string"}], "returns":"string"}),
+        json!([
+            case(
+                json!({"nums":[],"label":"hello world"}),
+                json!("hello world")
+            ),
+            case(json!({"nums":[],"label":""}), json!("")),
+            case(json!({"nums":[1,2],"label":"next"}), json!("next"))
+        ]),
+    );
+    accepted(&p, "class Solution { public: string join(vector<int>& nums, string label) { return label; } };");
+    let acm = r#"#include <iostream>
+#include <string>
+#include <limits>
+using namespace std;
+int main() { size_t n; cin >> n; cin.ignore(numeric_limits<streamsize>::max(), '\n'); string values, label; getline(cin, values); getline(cin, label); cout << label << '\n'; }
+"#;
+    assert_eq!(judge(&p, "acm", acm, false, "").unwrap().status, "accepted");
+}

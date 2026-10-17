@@ -440,3 +440,32 @@ fn background_connections_share_migrated_data_and_enforce_foreign_keys() {
         .unwrap();
     assert_eq!(fk, 1);
 }
+
+#[test]
+fn judge_result_and_review_run_commit_or_rollback_together() {
+    let dir = tempfile::tempdir().unwrap();
+    let c = db::open(&dir.path().join("atomic.sqlite3")).unwrap();
+    db::save(&c, "lc-1", "function", &solution("lc-1", "function")).unwrap();
+    // Real compilation and execution; a trigger then forces only persistence to fail.
+    let p = problem("lc-1").unwrap();
+    let result = judge(&p, "function", &solution("lc-1", "function"), false, "").unwrap();
+    assert_eq!(result.status, "accepted");
+    c.execute_batch("CREATE TRIGGER fail_result BEFORE UPDATE ON coding_progress BEGIN SELECT RAISE(FAIL,'fixture write failure'); END;").unwrap();
+    assert!(db::record_submission(&c, "lc-1", "function", &result).is_err());
+    assert_eq!(
+        c.query_row("SELECT count(*) FROM judge_runs", [], |r| r
+            .get::<_, i64>(0))
+            .unwrap(),
+        0
+    );
+    assert!(db::load(&c).unwrap()[0].last_result.is_none());
+    c.execute_batch("DROP TRIGGER fail_result").unwrap();
+    db::record_submission(&c, "lc-1", "function", &result).unwrap();
+    assert_eq!(
+        c.query_row("SELECT count(*) FROM judge_runs", [], |r| r
+            .get::<_, i64>(0))
+            .unwrap(),
+        1
+    );
+    assert_eq!(db::load(&c).unwrap()[0].status, "completed");
+}

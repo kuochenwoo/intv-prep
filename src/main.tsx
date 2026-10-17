@@ -1,3 +1,4 @@
+import { notifyReviewChanged } from "./features/review/events";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { invoke, isTauri } from "@tauri-apps/api/core";
@@ -152,7 +153,14 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [ready, setReady] = useState(false),
-    [saving, setSaving] = useState(false);
+    [saving, setSaving] = useState(false),
+    [saveFailed, setSaveFailed] = useState(false);
+  const failedDrafts = useRef(
+    new Map<
+      string,
+      { id: string; mode: string; code: string; error: string }
+    >(),
+  );
   const saveQueue = useRef(Promise.resolve()),
     saveError = useRef(""),
     version = useRef(0);
@@ -172,11 +180,15 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
     busyRef.current = on;
     setBusy(on);
   }
-  useEffect(() => registerUpdateGuard(async () => {
-    if (busy) throw new Error("updatePracticeBusy");
-    await saveQueue.current;
-    if (saveError.current) throw new Error("updateDraftFailed");
-  }), [busy]);
+  useEffect(
+    () =>
+      registerUpdateGuard(async () => {
+        if (busy) throw new Error("updatePracticeBusy");
+        await saveQueue.current;
+        if (saveError.current) throw new Error("updateDraftFailed");
+      }),
+    [busy],
+  );
   useEffect(() => {
     if (!isTauri()) {
       setError(t("needDesktop"));
@@ -227,7 +239,6 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
     const id = now.id,
       m = now.mode,
       k = now.key;
-    const n = ++version.current;
     setProgress((prev) => ({
       ...prev,
       [k]: {
@@ -238,17 +249,30 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
         code: value,
       },
     }));
+    persistDraft(id, m, value);
+  }
+  function persistDraft(id: string, m: string, value: string) {
+    const n = ++version.current;
+    const k = keyOf(id, m as Mode);
     setSaving(true);
     saveQueue.current = saveQueue.current
       .then(() => invoke("save_draft", { problemId: id, mode: m, code: value }))
       .then(() => {
-        saveError.current = "";
+        failedDrafts.current.delete(k);
       })
       .catch((e) => {
-        saveError.current = String(e);
+        failedDrafts.current.set(k, {
+          id,
+          mode: m,
+          code: value,
+          error: String(e),
+        });
         setError(t("draftSaveFailed", { e: String(e) }));
       })
       .then(() => {
+        saveError.current =
+          failedDrafts.current.values().next().value?.error ?? "";
+        setSaveFailed(failedDrafts.current.size > 0);
         if (version.current === n) setSaving(false);
       });
   }
@@ -265,6 +289,7 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
         code,
         samples,
       });
+      if (!samples) notifyReviewChanged();
       setResults((prev) => ({ ...prev, [key]: r }));
       const rows = await invoke<Progress[]>("load_progress");
       setProgress(
@@ -305,6 +330,13 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
       await invoke("clear_solutions", {
         problemId: scope === "one" ? selected : null,
       });
+      for (const [k, draft] of failedDrafts.current) {
+        if (scope === "all" || draft.id === selected)
+          failedDrafts.current.delete(k);
+      }
+      saveError.current =
+        failedDrafts.current.values().next().value?.error ?? "";
+      setSaveFailed(failedDrafts.current.size > 0);
       dropModels(scope);
       const keep = (id: string) => scope === "one" && id !== selected;
       setProgress((prev) =>
@@ -526,9 +558,26 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
               <SegmentedControlItem value="acm" label={t("modeAcmFull")} />
             </SegmentedControl>
             <small className="muted">
-              {saving ? t("saving") : t("saved")} ·{" "}
-              {mode === "function" ? t("mainProvided") : t("mainYours")}
+              {saving
+                ? t("saving")
+                : saveFailed
+                  ? t("draftUnsaved")
+                  : t("saved")}{" "}
+              · {mode === "function" ? t("mainProvided") : t("mainYours")}
             </small>
+            {saveFailed && (
+              <Button
+                size="sm"
+                variant="secondary"
+                label={t("retrySave")}
+                isDisabled={saving || busy}
+                onClick={() => {
+                  setError("");
+                  for (const draft of failedDrafts.current.values())
+                    persistDraft(draft.id, draft.mode, draft.code);
+                }}
+              />
+            )}
             <Badge variant="purple" label={t("offlineJudge")} />
             <div className="coding-timer-right">
               <Timer key={selected} problemId={selected} />
@@ -641,18 +690,20 @@ function CodingApp({ scheme, focus }: { scheme: Scheme; focus?: Focus }) {
                         : t("noMemory")}
                     </summary>
                     {/* Passed hidden tests carry no input or output, only the summary. */}
-                    {(c.input || c.status !== "accepted") && <pre>
-                      {t("caseStdin")}
-                      {"\n"}
-                      {c.input}
-                      {"\n"}
-                      {t("caseExpected")}
-                      {JSON.stringify(c.expected)}
-                      {"\n"}
-                      {t("caseActual")}
-                      {c.actual || t("emptyOutput")}
-                      {c.stderr && `\nstderr: ${c.stderr}`}
-                    </pre>}
+                    {(c.input || c.status !== "accepted") && (
+                      <pre>
+                        {t("caseStdin")}
+                        {"\n"}
+                        {c.input}
+                        {"\n"}
+                        {t("caseExpected")}
+                        {JSON.stringify(c.expected)}
+                        {"\n"}
+                        {t("caseActual")}
+                        {c.actual || t("emptyOutput")}
+                        {c.stderr && `\nstderr: ${c.stderr}`}
+                      </pre>
+                    )}
                   </details>
                 ))}
                 {result.cases.length > 0 &&
@@ -835,6 +886,8 @@ function App() {
 }
 createRoot(document.getElementById("root")!).render(
   <LangProvider>
-    <UpdateProvider><App /></UpdateProvider>
+    <UpdateProvider>
+      <App />
+    </UpdateProvider>
   </LangProvider>,
 );

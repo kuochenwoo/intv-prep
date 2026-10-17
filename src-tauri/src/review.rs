@@ -466,8 +466,13 @@ fn design_history(
         if answers.is_empty() {
             continue;
         }
-        // Design turns carry no timestamps; the session start stands in.
-        let at = s.created_at.clone();
+        // New completed sessions use feedback time; preserve legacy histories.
+        let at = s
+            .feedback_at
+            .as_ref()
+            .filter(|_| s.status == "finished")
+            .unwrap_or(&s.created_at)
+            .clone();
         let Some(ms) = parse_ms(&at) else { continue };
         let seed = s.question.seed_id.clone();
         let title = scenario_title(&seed);

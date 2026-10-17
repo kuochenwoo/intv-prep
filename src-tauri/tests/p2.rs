@@ -330,6 +330,8 @@ fn failed_feedback_restores_and_cache_reuse_is_offline_and_pinned() {
     let c = db::open(&path).unwrap();
     let s = start(&c);
     let api = Api::new();
+    store::begin_answer(&c, &s.id, "Scope").unwrap();
+    store::retry_pending(&c, &s.id, &api).unwrap();
     api.fail.set(true);
     store::begin_feedback(&c, &s.id).unwrap();
     assert!(store::retry_pending(&c, &s.id, &api).is_err());
@@ -391,6 +393,8 @@ fn p1_and_coding_data_remain_untouched_by_p2() {
     let original = swe_interview_prep::interview_store::start(&c, &q.id, &config()).unwrap();
     let s = start(&c);
     store::change_stage(&c, &s.id, Stage::Tradeoffs).unwrap();
+    store::begin_answer(&c, &s.id, "Independent trade-off answer").unwrap();
+    store::retry_pending(&c, &s.id, &Api::new()).unwrap();
     store::begin_feedback(&c, &s.id).unwrap();
     store::retry_pending(&c, &s.id, &Api::new()).unwrap();
     assert_eq!(
@@ -435,6 +439,8 @@ fn conversation_limit_still_allows_finishing_without_a_model_followup() {
     let dir = tempfile::tempdir().unwrap();
     let c = db::open(&dir.path().join("length.sqlite3")).unwrap();
     let mut s = start(&c);
+    store::begin_answer(&c, &s.id, "Independent scope answer").unwrap();
+    s = store::retry_pending(&c, &s.id, &Api::new()).unwrap();
     while s.turns.len() < 100 {
         let next = if s.stage == Stage::Requirements {
             Stage::Estimation
@@ -493,4 +499,92 @@ fn failed_reference_request_leaves_the_session_unchanged() {
     assert_eq!(after.status, "active");
     assert!(after.last_error.is_none());
     assert!(store::submit_reference(&c, &s.id, s.turns.len(), &api).is_err());
+}
+
+#[test]
+fn empty_session_cannot_start_paid_feedback_and_reference_limit_matches_submission() {
+    let dir = tempfile::tempdir().unwrap();
+    let c = db::open(&dir.path().join("empty.sqlite3")).unwrap();
+    let s = start(&c);
+    assert!(store::begin_feedback(&c, &s.id)
+        .unwrap_err()
+        .contains("至少提交一轮"));
+    assert_eq!(store::session(&c, &s.id).unwrap().status, "active");
+    let mut reference = ReferenceAnswer {
+        answer: "字".repeat(6000),
+        key_points: vec!["one".into(), "two".into()],
+    };
+    reference.validate().unwrap();
+    reference.answer.push('字');
+    assert!(reference.validate().is_err());
+}
+#[test]
+fn new_feedback_resurfaces_a_dismissed_weakness_from_an_already_open_session() {
+    let dir = tempfile::tempdir().unwrap();
+    let c = db::open(&dir.path().join("review.sqlite3")).unwrap();
+    let s = start(&c);
+    let api = Api::new();
+    store::begin_answer(&c, &s.id, "Independent answer").unwrap();
+    store::retry_pending(&c, &s.id, &api).unwrap();
+    // The session predates dismissal. New feedback must use its completion time.
+    let mut legacy = serde_json::to_value(store::session(&c, &s.id).unwrap()).unwrap();
+    legacy["createdAt"] = serde_json::json!("2020-01-01T00:00:00Z");
+    legacy.as_object_mut().unwrap().remove("feedbackAt");
+    let restored: DesignSession = serde_json::from_value(legacy.clone()).unwrap();
+    assert!(restored.feedback_at.is_none());
+    c.execute(
+        "UPDATE sd_sessions SET content_json=?2 WHERE id=?1",
+        rusqlite::params![s.id, legacy.to_string()],
+    )
+    .unwrap();
+    c.execute("INSERT INTO review_dismissed(concept,dismissed_at) VALUES('p2:requirements','2021-01-01T00:00:00Z')", []).unwrap();
+    store::begin_feedback(&c, &s.id).unwrap();
+    let finished = store::retry_pending(&c, &s.id, &api).unwrap();
+    assert!(finished.feedback_at.as_ref().unwrap().as_str() > "2021-01-01T00:00:00Z");
+    let mut f = finished.clone();
+    f.feedback
+        .as_mut()
+        .unwrap()
+        .assessment
+        .get_mut("requirements")
+        .unwrap()
+        .rating = Rating::Partial;
+    c.execute(
+        "UPDATE sd_sessions SET content_json=?2 WHERE id=?1",
+        rusqlite::params![s.id, serde_json::to_string(&f).unwrap()],
+    )
+    .unwrap();
+    let review = swe_interview_prep::review::overview(&c, 0).unwrap();
+    assert!(review
+        .weak_points
+        .iter()
+        .any(|w| w.concept == "p2:requirements"));
+}
+
+#[test]
+fn legacy_long_reference_can_still_be_explicitly_submitted_without_widening_human_drafts() {
+    let dir = tempfile::tempdir().unwrap();
+    let c = db::open(&dir.path().join("legacy-reference.sqlite3")).unwrap();
+    let mut s = start(&c);
+    let text = "字".repeat(6001);
+    assert!(store::begin_answer(&c, &s.id, &text).is_err());
+    s.references.push(DesignReference {
+        turn_index: s.turns.len(),
+        stage: s.stage,
+        answer: text.clone(),
+        key_points: vec!["one".into(), "two".into()],
+    });
+    c.execute(
+        "UPDATE sd_sessions SET content_json=?2 WHERE id=?1",
+        rusqlite::params![s.id, serde_json::to_string(&s).unwrap()],
+    )
+    .unwrap();
+    let submitted = store::submit_reference(&c, &s.id, s.turns.len(), &Api::new()).unwrap();
+    let answer = submitted
+        .turns
+        .iter()
+        .find(|t| t.role == "candidate")
+        .unwrap();
+    assert!(answer.ai_assisted);
+    assert_eq!(answer.text, text);
 }

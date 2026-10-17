@@ -2,8 +2,10 @@ use rusqlite::{Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use std::{
     path::{Path, PathBuf},
-    sync::OnceLock,
+    sync::{Mutex, OnceLock},
 };
+
+static ENV_WRITE_LOCK: Mutex<()> = Mutex::new(());
 
 static ENV_PATH: OnceLock<PathBuf> = OnceLock::new();
 
@@ -103,6 +105,7 @@ pub fn read_env_key(path: &std::path::Path, provider: &str) -> Result<String, St
 }
 pub fn write_env_key(path: &std::path::Path, provider: &str, key: &str) -> Result<(), String> {
     use std::io::Write;
+    let _guard = ENV_WRITE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let wanted = variable(provider)?;
     let key = key.trim();
     if !key.is_empty() {
@@ -267,6 +270,41 @@ mod storage_tests {
             );
         }
     }
+    #[test]
+    fn concurrent_provider_saves_preserve_both_keys_and_unrelated_settings() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(".env");
+        std::fs::write(&path, "OTHER_SETTING=keep\n").unwrap();
+        for _ in 0..20 {
+            let barrier = std::sync::Barrier::new(2);
+            std::thread::scope(|scope| {
+                for (provider, key) in [
+                    ("deepseek", "fixture-text-key"),
+                    ("openai", "fixture-voice-key"),
+                ] {
+                    let (path, barrier) = (&path, &barrier);
+                    scope.spawn(move || {
+                        barrier.wait();
+                        write_env_key(path, provider, key).unwrap();
+                    });
+                }
+            });
+            assert_eq!(read_env_key(&path, "deepseek").unwrap(), "fixture-text-key");
+            assert_eq!(read_env_key(&path, "openai").unwrap(), "fixture-voice-key");
+            assert!(std::fs::read_to_string(&path)
+                .unwrap()
+                .contains("OTHER_SETTING=keep"));
+        }
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(
+                std::fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+    }
+
     #[test]
     fn relative_release_storage_is_rejected() {
         assert!(release_env_path(Path::new("relative-config")).is_err());

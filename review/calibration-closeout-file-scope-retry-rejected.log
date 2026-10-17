@@ -1,4 +1,0 @@
-   Compiling swe-interview-prep v0.1.0 (/Users/guozhen_wu/Documents/intv-prep/src-tauri)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.22s
-     Running `/tmp/intv-ai-quality-focused-target/debug/examples/live_ai_quality`
-Error: "AI 内容未通过质量检查，请重试；本地回答已保留"
