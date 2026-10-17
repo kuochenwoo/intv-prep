@@ -76,7 +76,7 @@ Cleanup validation passed 112 Rust tests (including all 100 LC references in bot
 
 ## Authorized preview release preparation (2026-10-16)
 
-The user authorized CI/CD, versioned Release packaging and installation acceptance, selected ad-hoc signing and a proprietary personal-evaluation preview. Current version: `0.1.0-preview.6`, macOS 13+ arm64 only. Preserve the application identifier and existing database location. Release credentials initialize from Tauri's runtime app-config directory; Debug development/probes retain the ignored checkout `.env`. No Keychain backend, automatic credential migration, bundled user keys or model/voice acceptance calls are authorized by this release task. This supersedes the earlier project-only credential-path requirement for installed Release builds.
+The user authorized CI/CD, versioned Release packaging and installation acceptance, selected ad-hoc signing and a proprietary personal-evaluation preview. Current version: `1.0.0`, macOS 13+ arm64 only. Preserve the application identifier and existing database location. Release credentials initialize from Tauri's runtime app-config directory; Debug development/probes retain the ignored checkout `.env`. No Keychain backend, automatic credential migration, bundled user keys or model/voice acceptance calls are authorized by this release task. This supersedes the earlier project-only credential-path requirement for installed Release builds.
 
 CI runs offline regression, actual LC judging, a real release-profile synthetic-key test, version checks and private-material/Git-history auditing. The version-tag/manual pipeline builds app/DMG, ad-hoc verifies, adds notices/checksums and creates a draft prerelease only. Keep actions pinned, CI read-only and release writes scoped to the release job. Do not publish the draft automatically or claim ad-hoc signing is Apple notarization. See `docs/RELEASING.md`.
 
@@ -87,3 +87,8 @@ The user authorized remote/automatic updates. Preview.2 adds Tauri's signed macO
 ## Automatic preview publication (2026-10-16)
 
 The user explicitly authorized automatic tag/build/publication after merged PR CI and requested including the pending P2 scenario-switch fix. This supersedes the earlier manual-only publication restriction for merged version increases: successful main push CI plus a matching merged PR and a strictly greater prerelease version permits automatic publication. Unchanged versions, direct pushes and untrusted/failed CI do not release. Manual tag builds still create drafts. Keep signature, clean-commit, uploaded-digest and feed rollback guards. No additional PAT or provider keys are required. See `docs/AUTOMATIC_RELEASES.md`.
+
+
+## Stable 1.0 release (2026-10-17)
+
+The user authorized restrained typography/UI polish, final checks, GitHub push and stable 1.0 publication. Stable releases use canonical SemVer and GitHub `isPrerelease=false`; numbered preview releases remain supported. Keep the legacy `updates-preview/latest.json` endpoint for installed-client compatibility, signature/version binding, immutable assets, rollback checks and merged-PR CI gates. Stable versioning does not imply Apple notarization: current distribution remains ad-hoc signed, macOS 13+ arm64, with the existing proprietary license and no new paid API/voice acceptance batch.

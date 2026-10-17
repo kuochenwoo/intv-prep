@@ -86,3 +86,8 @@ release, publish a corrected higher version. Signature verification does not rep
 release review, Apple notarization or a clean-machine Gatekeeper test.
 
 Official reference: https://v2.tauri.app/plugin/updater/
+
+
+## Stable 1.0 releases
+
+Stable and numbered preview releases use the same signed updater mechanism. The historical `updates-preview` URL remains fixed for installed-client compatibility. Preview users can receive stable 1.0.0; after the feed reaches stable, later previews do not replace it. Stable publication sets GitHub Latest without implying Apple notarization. See [automatic releases](AUTOMATIC_RELEASES.md).

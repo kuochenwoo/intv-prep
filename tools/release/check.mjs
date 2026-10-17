@@ -2,10 +2,11 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { releaseKind } from "./versions.mjs";
+
 export function validateRelease({ pkg, lock, cargo, cargoLock, tauri }, tag) {
   const version = pkg.version;
-  if (!/^\d+\.\d+\.\d+-(?:preview|alpha|beta|rc)\.\d+$/.test(version))
-    throw Error("This preview pipeline requires a prerelease version.");
+  releaseKind(version);
   const cargoVersion = cargo.match(
     /\[package\][\s\S]*?\nversion\s*=\s*"([^"]+)"/,
   )?.[1];
@@ -25,14 +26,14 @@ export function validateRelease({ pkg, lock, cargo, cargoLock, tauri }, tag) {
   if (tag && tag !== `v${version}`)
     throw Error("Release tag does not match the application version.");
   if (!tauri.bundle.active || tauri.bundle.macOS.signingIdentity !== "-")
-    throw Error("Preview packaging must be enabled and ad-hoc signed.");
+    throw Error("Release packaging must be enabled and ad-hoc signed.");
   if (tauri.identifier !== "local.swe.interview-prep")
     throw Error(
       "Changing the application identifier would lose the existing data location.",
     );
   if (pkg.license !== "UNLICENSED" || !pkg.private)
     throw Error(
-      "The preview must retain its proprietary/private-package declaration.",
+      "The release must retain its proprietary/private-package declaration.",
     );
   const updater = tauri.plugins?.updater;
   if (tauri.bundle.createUpdaterArtifacts !== true || !updater?.pubkey?.trim() ||
@@ -57,7 +58,7 @@ export function readRelease(root = process.cwd(), tag) {
   if (!existsSync(resolve(root, `docs/releases/v${version}.md`)))
     throw Error("Versioned release notes are missing.");
   if (!existsSync(resolve(root, "LICENSE")))
-    throw Error("The proprietary preview license is missing.");
+    throw Error("The proprietary license is missing.");
   return version;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)

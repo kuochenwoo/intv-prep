@@ -1,6 +1,6 @@
 # SWE 面试准备
 
-> 已安装的 Release 版本使用运行时应用配置目录中的 `.env`，本指南中项目 `.env` 的说明适用于 Debug 开发版本。安装与当前授权说明见[发版准备](docs/RELEASING.md)和[预览版说明](docs/releases/v0.1.0-preview.6.md)。
+> 已安装的 Release 版本使用运行时应用配置目录中的 `.env`，本指南中项目 `.env` 的说明适用于 Debug 开发版本。安装与当前授权说明见[发版准备](docs/RELEASING.md)和[版本说明](docs/releases/v1.0.0.md)。
 
 [English](README.md) · 简体中文
 
@@ -37,9 +37,9 @@ npm run tauri build -- --bundles app  # 未签名的 macOS .app
 
 构建结果在 `src-tauri/target/release/bundle/macos/`。运行时仍需要本机安装 C++ 编译器。
 
-## 发布新的预览版
+## 发布新版本
 
-以在 preview.5 之后发布 `0.1.0-preview.6` 为例：
+以在 preview.6 之后发布 `1.0.0` 为例：
 
 ### 1. 创建分支并更新版本号
 
@@ -48,7 +48,7 @@ npm run tauri build -- --bundles app  # 未签名的 macOS .app
 ```sh
 git switch main
 git pull --ff-only origin main
-git switch -c codex/preview-6
+git switch -c codex/release-1-0
 ```
 
 完成功能修改后，统一更新以下位置的应用版本号：
@@ -61,23 +61,23 @@ git switch -c codex/preview-6
 | `src-tauri/Cargo.lock` | 仅 `name = "swe-interview-prep"` 对应的版本 |
 | `src-tauri/tauri.conf.json` | 顶层 `version` |
 
-将这些位置都设为 `0.1.0-preview.6`，不要修改依赖包的版本号。每次发布都应使用严格递增的新预发布版本号，不要复用已发布版本。如果改动已经在功能分支上，继续使用当前分支即可，不必再创建分支。
+将这些位置都设为 `1.0.0`，不要修改依赖包的版本号。每次发布都应使用严格递增的正式版或编号预发布版本号，不要复用已发布版本。如果改动已经在功能分支上，继续使用当前分支即可，不必再创建分支。
 
 ### 2. 编写 release notes 并检查配置
 
-新建 `docs/releases/v0.1.0-preview.6.md`，描述实际改动和限制。项目的 release notes 使用英文，例如：
+新建 `docs/releases/v1.0.0.md`，描述实际改动和限制。项目的 release notes 使用英文，例如：
 
 ```markdown
-# SWE Prep 0.1.0-preview.6
+# SWE Prep 1.0.0
 
 - Fix ...
 - Improve ...
 
-macOS 13+ Apple Silicon preview.
+macOS 13+ Apple Silicon release.
 Ad-hoc signed; not Apple-notarized.
 ```
 
-把示例条目替换成实际改动，更新 README 中指向预览版说明的链接，然后执行：
+把示例条目替换成实际改动，更新 README 中指向版本说明的链接，然后执行：
 
 ```sh
 npm run check:release
@@ -88,10 +88,10 @@ npm run check:release
 ```sh
 git diff
 git add -p
-git add docs/releases/v0.1.0-preview.6.md
+git add docs/releases/v1.0.0.md
 git diff --cached
-git commit -m "Prepare preview.6"
-git push -u origin codex/preview-6
+git commit -m "Release 1.0.0"
+git push -u origin codex/release-1-0
 ```
 
 `git add -p` 用于逐项选择已跟踪文件的改动。除新增的 release notes 外，新增源码文件也需要单独暂存。不要提交 `.env`、`.release-keys` 或本地数据。
@@ -101,10 +101,10 @@ git push -u origin codex/preview-6
 合并后，GitHub 会自动执行：
 
 ```text
-main CI → 创建版本标签 → macOS 签名构建 → 附件校验 → 发布 prerelease → 同步更新源
+main CI → 创建版本标签 → macOS 签名构建 → 附件校验 → 发布 Release → 同步更新源
 ```
 
-在 **Actions → CI** 和 **Automatic preview release** 中查看结果即可。不需要手动打标签或点击发布，也不需要特殊 PR 标题、标签或新增 PAT；流程会复用已配置的更新签名密钥。普通 PR 不提升版本号时只运行 CI。手动推送标签的构建仍会先生成草稿。
+在 **Actions → CI** 和 **Automatic release** 中查看结果即可。不需要手动打标签或点击发布，也不需要特殊 PR 标题、标签或新增 PAT；流程会复用已配置的更新签名密钥。普通 PR 不提升版本号时只运行 CI。手动推送标签的构建仍会先生成草稿。
 
 保护条件和重试方法见[自动发版指南](docs/AUTOMATIC_RELEASES.md)，安装方式与签名密钥备份见[签名更新指南](docs/UPDATES.md)。首次安装或使用 preview.1 的用户，需要先手动安装一次支持更新的预览版。
 

@@ -1,4 +1,4 @@
-name: Build signed macOS preview
+name: Build signed macOS release
 on:
   workflow_call:
     inputs:
@@ -65,7 +65,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node tools/release/draft.mjs
-      - name: Publish verified automatic preview
+      - name: Publish verified automatic release
         if: ${{ inputs.publish }}
         env:
           GH_TOKEN: ${{ github.token }}

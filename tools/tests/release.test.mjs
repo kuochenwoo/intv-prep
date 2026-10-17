@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { releaseKind, validatePublishedRelease } from "../release/versions.mjs";
 import { validateRelease } from "../release/check.mjs";
 import { containsSecret, forbiddenPath } from "../release/audit.mjs";
 import { planPreview } from "../release/auto-preview.mjs";
@@ -66,15 +67,15 @@ test("automatic previews require successful trusted main CI and a merged version
     "skip",
   );
 });
-test("automatic previews reject downgraded versions, stable versions and conflicting tags", () => {
+test("automatic releases reject downgraded versions and conflicting tags", () => {
   assert.throws(
     () => planPreview({ ...automatic(), version: "0.1.0-preview.2" }),
     /strictly greater/,
   );
-  assert.throws(
-    () => planPreview({ ...automatic(), version: "0.1.0" }),
-    /prerelease/,
-  );
+  assert.deepEqual(planPreview({ ...automatic(), version: "1.0.0" }), {
+    action: "build",
+    tag: "v1.0.0",
+  });
   assert.throws(
     () => planPreview({ ...automatic(), tagCommit: "different-commit" }),
     /another commit/,
@@ -141,7 +142,7 @@ test("publication requires exact uploaded attachments and provider-reported SHA2
     /digest mismatch/,
   );
 });
-test("release checks reject version drift, wrong tags and accidental stable releases", () => {
+test("release checks reject version drift, wrong tags and malformed versions", () => {
   assert.equal(
     validateRelease(fixture(), "v0.1.0-preview.1"),
     "0.1.0-preview.1",
@@ -152,7 +153,7 @@ test("release checks reject version drift, wrong tags and accidental stable rele
   assert.throws(() => validateRelease(fixture(), "v0.2.0-preview.1"), /tag/);
   const stable = fixture();
   stable.pkg.version = "0.1.0";
-  assert.throws(() => validateRelease(stable), /prerelease/);
+  assert.throws(() => validateRelease(stable), /versions must match/);
 });
 test("preview checks protect identity, packaging and authorization scope", () => {
   for (const change of [
@@ -243,4 +244,80 @@ test("update publishing refuses rollback or replacement of the same version", ()
     `trusted comment: timestamp:2\tversion:${old.version}\n`,
   ).toString("base64");
   assert.throws(() => shouldPublishFeed(replacement, old), /immutable/);
+});
+
+const versioned = (version) => {
+  const source = fixture();
+  source.pkg.version =
+    source.lock.version =
+    source.lock.packages[""].version =
+    source.tauri.version =
+      version;
+  source.cargo = `[package]\nversion = "${version}"`;
+  source.cargoLock = `[[package]]\nname = "swe-interview-prep"\nversion = "${version}"`;
+  return source;
+};
+test("stable releases pass version checks and are published as latest, not prerelease", () => {
+  assert.equal(validateRelease(versioned("1.0.0"), "v1.0.0"), "1.0.0");
+  assert.deepEqual(releaseKind("1.0.0"), { isPrerelease: false, latest: true });
+  assert.deepEqual(releaseKind("1.0.1-preview.1"), {
+    isPrerelease: true,
+    latest: false,
+  });
+  for (const invalid of [
+    "v1.0.0",
+    "01.0.0",
+    "1.0",
+    "1.0.0+local",
+    "1.0.0-unknown.1",
+    "1.0.0-preview.01",
+  ])
+    assert.throws(() => releaseKind(invalid));
+  const input = { ...automatic(), version: "1.0.0" };
+  const release = {
+    targetCommitish: "tested-commit",
+    isPrerelease: false,
+    isDraft: false,
+  };
+  assert.deepEqual(planPreview({ ...input, release }), {
+    action: "feed",
+    tag: "v1.0.0",
+  });
+  assert.throws(
+    () =>
+      planPreview({ ...input, release: { ...release, isPrerelease: true } }),
+    /does not match/,
+  );
+  assert.equal(planPreview({ ...input, merged: false }).action, "skip");
+});
+test("feed publication accepts matching stable or preview releases but never drafts or mismatched kinds", () => {
+  for (const [tag, isPrerelease] of [
+    ["v1.0.0", false],
+    ["v1.0.1-preview.1", true],
+  ]) {
+    const release = { tagName: tag, isDraft: false, isPrerelease };
+    assert.equal(validatePublishedRelease(release, tag), tag.slice(1));
+    assert.throws(() =>
+      validatePublishedRelease({ ...release, isDraft: true }, tag),
+    );
+    assert.throws(() =>
+      validatePublishedRelease(
+        { ...release, isPrerelease: !isPrerelease },
+        tag,
+      ),
+    );
+    assert.throws(() =>
+      validatePublishedRelease({ ...release, tagName: "different" }, tag),
+    );
+  }
+});
+test("installed previews advance to stable without sending later previews to stable users", () => {
+  const stable = feedFor("1.0.0");
+  assert.equal(shouldPublishFeed(stable, feedFor("0.1.0-preview.6")), true);
+  assert.equal(shouldPublishFeed(feedFor("1.0.1"), stable), true);
+  assert.equal(shouldPublishFeed(feedFor("1.1.0-preview.1"), stable), false);
+  assert.throws(
+    () => shouldPublishFeed(feedFor("0.1.0-preview.6"), stable),
+    /backwards/,
+  );
 });

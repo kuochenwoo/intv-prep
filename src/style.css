@@ -15,9 +15,9 @@
   --font-family-reading:
     -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  --font-size-reading: calc(var(--font-size-lg) - 0.0625rem);
-  --line-height-reading: 1.85;
-  --reading-measure: 80ch;
+  --font-size-reading: 0.9375rem;
+  --line-height-reading: 1.8;
+  --reading-measure: 76ch;
 }
 html,
 body {
@@ -186,12 +186,16 @@ button.problem small {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-container);
   padding: 20px 22px;
-  box-shadow: var(--shadow-low);
+  box-shadow: none;
   min-width: 0;
 }
 .statement h1 {
   margin: 0 0 10px;
-  font-size: var(--font-size-2xl);
+  font-family: var(--font-family-reading);
+  font-size: 1.375rem;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.5;
+  text-wrap: pretty;
 }
 .statement h3 {
   margin: 20px 0 8px;
@@ -517,3 +521,31 @@ button.tint-btn.stage-chip.current:hover:not(:disabled) { background: var(--tint
 /* Settings: key badges are compact pills centred on their heading. */
 .settings-key-title { display: inline-flex; align-items: center; gap: 8px; }
 .settings-page .api-key-badge .astryx-badge { height: 18px; min-height: 0; padding-block: 0; padding-inline: 7px; font-size: 11px; line-height: 18px; }
+
+/* Quiet reading surfaces: hierarchy comes from type and space, with one accent. */
+button.problem {
+  font-family: var(--font-family-reading);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  padding: 12px 14px;
+}
+button.problem > strong { font-weight: var(--font-weight-medium, 500); }
+button.problem:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.statement .tags { margin-block: 12px 18px; }
+.statement h3 { color: var(--color-text-secondary); font-weight: var(--font-weight-medium, 500); }
+.complexity-card { background: var(--color-background-muted); }
+.topic-panel > h2,
+.session-heading h2 {
+  font-family: var(--font-family-reading);
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.55;
+  margin-block: 0 14px;
+  text-wrap: pretty;
+}
+@media (prefers-reduced-motion: reduce) {
+  button.problem { transition: none; }
+}

@@ -1,9 +1,9 @@
-# macOS preview release
+# macOS release
 
-The first release was `0.1.0-preview.1`; the current candidate is `0.1.0-preview.6`, targeting macOS 13+ on Apple Silicon. It is
+The first release was `0.1.0-preview.1`; the current release candidate is `1.0.0`, targeting macOS 13+ on Apple Silicon. It is
 ad-hoc signed and not Apple-notarized. Original project material remains proprietary;
 see LICENSE. Intel, other operating systems and Developer ID
-signing/notarization are outside this preview.
+signing/notarization are outside this release.
 
 ## Storage and compatibility
 
@@ -47,18 +47,18 @@ exists on the default branch). It first calls CI, then:
    credential patterns and a compiled-in checkout `.env` path.
 4. Prepares the app ZIP, DMG, proprietary license, versioned release notes, dependency
    license texts, MPL dependency sources, build manifest and SHA-256 checksums.
-5. Uploads workflow artifacts and creates/updates a **draft prerelease** only.
+5. Uploads workflow artifacts and creates/updates a **draft release** only (stable or prerelease according to the version).
 
 Only the final release job receives `contents: write`; its `GH_TOKEN` is GitHub's
 workflow token. No Claude, DeepSeek or OpenAI key belongs in repository secrets for
 this pipeline. The workflow refuses public-release overwrites and drafts from a
-different commit. It does not publish an application release. Signed updater artifacts are included; after a human publishes the versioned prerelease, a separate workflow advances the preview feed. See `UPDATES.md`.
+different commit. It does not publish an application release. Signed updater artifacts are included; after a human publishes the versioned release, a separate workflow advances the compatibility feed. See `UPDATES.md`.
 
 After review, create a version tag at the tested commit and push it:
 
 ```sh
-git tag v0.1.0-preview.6 <tested-commit>
-git push origin v0.1.0-preview.6
+git tag v1.0.0 <tested-commit>
+git push origin v1.0.0
 ```
 
 Preview assets are generated in ignored `release-artifacts/`. To build locally:
@@ -105,3 +105,8 @@ remain separate from testing a relocated bundle on the development Mac.
 Official references: [Tauri GitHub pipelines](https://v2.tauri.app/distribute/pipelines/github/),
 [Tauri macOS signing](https://v2.tauri.app/distribute/sign/macos/),
 [GitHub Actions secrets](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets).
+
+
+## Stable release support
+
+Version 1.0.0 is a stable GitHub Release (`isPrerelease=false`, Latest). Canonical stable versions and numbered preview/alpha/beta/rc versions share the guarded pipeline. Stable versioning does not change ad-hoc signing, macOS 13+ arm64 support or the personal-evaluation license. Manual tag builds create drafts; a merged version increase plus successful trusted main CI can publish automatically. The historical `updates-preview` feed tag remains unchanged so installed previews can discover 1.0.0; once stable, the feed refuses promotion to a later prerelease. Use the current [automatic release guide](AUTOMATIC_RELEASES.md) for publication rules; earlier preview-only wording above describes the original distribution workflow.
