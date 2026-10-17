@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { Button } from "@astryxdesign/core/Button";
 import { Banner } from "@astryxdesign/core/Banner";
@@ -7,6 +7,7 @@ import { localizeError } from "../../errors";
 import { EmptyState } from "../../EmptyState";
 import "../interview/interview.css";
 import "./review.css";
+import { watchReviewChanges } from "./events";
 import { summarizeCosts } from "./costs";
 
 type Module = "lc" | "p1" | "p2";
@@ -107,12 +108,18 @@ export function ReviewPage({
     [moduleFilter, setModuleFilter] = useState<Module | "all">("all"),
     [open, setOpen] = useState(""),
     [dismissing, setDismissing] = useState("");
+  const loadVersion = useRef(0);
   async function load() {
     if (!isTauri()) return;
+    const version = ++loadVersion.current;
     try {
-      setData(await invoke<Overview>("review_overview"));
+      const result = await invoke<Overview>("review_overview");
+      if (version === loadVersion.current) {
+        setData(result);
+        setError("");
+      }
     } catch (e) {
-      setError(String(e));
+      if (version === loadVersion.current) setError(String(e));
     }
   }
   useEffect(() => {
@@ -120,6 +127,7 @@ export function ReviewPage({
   }, [active]);
   useEffect(() => {
     void load();
+    return watchReviewChanges(() => void load());
   }, []);
 
   const now = data?.nowMs ?? Date.now();

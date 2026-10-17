@@ -711,3 +711,29 @@ fn generation_and_review_check_impossible_incidents_without_banning_challenges()
     assert!(!swe_interview_prep::quality::prompt(Lang::En, &feedback)
         .contains("concurrent committed inserts"));
 }
+
+#[test]
+fn question_language_survives_reopen_and_legacy_rows_remain_readable() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("language.sqlite3");
+    let c = db::open(&path).unwrap();
+    let api = FixtureProvider::new();
+    let config = LlmSettings::default();
+    let q = api
+        .generate_question(&topic("cache-selection").unwrap())
+        .unwrap();
+    let cached = store::cache_question_lang(&c, "cache-selection", &config, &q, Lang::En).unwrap();
+    let session = store::start(&c, &cached.id, &config).unwrap();
+    drop(c);
+    let c = db::open(&path).unwrap();
+    assert_eq!(
+        store::session(&c, &session.id).unwrap().question.lang,
+        Lang::En
+    );
+    c.execute(
+        "UPDATE generated_questions SET lang=NULL WHERE id=?1",
+        [&cached.id],
+    )
+    .unwrap();
+    assert_eq!(store::question(&c, &cached.id).unwrap().0.lang, Lang::Zh);
+}

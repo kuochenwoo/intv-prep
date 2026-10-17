@@ -95,6 +95,7 @@ fn design_session(case: &Value, config: &LlmSettings) -> DesignSession {
         suggested_stage: None,
         last_error: None,
         feedback: None,
+        feedback_at: None,
         references: vec![],
     }
 }

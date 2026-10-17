@@ -305,6 +305,9 @@ pub struct DesignSession {
     pub suggested_stage: Option<Stage>,
     pub last_error: Option<String>,
     pub feedback: Option<DesignFeedback>,
+    /// Completion time for Review outcomes; legacy sessions retain their original fallback.
+    #[serde(default)]
+    pub feedback_at: Option<String>,
     /// AI reference answers the user asked for, keyed by the turn they answer.
     #[serde(default)]
     pub references: Vec<DesignReference>,
@@ -319,6 +322,7 @@ pub struct ReferenceAnswer {
 impl Validated for ReferenceAnswer {
     fn validate(&self) -> Result<(), String> {
         if text(&self.answer)
+            && self.answer.chars().count() <= 6000
             && (2..=6).contains(&self.key_points.len())
             && self.key_points.iter().all(|p| text(p))
         {
@@ -836,6 +840,7 @@ mod tests {
             suggested_stage: None,
             last_error: None,
             feedback: None,
+            feedback_at: None,
             references: vec![],
             created_at: String::new(),
         };

@@ -455,13 +455,13 @@ fn is_identifier(s: &str) -> bool {
 fn reader(ty: Ty) -> String {
     match ty {
         Ty::Str => "read_line()".into(),
-        Ty::IntArr => "read_values<int>(read_value<size_t>())".into(),
-        Ty::LongArr => "read_values<long long>(read_value<size_t>())".into(),
+        Ty::IntArr => "read_array<int>(read_value<size_t>())".into(),
+        Ty::LongArr => "read_array<long long>(read_value<size_t>())".into(),
         Ty::StrArr => "read_lines(read_value<size_t>())".into(),
         Ty::IntGrid => "read_int_grid()".into(),
         Ty::CharGrid => "read_char_grid()".into(),
         Ty::StrGrid => "read_string_grid()".into(),
-        Ty::List => "make_list(read_values<int>(read_value<size_t>()))".into(),
+        Ty::List => "make_list(read_array<int>(read_value<size_t>()))".into(),
         Ty::Tree => "make_tree(read_tokens(read_value<size_t>()))".into(),
         _ => format!("read_value<{}>()", ty.cpp()),
     }
@@ -789,12 +789,19 @@ inline string read_line() {
     getline(cin, text);
     return text;
 }
+// Flat arrays have a values line even when empty. Grids use read_values instead:
+// their row length and values share one line, so no extra line is consumed.
+template <class T> vector<T> read_array(size_t n) {
+    auto values = read_values<T>(n);
+    if (n == 0) read_line();
+    return values;
+}
 inline vector<string> read_lines(size_t n) {
     vector<string> lines(n);
     for (auto& line : lines) line = read_line();
     return lines;
 }
-inline vector<string> read_tokens(size_t n) { return read_values<string>(n); }
+inline vector<string> read_tokens(size_t n) { return read_array<string>(n); }
 inline vector<vector<int>> read_int_grid() {
     vector<vector<int>> grid(read_value<size_t>());
     for (auto& row : grid) row = read_values<int>(read_value<size_t>());

@@ -25,6 +25,7 @@ export function Timer({ problemId }: { problemId: string }) {
   const [minutes, setMinutes] = useState("off"),
     [clock, setClock] = useState<CodingClock | null>(null),
     [loaded, setLoaded] = useState(false),
+    [reload, setReload] = useState(0),
     [working, setWorking] = useState(false),
     [error, setError] = useState(""),
     [now, setNow] = useState(Date.now());
@@ -32,6 +33,10 @@ export function Timer({ problemId }: { problemId: string }) {
   useEffect(() => {
     let active = true;
     if (!isTauri()) return;
+    setLoaded(false);
+    setClock(null);
+    setMinutes("off");
+    setError("");
     invoke<CodingClock | null>("coding_timing", { problemId, action: "get" })
       .then((saved) => {
         if (!active) return;
@@ -46,7 +51,7 @@ export function Timer({ problemId }: { problemId: string }) {
     return () => {
       active = false;
     };
-  }, [problemId]);
+  }, [problemId, reload]);
 
   const left = clock
     ? clock.deadlineMs === null
@@ -148,6 +153,15 @@ export function Timer({ problemId }: { problemId: string }) {
           />
         )}
       </div>
+      {error && !loaded && (
+        <Button
+          size="sm"
+          variant="secondary"
+          label={t("retryLoadTimer")}
+          isDisabled={working}
+          onClick={() => setReload((n) => n + 1)}
+        />
+      )}
       {error && <p role="alert">{localizeError(error, lang)}</p>}
     </div>
   );

@@ -288,3 +288,41 @@ test("update download progress remains indeterminate without a length and never 
   assert.equal(downloadPercent(1000, 1000), 99);
   assert.equal(downloadPercent(1200, 1000), 99);
 });
+
+const { localizeError } = await sourceModule("../../src/errors.ts");
+const { nextMidnight, notifyReviewChanged, watchReviewChanges } = await sourceModule(
+  "../../src/features/review/events.ts",
+);
+test("errors remove JavaScript prefixes in both languages and translate Review errors", () => {
+  assert.equal(localizeError("Error: 无效的复习条目", "zh"), "无效的复习条目");
+  assert.equal(localizeError("Error: 无效的复习条目", "en"), "Invalid review item");
+  assert.equal(localizeError("草稿保存失败：Error: disk full", "zh"), "草稿保存失败：disk full");
+});
+test("Review invalidation covers local mutations, next midnight, wake-up and cleanup", () => {
+  const originals = { window: globalThis.window, document: globalThis.document, setTimeout, clearTimeout };
+  const window = new EventTarget(), document = new EventTarget();
+  let scheduled, cancelled, calls = 0;
+  Object.assign(globalThis, { window, document,
+    setTimeout: (callback, delay) => { scheduled = { callback, delay }; return 17; },
+    clearTimeout: (id) => { cancelled = id; },
+  });
+  try {
+    const now = new Date(2026, 9, 17, 23, 59, 59).getTime();
+    assert.equal(nextMidnight(now) - now, 1000);
+    const stop = watchReviewChanges(() => calls++);
+    assert.ok(scheduled.delay > 0 && scheduled.delay <= 25 * 60 * 60 * 1000);
+    notifyReviewChanged();
+    assert.equal(calls, 1);
+    scheduled.callback();
+    assert.equal(calls, 2);
+    window.dispatchEvent(new Event("focus"));
+    document.dispatchEvent(new Event("visibilitychange"));
+    assert.equal(calls, 4);
+    stop();
+    assert.equal(cancelled, 17);
+    notifyReviewChanged();
+    window.dispatchEvent(new Event("focus"));
+    document.dispatchEvent(new Event("visibilitychange"));
+    assert.equal(calls, 4);
+  } finally { Object.assign(globalThis, originals); }
+});

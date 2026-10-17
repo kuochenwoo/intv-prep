@@ -147,22 +147,7 @@ fn run_judge(
     )?;
     if !samples {
         let c = state.db();
-        swe_interview_prep::review::log_run(
-            &c,
-            &problem_id,
-            &mode,
-            &result.status,
-            result.passed,
-            result.total,
-        )?;
-        drop(c);
-        db::record(
-            &state.db(),
-            &problem_id,
-            &mode,
-            &serde_json::to_string(&result).map_err(|e| e.to_string())?,
-            result.status == "accepted",
-        )?;
+        db::record_submission(&c, &problem_id, &mode, &result)?;
     }
     Ok(result)
 }
@@ -273,7 +258,13 @@ async fn generate_interview_question(
             "generation",
         )?
         .generate_question(&interview::topic(&topic_id)?)?;
-        let cached = interview_store::cache_question(&c, &topic_id, &config, &q)?;
+        let cached = interview_store::cache_question_lang(
+            &c,
+            &topic_id,
+            &config,
+            &q,
+            lang.unwrap_or_default(),
+        )?;
         swe_interview_prep::usage::link_question(&c, "p1", &cached.id, after)?;
         Ok(cached)
     })

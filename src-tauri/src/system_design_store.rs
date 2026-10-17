@@ -140,6 +140,7 @@ pub fn start(c: &Connection, id: &str, config: &LlmSettings) -> Result<DesignSes
         suggested_stage: None,
         last_error: None,
         feedback: None,
+        feedback_at: None,
         references: vec![],
     };
     c.execute(
@@ -207,8 +208,14 @@ pub fn begin_answer(c: &Connection, id: &str, answer: &str) -> Result<(), String
     begin_answer_kind(c, id, answer, false)
 }
 fn begin_answer_kind(c: &Connection, id: &str, answer: &str, ai: bool) -> Result<(), String> {
-    if answer.trim().is_empty() || answer.chars().count() > 6000 {
+    let length = answer.chars().count();
+    if answer.trim().is_empty() || (!ai && length > 6000) {
         return Err("回答需要 1–6000 字符".into());
+    }
+    // Older cached references allowed up to 12000 characters. Keep those usable
+    // as explicitly assisted turns; new generation and human drafts stay at 6000.
+    if ai && length > 12000 {
+        return Err("系统设计参考答案为空、过长或缺少要点，请重试".into());
     }
     let tx = c.unchecked_transaction().map_err(err)?;
     let mut s = session(&tx, id)?;
@@ -243,6 +250,9 @@ pub fn begin_feedback(c: &Connection, id: &str) -> Result<(), String> {
     let tx = c.unchecked_transaction().map_err(err)?;
     let mut s = session(&tx, id)?;
     active(&s)?;
+    if !s.turns.iter().any(|t| t.role == "candidate") {
+        return Err("至少提交一轮回答后再生成反馈".into());
+    }
     if s.workspace.drafts.values().any(|d| !d.trim().is_empty()) {
         return Err("系统设计仍有未提交的阶段草稿，请先提交或清空".into());
     }
@@ -292,6 +302,12 @@ pub fn retry_pending(
             current.status = "active".into();
         }
         if let Some(f) = feedback {
+            current.feedback_at = Some(
+                tx.query_row("SELECT strftime('%Y-%m-%dT%H:%M:%fZ','now')", [], |r| {
+                    r.get(0)
+                })
+                .map_err(err)?,
+            );
             current.feedback = Some(f);
             current.status = "finished".into();
             current.stage = Stage::Feedback;
