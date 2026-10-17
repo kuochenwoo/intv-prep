@@ -1,5 +1,6 @@
-import { valid, lt } from "semver";
+import { valid, lt, prerelease } from "semver";
 export const UPDATE_REPOSITORY = "kuochenwoo/intv-prep";
+// Historical channel name is retained for installed preview clients.
 export const UPDATE_CHANNEL_TAG = "updates-preview";
 export function updaterFile(version) {
   return `SWE-Prep_${version}_macos-arm64.app.tar.gz`;
@@ -47,6 +48,8 @@ export function shouldPublishFeed(next, current) {
   validateUpdateFeed(current);
   if (lt(next.version, current.version))
     throw Error("Refusing to move the update feed backwards.");
+  // Once the shared compatibility feed reaches stable, do not send previews to stable users.
+  if (!prerelease(current.version) && prerelease(next.version)) return false;
   if (next.version === current.version) {
     if (JSON.stringify(next.platforms) !== JSON.stringify(current.platforms))
       throw Error("A published update version is immutable.");

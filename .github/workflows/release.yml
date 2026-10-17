@@ -1,11 +1,11 @@
-name: Draft macOS preview
+name: Draft macOS release
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing preview tag matching the application version"
+        description: "Existing release tag matching the application version"
         required: true
         type: string
 permissions:

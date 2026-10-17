@@ -11,7 +11,7 @@ See [the project TODO](TODO.md) for AI-quality calibration and the deferred feat
 - **System Design:** 26 bilingual scenarios, user-controlled interview stages, capacity estimates and architecture discussions, Markdown notes, local Mermaid previews, and eight-dimension feedback. Questions, drafts and history persist locally. See [the P2 guide](docs/P2_SYSTEM_DESIGN.md).
 - **Interface:** Chinese or English, switched with the button in the header. Light and dark modes. Built with Meta's [Astryx](https://github.com/facebook/astryx) design system.
 
-Problem statements, interview topics, AI questions and answers, and error messages follow the selected language.
+Problem statements, topics and error messages follow the selected language. New AI questions use that language; saved interview sessions retain their original language for follow-ups and feedback.
 
 The latest [practical fundamentals expansion](docs/P1_PRACTICAL_FUNDAMENTALS.md) adds P1 question-style/priority filters and five complete P2 exercises. The subsequent [P1 acceptance](docs/P1_ACCEPTANCE_2026-10-16.md) passed 103 automated checks, frontend/native builds and representative UI/live-provider workflows, with documented network and semantic limits. Live acceptance of the five new P2 scenarios remains separate.
 
@@ -43,11 +43,11 @@ npm run test:release-tools            # release guard regressions
 TAURI_SIGNING_PRIVATE_KEY="$PWD/.release-keys/updater.key" npm run build:macos # signed update bundle plus app/DMG
 ```
 
-The app and DMG are written to `src-tauri/target/aarch64-apple-darwin/release/bundle/`. The preview targets macOS 13+ on Apple Silicon and still needs a local C++20 compiler for LC judging. See [release preparation and CI](docs/RELEASING.md) and [preview notes](docs/releases/v0.1.0-preview.6.md). Merged version increases automatically publish signed previews after CI passes; manual tag builds create drafts.
+The app and DMG are written to `src-tauri/target/aarch64-apple-darwin/release/bundle/`. The preview targets macOS 13+ on Apple Silicon and still needs a local C++20 compiler for LC judging. See [release preparation and CI](docs/RELEASING.md) and [release notes](docs/releases/v1.0.0.md). Merged version increases automatically publish signed releases after CI passes; manual tag builds create drafts.
 
-## Publish a new preview
+## Publish a release
 
-For example, to release `0.1.0-preview.6` after preview.5:
+For example, to release `1.0.0` after preview.6:
 
 ### 1. Create a branch and update the version
 
@@ -56,7 +56,7 @@ Before starting your changes:
 ```sh
 git switch main
 git pull --ff-only origin main
-git switch -c codex/preview-6
+git switch -c codex/release-1-0
 ```
 
 Make your code changes, then set the application version consistently:
@@ -69,23 +69,23 @@ Make your code changes, then set the application version consistently:
 | `src-tauri/Cargo.lock` | Only the version belonging to `name = "swe-interview-prep"` |
 | `src-tauri/tauri.conf.json` | Top-level `version` |
 
-Set each entry to `0.1.0-preview.6`. Do not change dependency versions. Use a new, strictly greater prerelease version for each release; never reuse a published version. If your changes are already on a feature branch, continue on that branch instead of creating another one.
+Set each entry to `1.0.0`. Do not change dependency versions. Use a new, strictly greater stable or numbered prerelease version for each release; never reuse a published version. If your changes are already on a feature branch, continue on that branch instead of creating another one.
 
 ### 2. Write release notes and check the configuration
 
-Create `docs/releases/v0.1.0-preview.6.md` with the actual changes and limitations. Project release notes are written in English, for example:
+Create `docs/releases/v1.0.0.md` with the actual changes and limitations. Project release notes are written in English, for example:
 
 ```markdown
-# SWE Prep 0.1.0-preview.6
+# SWE Prep 1.0.0
 
 - Fix ...
 - Improve ...
 
-macOS 13+ Apple Silicon preview.
+macOS 13+ Apple Silicon release.
 Ad-hoc signed; not Apple-notarized.
 ```
 
-Replace the example bullets with real changes, keep the README preview-notes link current, then run:
+Replace the example bullets with real changes, keep the README release-notes link current, then run:
 
 ```sh
 npm run check:release
@@ -96,10 +96,10 @@ npm run check:release
 ```sh
 git diff
 git add -p
-git add docs/releases/v0.1.0-preview.6.md
+git add docs/releases/v1.0.0.md
 git diff --cached
-git commit -m "Prepare preview.6"
-git push -u origin codex/preview-6
+git commit -m "Release 1.0.0"
+git push -u origin codex/release-1-0
 ```
 
 `git add -p` lets you select changes to tracked files. Explicitly stage any new source files as well as the new release notes. Keep `.env`, `.release-keys` and local data excluded.
@@ -109,10 +109,10 @@ On GitHub, choose **Compare & pull request**, target `main`, review the changes 
 After the merge, GitHub automatically runs:
 
 ```text
-main CI → version tag → signed macOS build → attachment verification → prerelease publication → update feed
+main CI → version tag → signed macOS build → attachment verification → release publication → update feed
 ```
 
-Watch **Actions → CI**, then **Automatic preview release**. No manual tag or Publish action, special PR title/label, or additional PAT is required; the existing updater signing secret is reused. A normal PR without a version increase runs CI only. Manual tag builds still create drafts.
+Watch **Actions → CI**, then **Automatic release**. Stable versions publish as Latest; numbered previews remain prereleases. No manual tag or Publish action, special PR title/label, or additional PAT is required; the existing updater signing secret is reused. A normal PR without a version increase runs CI only. Manual tag builds still create drafts.
 
 See [automatic releases](docs/AUTOMATIC_RELEASES.md) for guards and retries, and [signed updates](docs/UPDATES.md) for installation and signing-key backup. Preview.1 users and first-time users need one manual install of an updater-enabled preview.
 
@@ -159,6 +159,6 @@ tools/leetcode/              Problem generators and authoring guide
 
 ## License
 
-Original project material is proprietary, with personal non-commercial evaluation of authorized preview binaries permitted by [LICENSE](LICENSE). No open-source license is granted. Third-party dependencies retain their own licenses; release assets include dependency notices.
+Original project material is proprietary, with personal non-commercial evaluation of authorized release binaries permitted by [LICENSE](LICENSE). No open-source license is granted. Third-party dependencies retain their own licenses; release assets include dependency notices.
 
-Signed preview updates: see [UPDATES.md](docs/UPDATES.md) for automatic checks, signing-key backup, the first manual install and automatic release/feed publication and the retained manual draft path.
+Signed updates: see [UPDATES.md](docs/UPDATES.md) for automatic checks, signing-key backup, the first manual install and automatic release/feed publication and the retained manual draft path.

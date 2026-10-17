@@ -9,15 +9,15 @@ import {
   shouldPublishFeed,
   updaterFile,
 } from "./update-feed.mjs";
+import { releaseKind, validatePublishedRelease } from "./versions.mjs";
 const tag = process.env.RELEASE_TAG;
-if (!/^v\d+\.\d+\.\d+-(?:preview|alpha|beta|rc)\.\d+$/.test(tag ?? ""))
-  throw Error("A versioned preview tag is required.");
+if (!tag?.startsWith("v")) throw Error("A versioned release tag is required.");
+releaseKind(tag.slice(1));
 const gh = (...args) => execFileSync("gh", args, { encoding: "utf8" });
 const release = JSON.parse(
   gh("release", "view", tag, "--json", "isDraft,isPrerelease,tagName,assets"),
 );
-if (release.isDraft || release.tagName !== tag || !release.isPrerelease)
-  throw Error("Only a published preview can update this feed.");
+validatePublishedRelease(release, tag);
 const dir = mkdtempSync(join(tmpdir(), "swe-published-update-"));
 const names = [
   "latest.json",
@@ -105,7 +105,7 @@ if (channel.status === 0) {
 } else if (!/release not found|HTTP 404/i.test(channel.stderr))
   throw Error("Could not inspect the update channel; refusing to publish.");
 if (!shouldPublishFeed(feed, current)) {
-  console.log("The update feed already points to this exact version.");
+  console.log("The update feed is unchanged: this version is current or a stable feed excludes this prerelease.");
 } else {
   if (channel.status !== 0)
     gh(
@@ -116,9 +116,9 @@ if (!shouldPublishFeed(feed, current)) {
       "--target",
       sha,
       "--title",
-      "SWE Prep preview update feed",
+      "SWE Prep update feed",
       "--notes",
-      "Automatic update manifest for published macOS arm64 previews. Installers and release notes live in the versioned releases. Do not edit this feed manually.",
+      "Automatic update manifest for published macOS arm64 releases. Installers and release notes live in the versioned releases. Do not edit this feed manually.",
     );
   if (!existsSync(join(dir, "latest.json")))
     throw Error("Missing verified feed.");
@@ -130,6 +130,6 @@ if (!shouldPublishFeed(feed, current)) {
     "--clobber",
   );
   console.log(
-    `Published the verified preview update feed for ${feed.version}.`,
+    `Published the verified update feed for ${feed.version}.`,
   );
 }

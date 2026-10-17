@@ -8,13 +8,7 @@
   gap: 16px;
   flex-wrap: wrap;
   padding: 20px 24px;
-  background:
-    radial-gradient(
-      120% 160% at 0% 0%,
-      color-mix(in srgb, var(--color-accent) 22%, transparent),
-      transparent 60%
-    ),
-    var(--color-background-surface);
+  background: var(--color-background-surface);
   border-bottom: 1px solid var(--color-border);
 }
 .dd-hero h1 {
@@ -176,7 +170,7 @@
 .question-context {
   padding: 20px 24px;
   border-radius: var(--radius-element);
-  background: var(--color-background-muted);
+  background: var(--color-background-card);
   border: 1px solid var(--color-border);
 }
 .question-context h3 {
@@ -378,4 +372,27 @@
 
 .interview-main > aside > :not(.topic-list) {
   flex-shrink: 0;
+}
+
+.question-context,
+.question-preview { border-radius: var(--radius-container); }
+.question-context { padding: 22px 24px; }
+.question-title {
+  font-family: var(--font-family-reading);
+  font-size: 1rem;
+  font-weight: var(--font-weight-medium, 500);
+  line-height: 1.8;
+  text-wrap: pretty;
+}
+.question-context > .markdown-content,
+.question-preview > .markdown-content { color: var(--color-text-secondary); }
+.question-context > .question-title,
+.question-preview > .question-title { color: var(--color-text-primary); }
+.topic-panel .question-preview { margin-top: 16px; padding: 18px 20px; }
+.shown-reference { border-style: solid; border-color: var(--color-border); }
+.turn.candidate {
+  background: color-mix(in srgb, var(--color-accent-muted) 40%, var(--color-background-card));
+}
+@media (max-width: 760px) {
+  .question-context, .topic-panel .question-preview { padding: 16px; }
 }

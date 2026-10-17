@@ -2,10 +2,12 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { readRelease } from "./check.mjs";
+import { releaseKind } from "./versions.mjs";
 const product = JSON.parse(readFileSync("src-tauri/tauri.conf.json", "utf8")).productName;
 const tag = process.env.RELEASE_TAG;
 if (!tag) throw Error("RELEASE_TAG is required.");
 const version = readRelease(process.cwd(), tag);
+const { isPrerelease } = releaseKind(version);
 const sha = execFileSync("git", ["rev-parse", "HEAD"]).toString().trim();
 const artifactDir = resolve(process.env.RELEASE_ARTIFACT_DIR ?? "release-artifacts");
 const manifest = JSON.parse(
@@ -20,12 +22,12 @@ if (ref.status === 0 && ref.stdout.trim() !== sha)
   throw Error("The tag points to another commit.");
 const existing = spawnSync(
   "gh",
-  ["release", "view", tag, "--json", "isDraft,targetCommitish"],
+  ["release", "view", tag, "--json", "isDraft,isPrerelease,targetCommitish"],
   { encoding: "utf8" },
 );
 if (existing.status === 0) {
   const value = JSON.parse(existing.stdout);
-  if (!value.isDraft || value.targetCommitish !== sha)
+  if (!value.isDraft || value.targetCommitish !== sha || value.isPrerelease !== isPrerelease)
     throw Error(
       "Refusing to overwrite a public release or a draft from another commit.",
     );
@@ -39,11 +41,11 @@ if (existing.status === 0) {
       "create",
       tag,
       "--draft",
-      "--prerelease",
+      ...(isPrerelease ? ["--prerelease"] : []),
       "--target",
       sha,
       "--title",
-      `${product} ${version} (macOS preview)`,
+      `${product} ${version}${isPrerelease ? " (macOS preview)" : ""}`,
       "--notes-file",
       `docs/releases/v${version}.md`,
     ],

@@ -1,4 +1,4 @@
-name: Publish preview update feed
+name: Publish update feed
 on:
   release:
     types: [published]
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "An already published preview tag (drafts are refused)"
+        description: "An already published release tag (drafts are refused)"
         required: true
         type: string
 permissions:
@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish:
-    if: ${{ (github.event_name == 'workflow_dispatch') || (github.event_name == 'workflow_run') || (startsWith(github.event.release.tag_name, 'v') && github.event.release.prerelease && !github.event.release.draft && contains(github.event.release.assets.*.name, 'latest.json')) }}
+    if: ${{ (github.event_name == 'workflow_dispatch') || (github.event_name == 'workflow_run') || (startsWith(github.event.release.tag_name, 'v') && !github.event.release.draft && contains(github.event.release.assets.*.name, 'latest.json')) }}
     runs-on: macos-15
     timeout-minutes: 15
     permissions:

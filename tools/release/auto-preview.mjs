@@ -5,6 +5,8 @@ import { pathToFileURL } from "node:url";
 import { gt } from "semver";
 import { readRelease } from "./check.mjs";
 
+import { releaseKind } from "./versions.mjs";
+
 const repository = "kuochenwoo/intv-prep";
 export function planPreview({
   run,
@@ -22,20 +24,16 @@ export function planPreview({
   )
     return { action: "skip" };
   if (!merged || version === previousVersion) return { action: "skip" };
-  if (
-    !/^\d+\.\d+\.\d+-(?:preview|alpha|beta|rc)\.\d+$/.test(version) ||
-    !gt(version, previousVersion)
-  )
-    throw Error(
-      "Automatic previews require a strictly greater prerelease version.",
-    );
+  const { isPrerelease } = releaseKind(version);
+  if (!gt(version, previousVersion))
+    throw Error("Automatic releases require a strictly greater version.");
   if (tagCommit && tagCommit !== run.head_sha)
     throw Error("The version tag already belongs to another commit.");
   if (
     release &&
-    (release.targetCommitish !== run.head_sha || !release.isPrerelease)
+    (release.targetCommitish !== run.head_sha || release.isPrerelease !== isPrerelease)
   )
-    throw Error("The existing release does not match this preview commit.");
+    throw Error("The existing release does not match this release commit.");
   return {
     action: release && !release.isDraft ? "feed" : "build",
     tag: `v${version}`,
@@ -122,7 +120,7 @@ function main() {
     `action=${plan.action}\ntag=${plan.tag ?? ""}\n`,
   );
   console.log(
-    `Automatic preview: ${plan.action}${plan.tag ? ` ${plan.tag}` : " (no merged version increase)"}.`,
+    `Automatic release: ${plan.action}${plan.tag ? ` ${plan.tag}` : " (no merged version increase)"}.`,
   );
 }
 if (

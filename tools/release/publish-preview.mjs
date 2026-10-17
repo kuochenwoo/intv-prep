@@ -6,6 +6,8 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { readRelease } from "./check.mjs";
 
+import { releaseKind } from "./versions.mjs";
+
 export function verifyUploadedAssets(local, assets) {
   assert.deepEqual(
     assets.map((a) => a.name).sort(),
@@ -22,6 +24,7 @@ export function verifyUploadedAssets(local, assets) {
 function main() {
   const tag = process.env.RELEASE_TAG;
   const version = readRelease(process.cwd(), tag);
+  const { isPrerelease, latest } = releaseKind(version);
   const git = (...args) =>
     execFileSync("git", args, { encoding: "utf8" }).trim();
   const sha = git("rev-parse", "HEAD");
@@ -69,10 +72,10 @@ function main() {
   );
   if (
     !release.isDraft ||
-    !release.isPrerelease ||
+    release.isPrerelease !== isPrerelease ||
     release.targetCommitish !== sha
   )
-    throw Error("Only the matching draft prerelease can be published.");
+    throw Error("Only the matching versioned draft can be published.");
   const local = Object.fromEntries(
     readdirSync(dir).map((name) => [
       name,
@@ -84,10 +87,10 @@ function main() {
   verifyUploadedAssets(local, release.assets);
   execFileSync(
     "gh",
-    ["release", "edit", tag, "--draft=false", "--prerelease", "--latest=false"],
+    ["release", "edit", tag, "--draft=false", `--prerelease=${isPrerelease}`, `--latest=${latest}`],
     { stdio: "inherit" },
   );
-  console.log(`Published verified prerelease ${tag}.`);
+  console.log(`Published verified release ${tag}.`);
 }
 if (
   process.argv[1] &&
